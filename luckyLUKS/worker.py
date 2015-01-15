@@ -83,16 +83,16 @@ def init():
             except UserAbort:
                 continue#no response needed
             except WorkerException as we:
-                response = {'type':'error', 'msg':we.args[0]}
+                response = {'type':'error', 'msg': format_exception(we)}
             except KeyError as ke:
-                response = {'type':'error', 'msg':_('Error in communication:') +'\n' + ke.args[0]}#thrown if required parameters missing
+                response = {'type':'error', 'msg': _('Error in communication:\n{error}').format(error = format_exception(ke))}#thrown if required parameters missing
             except: #catch ANY exception (including warnings) to show via gui
-                response = {'type':'error', 'msg': "".join(traceback.format_exception(*sys.exc_info()))}
+                response = {'type':'error', 'msg': format_exception(''.join(traceback.format_exception(*sys.exc_info())))}
             sys.stdout.write(json.dumps(response)+'\n')
             sys.stdout.flush()
 
 class WorkerHelper():
-    """ supports 5 commands:
+    """ offers 5 commands:
         -> check_status() validates the input and returns the current state (unlocked/closed) of the container
         -> unlock_container() asks for the passphrase and tries to unlock and mount a container
         -> close_container() closes and unmounts a container
@@ -367,7 +367,7 @@ class WorkerHelper():
         count = str(int(container_size / 1024 / 1024)) + 'K'
         #oflag=excl -> fail if the output file already exists
         #runas user to fail on access restictions
-        cmd = ['sudo' , '-u', os.getenv("SUDO_USER"), 'dd', 'if=/dev/urandom', 'of=' + container_path, 'bs=1K', 'count='+count, 'conv=excl', 'status=none']
+        cmd = ['sudo' , '-u', os.getenv("SUDO_USER"), 'dd', 'if=/dev/urandom', 'of=' + container_path, 'bs=1K', 'count='+count, 'conv=excl']
         with open(os.devnull) as DEVNULL:
             p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
             __, errors = p.communicate()
@@ -401,12 +401,11 @@ class WorkerHelper():
             raise WorkerException(errors) 
         
         #fs-root of created ext-filesystem should belong to the user
-        ext_owner_mapping = 'root_owner=' + os.getenv("SUDO_UID") + ':' + os.getenv("SUDO_GID")
         device_mapper_name = self.get_device_mapper_name(device_name)
         if filesystem_type == 'ext4':
-            cmd = ['mkfs.ext4' , '-L', device_name , '-E', ext_owner_mapping, '-O', '^has_journal', '-m', '0', '-q', device_mapper_name]
+            cmd = ['mkfs.ext4' , '-L', device_name , '-O', '^has_journal', '-m', '0', '-q', device_mapper_name]
         elif filesystem_type == 'ext2':
-            cmd = ['mkfs.ext2' , '-L', device_name , '-E', ext_owner_mapping, '-m', '0', '-q', device_mapper_name]
+            cmd = ['mkfs.ext2' , '-L', device_name , '-m', '0', '-q', device_mapper_name]
         elif filesystem_type == 'ntfs':
             cmd = ['mkfs.ntfs' , '-L', device_name , '-Q', '-q', device_mapper_name]
         try:
@@ -421,8 +420,8 @@ class WorkerHelper():
                 subprocess.check_output(['mount', device_mapper_name, '/tmp/' + device_name], stderr=subprocess.STDOUT, universal_newlines=True)
             except subprocess.CalledProcessError as cpe:
                 raise WorkerException(cpe.output)
+            os.chown('/tmp/' + device_name, int(os.getenv("SUDO_UID")), int(os.getenv("SUDO_GID")))
             os.chmod('/tmp/' + device_name, 0o700)
-            
 
         #finally close container
         self.close_container(device_name, container_path)

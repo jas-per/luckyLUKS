@@ -2,7 +2,7 @@
 [Desktop Entry]
 Comment=GUI for creating and unlocking LUKS/TrueCrypt volumes from container files
 Comment[de]=GUI zum Erstellen und Öffnen von verschlüsselten Containern (LUKS/TrueCrypt)
-Categories=GTK;Utility;
+Categories=QT;Utility;
 GenericName=Encrypted Container Tool
 GenericName[de]=Programm für verschlüsselte Container
 Exec=lucky-luks
@@ -11,6 +11,5 @@ Name=luckyLUKS
 NoDisplay=false
 Path[$e]=
 StartupNotify=false
-Terminal=0
-TerminalOptions=
+Terminal=false
 Type=Application

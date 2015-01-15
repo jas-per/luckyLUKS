@@ -25,7 +25,7 @@ QSystemTrayIcon, QMessageBox, QIcon, QMenu, QAction, QLabel, QPushButton, QGridL
 from luckyLUKS import util, PROJECT_URL
 from luckyLUKS.unlockUI import SudoDialog, UnlockContainerDialog
 from luckyLUKS.setupUI import SetupDialog
-
+    
 
 class MainWindow(QMainWindow):
     """ A window that shows the current status of the encrypted container 
@@ -33,12 +33,10 @@ class MainWindow(QMainWindow):
         leave an icon in the systray as a reminder to close them eventually.
     """
     
-    def __init__(self, application, device_name = None, container_path = None, mount_point = None):
+    def __init__(self, device_name = None, container_path = None, mount_point = None):
         """ Command line arguments checks are done here to be able to display a graphical dialog with error messages .
             If no arguments were supplied on the command line a setup dialog will be shown.
             All commands will be executed from a separate worker process with administrator privileges that gets initialized here.
-            :param application: The qt application
-            :type application: QApplication
             :param device_name: The device mapper name
             :type device_name: str/unicode or None
             :param container_path: The path of the container file
@@ -48,12 +46,14 @@ class MainWindow(QMainWindow):
         """
         super(MainWindow, self).__init__()
 
-        self.application = application
         self.luks_device_name = device_name
         self.encrypted_container = container_path
         self.mount_point = mount_point
         
+        self.worker = None
         self.is_waiting_for_worker = False
+        self.is_unlocked = False
+        self.is_initialized = False
 
         self.setWindowTitle(_('luckyLUKS'))
         self.setWindowIcon(QIcon.fromTheme('dialog-password'))
@@ -93,8 +93,9 @@ class MainWindow(QMainWindow):
             self.worker.start()
             
         except util.SudoException as se:
-            self.show_alert(str(se), critical=True)
-
+            self.show_alert(format_exception(se), critical=True)
+            return
+        
         # if no arguments supplied, display dialog to gather this information
         if self.encrypted_container is None and self.luks_device_name is None:
             sd = SetupDialog(self)
@@ -105,10 +106,9 @@ class MainWindow(QMainWindow):
                 
                 self.is_unlocked = True#all checks in setup dialog -> skip initializing state
             else:
-                sys.exit()#user closed dialog -> quit program
-        else:
-            # needed arguments supplied via cli -> validate args and initialize state after main window init is done
-            self.is_unlocked = False
+                #user closed dialog -> quit program
+                QApplication.instance().quit()
+                return
 
         # center window on desktop
         qr = self.frameGeometry()
@@ -159,6 +159,8 @@ class MainWindow(QMainWindow):
                                 error_callback = self.on_authorized)
         else:
             self.init_status()
+            
+        self.is_initialized = True
 
 
     def refresh(self):
@@ -193,7 +195,7 @@ class MainWindow(QMainWindow):
     def tray_quit(self):
         """ Triggered by clicking on `quit` in the systray popup: asks to close an unlocked container """
         if not self.is_unlocked:
-            self.application.quit()
+            QApplication.instance().quit()
         elif not self.is_waiting_for_worker:
             message = _('<b>{device_name}</b> >> {container_path}\n' +
                         'is currently <b>unlocked</b>,\n' + 
@@ -240,8 +242,8 @@ class MainWindow(QMainWindow):
             try:
                 UnlockContainerDialog(self, self.worker, self.luks_device_name, self.encrypted_container, self.mount_point).communicate()
                 self.is_unlocked = True
-            except util.UserInputError as e:
-                self.show_alert(str(e))
+            except util.UserInputError as uie:
+                self.show_alert(format_exception(uie))
                 self.is_unlocked = False
             self.refresh()
 
@@ -275,7 +277,7 @@ class MainWindow(QMainWindow):
         else:
             self.is_unlocked = False
         if not error and shutdown:#automatic shutdown only if container successfully closed
-            self.application.quit()
+            QApplication.instance().quit()
         else:
             self.enable_ui()
 
@@ -354,11 +356,10 @@ class MainWindow(QMainWindow):
             :param critical: If critical, quit application (default=False)
             :type critical: bool
         """
-        md_type = QMessageBox.Critical if critical else QMessageBox.Warning
-
         if message != '':
+            md_type = QMessageBox.Critical if critical else QMessageBox.Warning
             mb = QMessageBox(md_type, _('Error'), message, QMessageBox.Ok, self)
             mb.exec_()
             
         if critical:
-            sys.exit()
+            QApplication.instance().quit()

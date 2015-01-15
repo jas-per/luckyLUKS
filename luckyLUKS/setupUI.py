@@ -19,10 +19,11 @@ from __future__ import division
 import os
 import sys
 import codecs
+import subprocess
 
 from PyQt4.QtCore import QTimer, Qt
 from PyQt4.QtGui import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
-QMessageBox, QLineEdit, QPushButton, QIcon, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar
+QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar
 
 from luckyLUKS import PROJECT_URL
 from luckyLUKS.unlockUI import FormatContainerDialog, UnlockContainerDialog
@@ -328,7 +329,7 @@ class SetupDialog(QDialog):
                 self.accept()
                 
         except UserInputError as error:
-            self.show_alert(error.args[0])
+            self.show_alert(format_exception(error))
 
 
     def show_create_startmenu_entry(self):
@@ -338,7 +339,7 @@ class SetupDialog(QDialog):
                        'a startup menu entry for <b>{device_name}</b>?\n\n' +
                        '-> Your password will NOT be saved!\n' +
                        '   This just creates a shortcut,\n' +
-                       '   to the unlock container dialog.').format(
+                       '   to the unlock container dialog.\n').format(
                         device_name = self.get_luks_device_name())
                      )
         mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
@@ -359,32 +360,46 @@ class SetupDialog(QDialog):
             cmd += " -m '" + self.get_mount_point().replace("'","'\\'''") + "'"
              
         #create .desktop-file
-        desktop_file_path = os.path.expanduser('~')
-        if os.path.exists(os.path.join(desktop_file_path,'.local','share','applications')):#check default location for freedesktop menu entries
-            desktop_file_path = os.path.join(desktop_file_path,'.local','share','applications')
+        if is_installed('xdg-desktop-menu'):#create in tmp and add freedesktop menu entry
+            desktop_file_path = '/tmp'            
+        else:#or create in users home dir
+            desktop_file_path = os.path.expanduser('~')
         desktop_file_path = os.path.join(desktop_file_path, _('luckyLUKS') + '-' + self.get_luks_device_name() + '.desktop')
              
         desktop_file = codecs.open(desktop_file_path, 'w', 'utf-8') 
-         
+
+        entry_name = _('Unlock {device_name}').format(device_name = self.get_luks_device_name())
         desktop_file.write("[Desktop Entry]\n")
         desktop_file.write("Comment=" + self.get_luks_device_name() + " " + _('Encrypted Container Tool') + "\n")
         desktop_file.write("Categories=Utility;\n")
         desktop_file.write("Exec=" + cmd + "\n")
         desktop_file.write("GenericName=" + _('Encrypted Container') + "\n")
         desktop_file.write("Icon=dialog-password\n")
-        desktop_file.write("Name=" + _('Unlock {device_name}').format(device_name = self.get_luks_device_name()) + "\n")
+        desktop_file.write("Name=" + entry_name + "\n")
         desktop_file.write("NoDisplay=false\n")
         desktop_file.write("Path[$e]=\n")
         desktop_file.write("StartupNotify=false\n")
         desktop_file.write("Terminal=0\n")
         desktop_file.write("TerminalOptions=\n")
-        desktop_file.write("Type=Application\n")
+        desktop_file.write("Type=Application\n\n")
         desktop_file.close()
          
         os.chmod(desktop_file_path, 0o600)
- 
-        self.show_info(_('Shortcut file saved') + ':\n'+desktop_file_path,
-                       _('Startmenu entry created'))
+
+        if is_installed('xdg-desktop-menu'):
+            try:
+                subprocess.check_output(['xdg-desktop-menu', 'installs', '--novendor', desktop_file_path], stderr=subprocess.STDOUT, universal_newlines=True)
+                os.remove(desktop_file_path)# remove from tmp
+                self.show_info(_('<b>` {name} `</b>\nadded to start menu').format(name = entry_name), _('Success'))
+            except subprocess.CalledProcessError as cpe:
+                home_dir_path = os.path.join(os.path.expanduser('~'), os.path.basename(desktop_file_path))
+                #move to homedir instead
+                from shutil import move
+                move(desktop_file_path, home_dir_path)
+                self.show_alert(format_exception(cpe.output))
+                self.show_info(_('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=home_dir_path), '')
+        else:
+            self.show_info(_('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=desktop_file_path), '')
         
 
     def reject(self):

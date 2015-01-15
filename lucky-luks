@@ -20,11 +20,12 @@ import os.path
 import sys
 import locale
 import gettext
+import pkg_resources
 from luckyLUKS import main
 
 locale.setlocale(locale.LC_ALL, '')
+locale_dir = pkg_resources.resource_filename('luckyLUKS', 'locale')
 
-locale_dir = os.path.join(os.path.dirname(sys.argv[0]), 'luckyLUKS','i18n')
 translation = gettext.translation('luckyLUKS', locale_dir, fallback=True)
 
 main.luckyLUKS(translation)

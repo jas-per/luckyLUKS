@@ -46,7 +46,9 @@ def spawn_worker(passwordUI):
     worker_process = _connect_to_sudo()
     pipe_events.register(worker_process.stdout.fileno(), select.EPOLLIN)
     sudo_prompt = '[sudo] password for ' + os.getenv('USER')
+    dlg_message = _('luckyLUKS needs administrative privileges.\nPlease enter your password:')
     incorrent_pw_entered = False
+    
     try:
         while True:
             __, event = pipe_events.poll()[0]#blocking
@@ -59,18 +61,16 @@ def spawn_worker(passwordUI):
                     fl = fcntl.fcntl(worker_process.stdout.fileno(), fcntl.F_GETFL)
                     fcntl.fcntl(worker_process.stdout.fileno(), fcntl.F_SETFL, fl & (~os.O_NONBLOCK))
                     break
-                if 'Sorry, try again.' in msg:
-                    incorrent_pw_entered = True
-                if sudo_prompt in msg:
-                    dlg_message = _('luckyLUKS needs administrative privileges.\nPlease enter your password:')
-                    if incorrent_pw_entered:
-                        dlg_message = _('Sorry, incorrect password.') + '\n' + dlg_message
-                        incorrent_pw_entered = False
+                elif sudo_prompt in msg:
                     try:
                         worker_process.stdin.write(passwordUI(dlg_message).get_password()+'\n')
                         worker_process.stdin.flush()
+                        # change dialog text in case another try is needed
+                        if not incorrent_pw_entered:
+                            incorrent_pw_entered = True
+                            dlg_message = _('<b>Sorry, incorrect password.</b>\n') + dlg_message
                     except UserInputError:#user cancelled dlg -> quit without msg
-                        raise SudoException()
+                        raise SudoException('')
                     
             elif event & select.EPOLLERR or event & select.EPOLLHUP:
                 #react to error/hangup (msg has most likely been read before)
@@ -84,10 +84,10 @@ def spawn_worker(passwordUI):
                 elif msg != '':
                     raise SudoException(msg)
                 else:
-                    raise IOError
+                    raise SudoException(_('Communication with sudo process failed\n{error}').format(error = u''))
                 
     except IOError as ioe:
-        raise SudoException(_('Communication with sudo process failed') + '\n' + str(ioe))
+        raise SudoException(_('Communication with sudo process failed\n{error}').format(error = format_exception(ioe)))
     finally:
         pipe_events.unregister(worker_process.stdout.fileno())
         pipe_events.close()
@@ -102,7 +102,7 @@ def _connect_to_sudo():
     """
     #since output from sudo gets parsed, it needs to be run without localization
     #saving original language settings to pass to the worker process
-    original_language = os.getenv("LANGUAGE")
+    original_language = os.getenv("LANGUAGE","")
     env_lang_cleared = os.environ.copy()
     env_lang_cleared['LANGUAGE'] = 'C'
     cmd = ['sudo', '-S', 'LANGUAGE='+original_language, sys.argv[0], '--ishelperprocess']
@@ -131,8 +131,7 @@ class PipeMonitor(QThread):
         """
         super(PipeMonitor, self).__init__()
         self.daemon = True#forced kill needed 
-        self.worker_out = worker_process.stdout
-        self.worker_in = worker_process.stdin
+        self.worker = worker_process
         self.parent = parent
         self.com_errorhandler = com_errorhandler
         self.success_callback, self.error_callback = None, None
@@ -142,7 +141,7 @@ class PipeMonitor(QThread):
         """ Listens on workers stdout and executes callbacks when answers arrive """
         while True:
             try:
-                response = json.loads(self.worker_out.readline().strip(),encoding='utf-8')#blocks
+                response = json.loads(self.worker.stdout.readline().strip(),encoding='utf-8')#blocks
                 assert('type' in response and 'msg' in response)
                 assert(self.success_callback is not None and self.error_callback is not None)#there should be somebody waiting for an answer!
                 # valid response received
@@ -154,7 +153,7 @@ class PipeMonitor(QThread):
                 self.success_callback, self.error_callback = None, None
                 
             except (IOError, ValueError, AssertionError) as communication_error:
-                QApplication.postEvent(self.parent, WorkerEvent(self.com_errorhandler, _('Error in communication:\n{error}').format(error = communication_error.args[0])))
+                QApplication.postEvent(self.parent, WorkerEvent(self.com_errorhandler, _('Error in communication:\n{error}').format(error = format_exception(communication_error))))
                 return
             
 
@@ -172,11 +171,11 @@ class PipeMonitor(QThread):
             assert(self.success_callback is None and self.error_callback is None)#channel clear?
             self.success_callback = success_callback
             self.error_callback = error_callback
-            self.worker_in.write(json.dumps(command) + '\n')
-            self.worker_in.flush()
+            self.worker.stdin.write(json.dumps(command) + '\n')
+            self.worker.stdin.flush()
         except (IOError, AssertionError) as communication_error:
-            QApplication.postEvent(self.parent, WorkerEvent(self.com_errorhandler, _('Error in communication:\n{error}').format(error = communication_error.args[0])))
-
+            QApplication.postEvent(self.parent, WorkerEvent(self.com_errorhandler, _('Error in communication:\n{error}').format(error = format_exception(communication_error))))
+            
 
 class WorkerEvent(QEvent):
     """ thread-safe callback execution by raising 

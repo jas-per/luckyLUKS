@@ -29,14 +29,16 @@ def luckyLUKS(translation, *args,**kwargs):
         translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'),translation)
         translation.ugettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'),translation)
         commandline_unicode_arg = lambda arg: arg
+        argparse._ = _ =  translation.gettext #gettext for argsparse
+        builtins.format_exception = str#format exception message for gui
     except:
         #py2: explicit unicode for qt string translations and commandline args parsing
         import __builtin__ as builtins
         translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'),translation)
         translation.ugettext_qt = types.MethodType(lambda self, msg: self.ugettext(msg).replace('\n', '<br>'),translation)
         commandline_unicode_arg = lambda arg: arg.decode(sys.getfilesystemencoding())
-
-    argparse._ = _ =  translation.ugettext_qt #gettext for argsparse
+        argparse._ = _ =  translation.ugettext #gettext for argsparse
+        builtins.format_exception = lambda e: str(e).decode('utf-8')#format exception message for gui
 
     parser = argparse.ArgumentParser(description = _('GUI for creating and unlocking LUKS/TrueCrypt volumes from container files'),
                                      epilog = _('When called without any arguments a setup dialog will be shown before unlocking,\n' +
@@ -70,7 +72,7 @@ def luckyLUKS(translation, *args,**kwargs):
                         help=_('Choose a device name to identify the unlocked container'))
     parser.add_argument('-m', dest='mountpoint', type=commandline_unicode_arg, nargs='?', metavar=_('PATH'),
                         help=_('Where to mount the encrypted filesystem'))
-    parser.add_argument('-v', action='version', version="luckyLUKS " + VERSION_STRING,
+    parser.add_argument('-v', '--version', action='version', version="luckyLUKS " + VERSION_STRING,
                         help=_("show program's version number and exit"))
     parser.add_argument('--ishelperprocess', action='store_true', help=argparse.SUPPRESS)
  
@@ -97,9 +99,14 @@ def startUI(parsed_args):
     qt_translator.load('qt_' +  QLocale.system().name(), QLibraryInfo.location(QLibraryInfo.TranslationsPath))
     application = QApplication(sys.argv)
     application.installTranslator(qt_translator)
+
     #start application
-    MainWindow(application, parsed_args.name, parsed_args.container, parsed_args.mountpoint)
-    sys.exit(application.exec_())
+    main_win = MainWindow(parsed_args.name, parsed_args.container, parsed_args.mountpoint)
+    #setup OK -> run event loop
+    if main_win.is_initialized:
+        sys.exit(application.exec_())
+    else:
+        sys.exit()
 
 
 def startWorker():
