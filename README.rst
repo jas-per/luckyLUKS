@@ -17,17 +17,16 @@ luckyLUKS follows a keep-it-simple philosophy that aims to keep users from shoot
 Installation
 ============
 
-For Ubuntu and derivates just use the ppa:
+For Ubuntu and derivates just use the ppa::
 
-```
-sudo add-apt-repository ppa:jas-per/lucky-luks
-sudo apt-get update && sudo apt-get upgrade
-sudo apt-get install python-luckyLUKS
-```
+    > sudo add-apt-repository ppa:jas-per/lucky-luks
+    > sudo apt-get update && sudo apt-get upgrade
+    > sudo apt-get install python-luckyLUKS
 
 For other debian based distributions download this debian package and install manually:
 
-[python-luckyluks_0.9.2-1_all.deb](https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks/+files/python-luckyluks_0.9.2-1_all.deb)
+
+`python-luckyluks_0.9.2-1_all.deb <https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks/+files/python-luckyluks_0.9.2-1_all.deb>`_
 
 make sure you have the following installed:
 `cryptsetup`, `sudo` and `python-qt4`
