@@ -21,38 +21,38 @@ import argparse
 import types
 
 
-def luckyLUKS(translation, *args,**kwargs):
+def luckyLUKS(translation, *args, **kwargs):
     """ main entry point: initialize gettext, parse arguments and start either GUI or worker """
     try:
-        #py3: 
+        # py3:
         import builtins
-        translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'),translation)
-        translation.ugettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'),translation)
+        translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
+        translation.ugettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
         commandline_unicode_arg = lambda arg: arg
-        argparse._ = _ =  translation.gettext #gettext for argsparse
-        builtins.format_exception = str#format exception message for gui
+        argparse._ = _ = translation.gettext  # gettext for argsparse
+        builtins.format_exception = str  # format exception message for gui
     except:
-        #py2: explicit unicode for qt string translations and commandline args parsing
+        # py2: explicit unicode for qt string translations and commandline args parsing
         import __builtin__ as builtins
-        translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'),translation)
-        translation.ugettext_qt = types.MethodType(lambda self, msg: self.ugettext(msg).replace('\n', '<br>'),translation)
+        translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
+        translation.ugettext_qt = types.MethodType(lambda self, msg: self.ugettext(msg).replace('\n', '<br>'), translation)
         commandline_unicode_arg = lambda arg: arg.decode(sys.getfilesystemencoding())
-        argparse._ = _ =  translation.ugettext #gettext for argsparse
-        builtins.format_exception = lambda e: str(e).decode('utf-8')#format exception message for gui
+        argparse._ = _ = translation.ugettext  # gettext for argsparse
+        builtins.format_exception = lambda e: str(e).decode('utf-8')  # format exception message for gui
 
-    parser = argparse.ArgumentParser(description = _('GUI for creating and unlocking LUKS/TrueCrypt volumes from container files'),
-                                     epilog = _('When called without any arguments a setup dialog will be shown before unlocking,\n' +
-                                                'where you can select containerfile and name, or create a new encrypted container.\n' +
-                                                'If both arguments are supplied, the unlock dialog will be shown directly.\n\n' +
-                                                'Example:\n' +
-                                                '  {executable} -c /usbstick/encrypted.bin -n mydata -m /home/user/enc\n\n' +
-                                                'If automatic mounting (eg udisks/polkit) is configured on your system,\n' +
-                                                'explicitly setting a mountpoint is usually not needed (but still possible)\n\n' +
-                                                'Homepage: {project_url}'
-                                                ).format(executable = os.path.basename(sys.argv[0]),
-                                                         project_url = PROJECT_URL),
-                                     formatter_class = argparse.RawDescriptionHelpFormatter)
-    
+    parser = argparse.ArgumentParser(description=_('GUI for creating and unlocking LUKS/TrueCrypt volumes from container files'),
+                                     epilog=_('When called without any arguments a setup dialog will be shown before unlocking,\n'
+                                              'where you can select containerfile and name, or create a new encrypted container.\n'
+                                              'If both arguments are supplied, the unlock dialog will be shown directly.\n\n'
+                                              'Example:\n'
+                                              '  {executable} -c /usbstick/encrypted.bin -n mydata -m /home/user/enc\n\n'
+                                              'If automatic mounting (eg udisks/polkit) is configured on your system,\n'
+                                              'explicitly setting a mountpoint is usually not needed (but still possible)\n\n'
+                                              'Homepage: {project_url}'
+                                              ).format(executable=os.path.basename(sys.argv[0]),
+                                                       project_url=PROJECT_URL),
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+
     # L10n: used by argsparse to generate help output on the console (luckyLUKS --help)
     ap_usage = _('usage: ')
     # L10n: used by argsparse to generate help output on the console (luckyLUKS --help)
@@ -63,9 +63,9 @@ def luckyLUKS(translation, *args,**kwargs):
     ap_errmsg = _('%(prog)s: error: %(message)s\n')
     # L10n: used by argsparse to generate help output on the console (luckyLUKS --help)
     ap_unknown = _('unrecognized arguments: %s')
-    
-    #if argument not specified or empty set value to None
-    #error messages will be shown by the GUI, not on the command line
+
+    # if argument not specified or empty set value to None
+    # error messages will be shown by the GUI, not on the command line
     parser.add_argument('-c', dest='container', type=commandline_unicode_arg, nargs='?', metavar=_('PATH'),
                         help=_('Path to the encrypted container file'))
     parser.add_argument('-n', dest='name', type=commandline_unicode_arg, nargs='?', metavar=_('NAME'),
@@ -75,34 +75,35 @@ def luckyLUKS(translation, *args,**kwargs):
     parser.add_argument('-v', '--version', action='version', version="luckyLUKS " + VERSION_STRING,
                         help=_("show program's version number and exit"))
     parser.add_argument('--ishelperprocess', action='store_true', help=argparse.SUPPRESS)
- 
+
     parsed_args = parser.parse_args()
-    
-    #worker will be created by calling the script again (but this time with su privileges)
+
+    # worker will be created by calling the script again (but this time with su privileges)
     if parsed_args.ishelperprocess:
-        #the backend process uses utf8 encoded str in py2
+        # the backend process uses utf8 encoded str in py2
         builtins._ = translation.gettext_qt
         startWorker()
     else:
-        #unicode translations for the qt gui
+        # unicode translations for the qt gui
         builtins._ = translation.ugettext_qt
         startUI(parsed_args)
+
 
 def startUI(parsed_args):
     """ Import the required GUI elements and create main window """
     from PyQt4.QtGui import QApplication
     from PyQt4.QtCore import QLocale, QTranslator, QLibraryInfo
     from luckyLUKS.mainUI import MainWindow
-    
-    #l10n qt-gui elements
+
+    # l10n qt-gui elements
     qt_translator = QTranslator()
-    qt_translator.load('qt_' +  QLocale.system().name(), QLibraryInfo.location(QLibraryInfo.TranslationsPath))
+    qt_translator.load('qt_' + QLocale.system().name(), QLibraryInfo.location(QLibraryInfo.TranslationsPath))
     application = QApplication(sys.argv)
     application.installTranslator(qt_translator)
 
-    #start application
+    # start application
     main_win = MainWindow(parsed_args.name, parsed_args.container, parsed_args.mountpoint)
-    #setup OK -> run event loop
+    # setup OK -> run event loop
     if main_win.is_initialized:
         sys.exit(application.exec_())
     else:
@@ -112,4 +113,4 @@ def startUI(parsed_args):
 def startWorker():
     """ Initialize worker process """
     from luckyLUKS import worker
-    worker.init()    
+    worker.init()

@@ -6,7 +6,7 @@ This little program was brought to life because some people I give a bit of supp
 
 - No need to deal with partition table wizardry when creating an encrypted container, you basically create a file on a harddrive, it doesn't matter if its an internal one or an external usb harddrive, -stick, memorycard ..
 - Backup is straightforward as well, just copy the file somewhere else - done! No need to backup your precious data unencrypted
-- You can easily add some encrypted private data to an external harddrive you want to share with friends or take with you while travelling
+- You can easily add some encrypted private data to an unencrypted external harddrive you want to share with friends or take with you while travelling
 - Lots of users are already quite familiar with all this, because their first touch with data encryption has been TrueCrypt which uses the encrypted container approach
 
 The major technical drawback is a bit of overhead while accessing data inside an encrypted container, because the computer has to work on two filesystems on top of each other (although you probably won't notice the difference on a reasonably fast computer). The much bigger problem for users right now is the lack of a graphical interface for using encrypted containers in almost every Linux distribution. Although you can run TrueCrypt on Linux, it's not an ideal solution for various reasons and almost certainly won't make it into default installations because of licencing issues. There is another program called ZuluCrypt which offers a graphical interface to all the options of the underlying command line tool called cryptsetup. I'd definitely recommend ZuluCrypt for power users, but for technical reasons this program probably won't find its way into default Linux installations as well.
@@ -19,19 +19,24 @@ Installation
 
 For Ubuntu and derivates just use the ppa:
 
+```
 sudo add-apt-repository ppa:jas-per/lucky-luks
 sudo apt-get update && sudo apt-get upgrade
 sudo apt-get install python-luckyLUKS
-
+```
 
 For other debian based distributions download this debian package and install manually:
-https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks/+files/python-luckyluks_0.9.2-1_all.deb
+
+[python-luckyluks_0.9.2-1_all.deb](https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks/+files/python-luckyluks_0.9.2-1_all.deb)
 
 make sure you have the following installed:
 `cryptsetup`, `sudo` and `python-qt4`
+
 add `tcplay` if you want to use TrueCrypt containers
 
+
 TODO: manual install
+
 
 FAQ
 ===

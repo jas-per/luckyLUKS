@@ -24,11 +24,13 @@ from PyQt4.QtGui import QApplication
 
 
 class SudoException(Exception):
+
     """ Errors while establishing a worker process with elevated privileges using sudo"""
     pass
 
 
 class UserInputError(Exception):
+
     """ Used to handle problems arising from unsuitable user input """
     pass
 
@@ -41,41 +43,41 @@ def spawn_worker(passwordUI):
         :rtype: :class:`subprocess.Popen`
         :raises: SudoException
     """
-    #using epoll to wait for feedback from sudo
+    # using epoll to wait for feedback from sudo
     pipe_events = select.epoll()
     worker_process = _connect_to_sudo()
     pipe_events.register(worker_process.stdout.fileno(), select.EPOLLIN)
     sudo_prompt = '[sudo] password for ' + os.getenv('USER')
     dlg_message = _('luckyLUKS needs administrative privileges.\nPlease enter your password:')
     incorrent_pw_entered = False
-    
+
     try:
         while True:
-            __, event = pipe_events.poll()[0]#blocking
+            __, event = pipe_events.poll()[0]  # blocking
             if event & select.EPOLLIN:
-                #sudo process wrote to pipe
+                # sudo process wrote to pipe
                 msg = worker_process.stdout.read()
                 if 'ESTABLISHED' in msg:
-                    #Helper process initialized
-                    #from here on all com-messages on the pipe will be terminated with newline -> switch back to blocking IO
+                    # Helper process initialized
+                    # from here on all com-messages on the pipe will be terminated with newline -> switch back to blocking IO
                     fl = fcntl.fcntl(worker_process.stdout.fileno(), fcntl.F_GETFL)
                     fcntl.fcntl(worker_process.stdout.fileno(), fcntl.F_SETFL, fl & (~os.O_NONBLOCK))
                     break
                 elif sudo_prompt in msg:
                     try:
-                        worker_process.stdin.write(passwordUI(dlg_message).get_password()+'\n')
+                        worker_process.stdin.write(passwordUI(dlg_message).get_password() + '\n')
                         worker_process.stdin.flush()
                         # change dialog text in case another try is needed
                         if not incorrent_pw_entered:
                             incorrent_pw_entered = True
                             dlg_message = _('<b>Sorry, incorrect password.</b>\n') + dlg_message
-                    except UserInputError:#user cancelled dlg -> quit without msg
-                        raise SudoException('')
-                    
+                    except UserInputError:  # user cancelled dlg -> quit without msg
+                        raise SudoException()
+
             elif event & select.EPOLLERR or event & select.EPOLLHUP:
-                #react to error/hangup (msg has most likely been read before)
+                # react to error/hangup (msg has most likely been read before)
                 if 'incorrect password attempts' in msg:
-                    #max password attempts reached -> restart sudo process and continue
+                    # max password attempts reached -> restart sudo process and continue
                     pipe_events.unregister(worker_process.stdout.fileno())
                     worker_process = _connect_to_sudo()
                     pipe_events.register(worker_process.stdout.fileno(), select.EPOLLIN)
@@ -84,44 +86,46 @@ def spawn_worker(passwordUI):
                 elif msg != '':
                     raise SudoException(msg)
                 else:
-                    raise SudoException(_('Communication with sudo process failed\n{error}').format(error = u''))
-                
+                    raise SudoException(_('Communication with sudo process failed\n{error}').format(error=u''))
+
     except IOError as ioe:
-        raise SudoException(_('Communication with sudo process failed\n{error}').format(error = format_exception(ioe)))
+        raise SudoException(_('Communication with sudo process failed\n{error}').format(error=format_exception(ioe)))
     finally:
         pipe_events.unregister(worker_process.stdout.fileno())
         pipe_events.close()
-    
+
     return worker_process
 
 
 def _connect_to_sudo():
-    """ Calls worker with sudo and initializes pipes for communication 
+    """ Calls worker with sudo and initializes pipes for communication
         :returns : An initialized Python subprocess object with a non-blocking stdout, that waits for password input
         :rtype: :class:`subprocess.Popen`
     """
-    #since output from sudo gets parsed, it needs to be run without localization
-    #saving original language settings to pass to the worker process
-    original_language = os.getenv("LANGUAGE","")
+    # since output from sudo gets parsed, it needs to be run without localization
+    # saving original language settings to pass to the worker process
+    # TODO: strip/recreate env instead of copy?
+    original_language = os.getenv("LANGUAGE", "")
     env_lang_cleared = os.environ.copy()
     env_lang_cleared['LANGUAGE'] = 'C'
-    cmd = ['sudo', '-S', 'LANGUAGE='+original_language, sys.argv[0], '--ishelperprocess']
+    cmd = ['sudo', '-S', 'LANGUAGE=' + original_language, sys.argv[0], '--ishelperprocess']
     sudo_process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, universal_newlines=True, env=env_lang_cleared)
-    #switch pipe to non-blocking IO
+    # switch pipe to non-blocking IO
     fd = sudo_process.stdout.fileno()
     fl = fcntl.fcntl(fd, fcntl.F_GETFL)
     fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
     return sudo_process
-        
-        
+
+
 class PipeMonitor(QThread):
+
     """ Establishes an asynchronous communication channel with the worker process:
         Since the worker executes only one task at a time a queue is not needed.
         After execute is called with command and callbacks further commands will get blocked
         until an answer from the worker arrives. The answer will get injected into the UI-loop
         -> the UI stays responsive, and thus has to disable buttons etc to prevent additional commands
     """
-        
+
     def __init__(self, parent, worker_process, com_errorhandler):
         """ Daemon thread - because of blocking readline()
             :param worker_process: A Python subprocess object initialized with a privileged worker process
@@ -130,32 +134,30 @@ class PipeMonitor(QThread):
             :type com_errorhandler: function that displays an errormessage and quits the program afterwards
         """
         super(PipeMonitor, self).__init__()
-        self.daemon = True#forced kill needed 
+        self.daemon = True  # forced kill needed
         self.worker = worker_process
         self.parent = parent
         self.com_errorhandler = com_errorhandler
         self.success_callback, self.error_callback = None, None
 
-
     def run(self):
         """ Listens on workers stdout and executes callbacks when answers arrive """
         while True:
             try:
-                response = json.loads(self.worker.stdout.readline().strip(),encoding='utf-8')#blocks
+                response = json.loads(self.worker.stdout.readline().strip(), encoding='utf-8')  # blocks
                 assert('type' in response and 'msg' in response)
-                assert(self.success_callback is not None and self.error_callback is not None)#there should be somebody waiting for an answer!
+                assert(self.success_callback is not None and self.error_callback is not None)  # there should be somebody waiting for an answer!
                 # valid response received
                 if response['type'] == 'error':
                     QApplication.postEvent(self.parent, WorkerEvent(self.error_callback, response['msg']))
                 else:
                     QApplication.postEvent(self.parent, WorkerEvent(self.success_callback, response['msg']))
-                # reset callbacks   
+                # reset callbacks
                 self.success_callback, self.error_callback = None, None
-                
+
             except (IOError, ValueError, AssertionError) as communication_error:
-                QApplication.postEvent(self.parent, WorkerEvent(self.com_errorhandler, _('Error in communication:\n{error}').format(error = format_exception(communication_error))))
+                QApplication.postEvent(self.parent, WorkerEvent(self.com_errorhandler, _('Error in communication:\n{error}').format(error=format_exception(communication_error))))
                 return
-            
 
     def execute(self, command, success_callback, error_callback):
         """ Writes command to workers stdin and sets callbacks for listener thread
@@ -167,18 +169,19 @@ class PipeMonitor(QThread):
             :type error_callback: function
         """
         try:
-            assert('type' in command and 'msg' in command)#valid command obj?
-            assert(self.success_callback is None and self.error_callback is None)#channel clear?
+            assert('type' in command and 'msg' in command)  # valid command obj?
+            assert(self.success_callback is None and self.error_callback is None)  # channel clear?
             self.success_callback = success_callback
             self.error_callback = error_callback
             self.worker.stdin.write(json.dumps(command) + '\n')
             self.worker.stdin.flush()
         except (IOError, AssertionError) as communication_error:
-            QApplication.postEvent(self.parent, WorkerEvent(self.com_errorhandler, _('Error in communication:\n{error}').format(error = format_exception(communication_error))))
-            
+            QApplication.postEvent(self.parent, WorkerEvent(self.com_errorhandler, _('Error in communication:\n{error}').format(error=format_exception(communication_error))))
+
 
 class WorkerEvent(QEvent):
-    """ thread-safe callback execution by raising 
+
+    """ thread-safe callback execution by raising
         these custom events in the main ui loop
     """
     EVENT_TYPE = QEvent.Type(QEvent.registerEventType())
@@ -196,7 +199,7 @@ class WorkerEvent(QEvent):
 
 
 def is_installed(executable):
-    """ Checks if executable is present in path 
+    """ Checks if executable is present in path
         :param executable: executable to search for
         :type executable: str
         :returns: True if executable found

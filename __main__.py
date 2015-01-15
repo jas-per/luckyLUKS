@@ -28,11 +28,11 @@ Because of this, gettext will be initialized here,
 #to search for a .mo file for the users locale inside the zip
 """
 if __name__ == '__main__':
-    
+
     locale.setlocale(locale.LC_ALL, '')
     loc, enc = locale.getlocale(locale.LC_MESSAGES)
     l10n_resource = None
-    
+
     # try to find the corresponding gettext file (*.mo) for the users locale in the zip file
     if loc != 'C':
         try:
@@ -44,9 +44,9 @@ if __name__ == '__main__':
                 except IOError:
                     pass
 
-    if l10n_resource is None:                
+    if l10n_resource is None:
         translation = NullTranslations()
     else:
-        translation = GNUTranslations(io.BytesIO(l10n_resource))  
-    
+        translation = GNUTranslations(io.BytesIO(l10n_resource))
+
     main.luckyLUKS(translation)
