@@ -2,9 +2,9 @@ luckyLUKS
 =========
 luckyLUKS is a Linux GUI for creating and (un-)locking encrypted volumes from container files. Unlocked containers leave an icon in the systray as a reminder to close them eventually ;) Supports cryptsetup/LUKS and Truecrypt container files.
 
-This little program was brought to life because some people I give a bit of support to run their Linux systems asked for an equivalent to the Windows TrueCrypt program they've been using. Although most Linux distributions provide excellent support for encrypted partitions these days - you can choose to run from a completely encrypted hardrive on installation with one or two clicks - the situation with encrypted containers is not that great. An encrypted container is basically a large file which encapsulates an encrypted partition. This approach has some advantages, especially for casual computer users:
+luckyLUKS was brought to life to offer an equivalent to the Windows TrueCrypt program. Although most Linux distributions provide excellent support for encrypted partitions these days - you can choose to run from a completely encrypted hardrive on installation with one or two clicks - the situation with encrypted containers is not that great. An encrypted container is basically a large file which encapsulates an encrypted partition - this approach has some advantages, especially for casual computer users:
 
-- No need to deal with partition table wizardry when creating an encrypted container, you basically create a file on a harddrive, it doesn't matter if its an internal one or an external usb harddrive, -stick, memorycard ..
+- No need to deal with partition table wizardry when creating an encrypted container, you basically create a file on a harddrive, it doesn't matter if its an internal one or an external usbstick etc..
 - Backup is straightforward as well, just copy the file somewhere else - done! No need to backup your precious data unencrypted
 - You can easily add some encrypted private data to an unencrypted external harddrive you want to share with friends or take with you while travelling
 - Lots of users are already quite familiar with all this, because their first touch with data encryption has been TrueCrypt which uses the encrypted container approach
@@ -17,7 +17,7 @@ luckyLUKS follows a keep-it-simple philosophy that aims to keep users from shoot
 Installation
 ============
 
-For Ubuntu and derivates just use the ppa::
+For Ubuntu and derivates just use this ppa::
 
     > sudo add-apt-repository ppa:jas-per/lucky-luks
     > sudo apt-get update && sudo apt-get upgrade
@@ -26,7 +26,7 @@ For Ubuntu and derivates just use the ppa::
 For other debian based distributions download this debian package and install manually:
 
 
-`python-luckyluks_0.9.2-1_all.deb <https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks/+files/python-luckyluks_0.9.2-1_all.deb>`_
+`python-luckyluks_0.9.6-1_all.deb <https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks/+files/python-luckyluks_0.9.6-1_all.deb>`_
 
 make sure you have the following installed:
 `cryptsetup`, `sudo` and `python-qt4`

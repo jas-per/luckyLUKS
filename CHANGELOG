@@ -1,0 +1,75 @@
+luckyluks (0.9.6) unstable; urgency=low
+
+  * add show/hide to systray context menu (required for unity)
+
+  * setup sudo if not configured via su
+
+  * add *sbin/ to search path for tool checks
+
+  * refactor util methods
+
+  * Makefile and setup.py for debian packaging
+
+  * tested on debian sid, ubuntu 14.04 and kubuntu 12.04 & 14.04
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Fri, 30 Jan 2015 15:02:11 +0100
+
+
+luckyluks (0.9.5) unstable; urgency=low
+
+  * using poll instead of epoll to connect with sudo process to avoid problems on python<2.7.4
+
+  * check dmsetup version for unicode/special character support
+
+  * fixes unicode output on exception display
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Thu, 22 Jan 2015 17:48:23 +0100
+
+
+luckyluks (0.9.4) unstable; urgency=low
+
+  * fixes build failure ubuntu ppa because of setup_requires
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Tue, 20 Jan 2015 17:32:05 +0100
+
+
+luckyluks (0.9.3) unstable; urgency=low
+
+  * modified gettext & qt application init
+
+  * more reliable parsing of sudo output
+
+  * use xdg-desktop-menu to add menuentry when available
+
+  * use python to set uid/gui of partition root on create (instead of
+    using mkfs which fails in older versions of mkfs)
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Thu, 15 Jan 2015 22:51:38 +0100
+
+
+luckyluks (0.9.2) unstable; urgency=low
+
+  * first try debian packaging with ubuntu ppa
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Sat, 27 Dec 2014 00:54:45 +0100
+
+
+luckyluks (0.9.1) unstable; urgency=low
+
+  * Support for internationalization
+
+  * German localization
+
+  * zip-'packaging'
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Sat, 20 Dec 2014 23:53:49 +0100
+
+
+luckyluks (0.9.0) unstable; urgency=low
+
+  * Initial version, finally getting things in shape for a public release
+    Been using the program for almost half a year and shared it
+    with some friends as well, so major bugs should hopefully be
+    squashed by now.
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Fri, 05 Dec 2014 11:37:23 +0100

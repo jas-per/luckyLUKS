@@ -1,0 +1,5 @@
+include lucky-luks.desktop
+include lucky-luks.1.gz
+include lucky-luks
+include LICENSE
+include README.rst
