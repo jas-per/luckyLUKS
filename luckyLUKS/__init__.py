@@ -1,2 +1,2 @@
-VERSION_STRING = '0.9.3'
+VERSION_STRING = '0.9.6'
 PROJECT_URL = 'https://github.com/jas-per/luckyLUKS'

@@ -1,7 +1,7 @@
 """
 If the main program gets called without arguments, this GUI will be shown first.
 
-luckyLUKS Copyright (c) 2014, Jasper van Hoorn (muzius@gmail.com)
+luckyLUKS Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@ from PyQt4.QtGui import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGri
     QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar
 
 from luckyLUKS import PROJECT_URL
-from luckyLUKS.unlockUI import FormatContainerDialog, UnlockContainerDialog
-from luckyLUKS.util import UserInputError, is_installed
+from luckyLUKS.unlockUI import FormatContainerDialog, UnlockContainerDialog, UserInputError
+from luckyLUKS.util import show_info, show_alert, is_installed
 
 
 class SetupDialog(QDialog):
@@ -39,7 +39,7 @@ class SetupDialog(QDialog):
 
     def __init__(self, parent):
         """ :param parent: The parent window/dialog used to enable modal behaviour
-            :type parent: :class:`QWidget`
+            :type parent: :class:`PyQt4.QtGui.QWidget`
         """
         super(SetupDialog, self).__init__(parent)
         self.setWindowTitle(_('luckyLUKS'))
@@ -50,11 +50,12 @@ class SetupDialog(QDialog):
         # build ui
         self.layout = QVBoxLayout()
         style = QApplication.style()
-        # set up stacked layout: initially only the main tab pane (unlock/create), gets switched when create process started
+        # set up stacked layout: initially only the main tab pane (unlock/create)
         self.main_pane = QStackedWidget()
         self.tab_pane = QTabWidget()
         self.main_pane.addWidget(self.tab_pane)
         self.layout.addWidget(self.main_pane)
+        self.create_pane = None  # init in on_create_container()
 
         # Unlock Tab
         unlock_grid = QGridLayout()
@@ -230,7 +231,7 @@ class SetupDialog(QDialog):
                                 error_callback=self.display_create_failed)
         except UserInputError:  # user cancelled dlg
             self.worker.execute({'type': 'abort', 'msg': ''}, None, None)  # notify worker process
-            self.display_create_failed(_('Initialize LUKS aborted'), step=2)
+            self.display_create_failed(_('Initialize LUKS aborted'))
 
     def on_creating_filesystem(self, msg):
         """ Triggered after LUKS encryption got initialized.
@@ -254,8 +255,8 @@ class SetupDialog(QDialog):
         # copy values of newly created container to unlock dlg und reset create values
         self.unlock_container_file.setText(self.create_container_file.text())
         self.unlock_device_name.setText(self.create_device_name.text())
-        self.show_info(_('<b>{device_name}\nsuccessfully created!</b>\nClick on unlock to use the new container')
-                       .format(device_name=self.encode_qt_output(self.create_device_name.text())), _('Success'))
+        show_info(self, _('<b>{device_name}\nsuccessfully created!</b>\nClick on unlock to use the new container')
+                  .format(device_name=self.encode_qt_output(self.create_device_name.text())), _('Success'))
         # reset create ui and switch to unlock tab
         self.create_container_file.setText('')
         self.create_device_name.setText('')
@@ -274,7 +275,7 @@ class SetupDialog(QDialog):
         """
         if stop_timer:
             self.set_progress_done(self.create_timer)
-        self.show_alert(errormessage)
+        show_alert(self, errormessage)
         self.display_create_done()
 
     def display_create_done(self):
@@ -322,7 +323,7 @@ class SetupDialog(QDialog):
                 self.accept()
 
         except UserInputError as error:
-            self.show_alert(format_exception(error))
+            show_alert(self, format_exception(error))
 
     def show_create_startmenu_entry(self):
         """ Shown after successfull unlock with setup dialog -> ask for shortcut creation """
@@ -351,46 +352,46 @@ class SetupDialog(QDialog):
             cmd += " -m '" + self.get_mount_point().replace("'", "'\\'''") + "'"
 
         # create .desktop-file
+        filename = "".join(i for i in self.get_luks_device_name() if i not in " \/:*?<>|")  # xdg-desktop-menu has some problems with special chars
         if is_installed('xdg-desktop-menu'):  # create in tmp and add freedesktop menu entry
             desktop_file_path = '/tmp'
         else:  # or create in users home dir
             desktop_file_path = os.path.expanduser('~')
-        desktop_file_path = os.path.join(desktop_file_path, _('luckyLUKS') + '-' + self.get_luks_device_name() + '.desktop')
+        desktop_file_path = os.path.join(desktop_file_path, _('luckyLUKS') + '-' + filename + '.desktop')
 
         desktop_file = codecs.open(desktop_file_path, 'w', 'utf-8')
 
         entry_name = _('Unlock {device_name}').format(device_name=self.get_luks_device_name())
         desktop_file.write("[Desktop Entry]\n")
+        desktop_file.write("Name=" + entry_name + "\n")
         desktop_file.write("Comment=" + self.get_luks_device_name() + " " + _('Encrypted Container Tool') + "\n")
+        desktop_file.write("GenericName=" + _('Encrypted Container') + "\n")
         desktop_file.write("Categories=Utility;\n")
         desktop_file.write("Exec=" + cmd + "\n")
-        desktop_file.write("GenericName=" + _('Encrypted Container') + "\n")
         desktop_file.write("Icon=dialog-password\n")
-        desktop_file.write("Name=" + entry_name + "\n")
         desktop_file.write("NoDisplay=false\n")
-        desktop_file.write("Path[$e]=\n")
         desktop_file.write("StartupNotify=false\n")
         desktop_file.write("Terminal=0\n")
         desktop_file.write("TerminalOptions=\n")
         desktop_file.write("Type=Application\n\n")
         desktop_file.close()
 
-        os.chmod(desktop_file_path, 0o600)
+        os.chmod(desktop_file_path, 0o700)  # some distros need the xbit to trust the desktop file
 
         if is_installed('xdg-desktop-menu'):
             try:
-                subprocess.check_output(['xdg-desktop-menu', 'installs', '--novendor', desktop_file_path], stderr=subprocess.STDOUT, universal_newlines=True)
+                subprocess.check_output(['xdg-desktop-menu', 'install', '--novendor', desktop_file_path], stderr=subprocess.STDOUT, universal_newlines=True)
                 os.remove(desktop_file_path)  # remove from tmp
-                self.show_info(_('<b>` {name} `</b>\nadded to start menu').format(name=entry_name), _('Success'))
+                show_info(self, _('<b>` {name} `</b>\nadded to start menu').format(name=entry_name), _('Success'))
             except subprocess.CalledProcessError as cpe:
                 home_dir_path = os.path.join(os.path.expanduser('~'), os.path.basename(desktop_file_path))
                 # move to homedir instead
                 from shutil import move
                 move(desktop_file_path, home_dir_path)
-                self.show_alert(format_exception(cpe.output))
-                self.show_info(_('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=home_dir_path), '')
+                show_alert(self, format_exception(cpe.output))
+                show_info(self, _('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=home_dir_path))
         else:
-            self.show_info(_('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=desktop_file_path), '')
+            show_info(self, _('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=desktop_file_path))
 
     def reject(self):
         """ Event handler cancel: Ask for confirmation while creating container """
@@ -420,9 +421,9 @@ class SetupDialog(QDialog):
         new_ok_label = _('Unlock')
         if index == 1:  # create
             if self.create_filesystem_type.currentText() == '':
-                self.show_alert(_('No tools to format the filesystem found\n' +
-                                  'Please install, eg for Debian/Ubuntu\n' +
-                                  '`apt-get install e2fslibs ntfs-3g`'))
+                show_alert(self, _('No tools to format the filesystem found\n'
+                                   'Please install, eg for Debian/Ubuntu\n'
+                                   '`apt-get install e2fslibs ntfs-3g`'))
             new_ok_label = _('Create')
         self.buttons.button(QDialogButtonBox.Ok).setText(new_ok_label)
 
@@ -452,9 +453,9 @@ class SetupDialog(QDialog):
             self.buttons.button(QDialogButtonBox.Ok).setText(_('Create'))
 
             if os.path.exists(save_path):
-                self.show_alert(_('File already exists:\n{filename}\n\n'
-                                  '<b>Please create container\n'
-                                  'as a new file!</b>').format(filename=save_path))
+                show_alert(self, _('File already exists:\n{filename}\n\n'
+                                   '<b>Please create container\n'
+                                   'as a new file!</b>').format(filename=save_path))
                 def_path = os.path.join(os.path.basename(save_path), _('new_container.bin'))
             else:
                 self.create_container_file.setText(save_path)
@@ -507,36 +508,6 @@ class SetupDialog(QDialog):
         except AttributeError:  # py2: 'QString' object has no attribute strip
             return unicode(qstring_or_str.trimmed().toUtf8(), encoding="UTF-8")
 
-    def show_info(self, message, title):
-        """ Helper to show info message
-            :param message: The message that gets displayed in a modal dialog
-            :type message: str/unicode
-            :param title: Displayed in the dialogs titlebar
-            :type title: str/unicode
-        """
-        self.show_message(message, title, QMessageBox.Information)
-
-    def show_alert(self, message):
-        """ Helper to show error message
-            :param message: The message that gets displayed in a modal dialog
-            :type message: str/unicode
-        """
-        if message != '':
-            self.show_message(message, _('Error'), QMessageBox.Warning)
-
-    def show_message(self, message, title, message_type):
-        """ Generic helper to show message
-            :param message: The message that gets displayed in a modal dialog
-            :type message: str/unicode
-            :param title: Displayed in the dialogs titlebar
-            :type title: str/unicode
-            :param message_type: Type of message box to be used
-            :type message_type: :class:`QMessageBox.Icon`
-        """
-        if message != '':
-            mb = QMessageBox(message_type, title, message, QMessageBox.Ok, self)
-            mb.exec_()
-
     def show_help_create(self):
         """ Triggered by clicking the help button (create tab) """
         message = _('''<b>Create a new encrypted LUKS container</b>:
@@ -568,7 +539,7 @@ when using unlocked ntfs devices in a multiuser environment!
 For more information, visit
 <a href="{project_url}">{project_url}</a>
 ''').format(project_url=PROJECT_URL)
-        self.show_info(message, _('Help'))
+        show_info(self, message, _('Help'))
 
     def show_help_unlock(self):
         """ Triggered by clicking the help button (unlock tab) """
@@ -593,4 +564,4 @@ explicitly setting a mountpoint is usually not needed
 For more information, visit
 <a href="{project_url}">{project_url}</a>
 ''').format(project_url=PROJECT_URL)
-        self.show_info(message, _('Help'))
+        show_info(self, message, _('Help'))

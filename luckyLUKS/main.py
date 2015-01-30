@@ -2,7 +2,7 @@
 luckyLUKS is a GTK-GUI for creating and (un-)locking LUKS volumes from container files.
 For more information visit: http://github.com/jas-per/luckyLUKS
 
-Copyright (c) 2014, Jasper van Hoorn (muzius@gmail.com)
+Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,13 +32,20 @@ def luckyLUKS(translation, *args, **kwargs):
         argparse._ = _ = translation.gettext  # gettext for argsparse
         builtins.format_exception = str  # format exception message for gui
     except:
-        # py2: explicit unicode for qt string translations and commandline args parsing
+        # py2: explicit unicode for qt string translations, exception output and commandline args parsing
         import __builtin__ as builtins
         translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
         translation.ugettext_qt = types.MethodType(lambda self, msg: self.ugettext(msg).replace('\n', '<br>'), translation)
         commandline_unicode_arg = lambda arg: arg.decode(sys.getfilesystemencoding())
         argparse._ = _ = translation.ugettext  # gettext for argsparse
-        builtins.format_exception = lambda e: str(e).decode('utf-8')  # format exception message for gui
+        # format exception message for gui
+
+        def format_exception(exception):
+            try:
+                return str(exception).decode('utf-8')
+            except UnicodeEncodeError:
+                return unicode(exception.message)
+        builtins.format_exception = format_exception
 
     parser = argparse.ArgumentParser(description=_('GUI for creating and unlocking LUKS/TrueCrypt volumes from container files'),
                                      epilog=_('When called without any arguments a setup dialog will be shown before unlocking,\n'
@@ -75,6 +82,7 @@ def luckyLUKS(translation, *args, **kwargs):
     parser.add_argument('-v', '--version', action='version', version="luckyLUKS " + VERSION_STRING,
                         help=_("show program's version number and exit"))
     parser.add_argument('--ishelperprocess', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--sudouser', type=int, help=argparse.SUPPRESS)
 
     parsed_args = parser.parse_args()
 
@@ -82,7 +90,7 @@ def luckyLUKS(translation, *args, **kwargs):
     if parsed_args.ishelperprocess:
         # the backend process uses utf8 encoded str in py2
         builtins._ = translation.gettext_qt
-        startWorker()
+        startWorker(parsed_args.sudouser)
     else:
         # unicode translations for the qt gui
         builtins._ = translation.ugettext_qt
@@ -107,10 +115,21 @@ def startUI(parsed_args):
     if main_win.is_initialized:
         sys.exit(application.exec_())
     else:
-        sys.exit()
+        sys.exit(1)
 
 
-def startWorker():
+def startWorker(sudouser=None):
     """ Initialize worker process """
     from luckyLUKS import worker
-    worker.init()
+    if sudouser is not None:
+        # helper called with su to configure sudo
+        # this is not completely kosher since you also gain the possibility to give other user userids sudo access to luckyLUKS
+        # TODO: check if sudo!?!
+        try:
+            worker.WorkerHelper().modify_sudoers(sudouser)
+            sys.exit(0)
+        except worker.WorkerException as we:
+            sys.stdout.write(format_exception(we))
+            sys.exit(2)
+    else:
+        worker.init()

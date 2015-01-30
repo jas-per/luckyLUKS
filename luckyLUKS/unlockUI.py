@@ -4,7 +4,7 @@ Each is based on a common password dialog and offers a method to use the dialog
 in a synchronous way ie to run itself and return a result or perform an action,
 or throw an exception if this fails
 
-luckyLUKS Copyright (c) 2014, Jasper van Hoorn (muzius@gmail.com)
+luckyLUKS Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,7 +22,11 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QDialog, QMessageBox, QDialogButtonBox, \
     QIcon, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox
 
-from luckyLUKS.util import UserInputError
+
+class UserInputError(Exception):
+
+    """ Raised if user cancels a password dialog """
+    pass
 
 
 class PasswordDialog(QDialog):
@@ -187,7 +191,7 @@ class UnlockContainerDialog(PasswordDialog):
         """ :param parent: The parent window/dialog used to enable modal behaviour
             :type parent: :class:`gtk.Widget`
             :param worker: Communication handler with the worker process
-            :type worker: :class:`util.PipeMonitor`
+            :type worker: :class:`helper.WorkerMonitor`
             :param luks_device_name: The device mapper name
             :type luks_device_name: str/unicode
             :param encrypted_container: The path of the container file

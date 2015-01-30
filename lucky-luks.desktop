@@ -1,15 +1,14 @@
-#!/usr/bin/env xdg-open
 [Desktop Entry]
+Name=luckyLUKS
+Name[de]=luckyLUKS
 Comment=GUI for creating and unlocking LUKS/TrueCrypt volumes from container files
 Comment[de]=GUI zum Erstellen und Öffnen von verschlüsselten Containern (LUKS/TrueCrypt)
-Categories=QT;Utility;
 GenericName=Encrypted Container Tool
-GenericName[de]=Programm für verschlüsselte Container
+GenericName[de]=Verschlüsselte Container
 Exec=lucky-luks
+Categories=Utility;
 Icon=dialog-password
-Name=luckyLUKS
 NoDisplay=false
-Path[$e]=
 StartupNotify=false
 Terminal=false
 Type=Application

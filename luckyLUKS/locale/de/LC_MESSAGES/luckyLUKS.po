@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: luckyLUKS 0.9.1\n"
 "Report-Msgid-Bugs-To: Jasper van Hoorn (muzius@gmail.com)\n"
-"POT-Creation-Date: 2015-01-15 17:34+0100\n"
-"PO-Revision-Date: 2015-01-15 17:35+0100\n"
+"POT-Creation-Date: 2015-01-29 22:44+0100\n"
+"PO-Revision-Date: 2015-01-29 22:45+0100\n"
 "Last-Translator: Jasper van Hoorn <muzius@gmail.com>\n"
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -18,13 +18,13 @@ msgstr ""
 "Language-Team: \n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: luckyLUKS/main.py:43
+#: luckyLUKS/main.py:50
 msgid ""
 "GUI for creating and unlocking LUKS/TrueCrypt volumes from container files"
 msgstr ""
 "GUI zum Erstellen und Öffnen von verschlüsselten Containern (LUKS/TrueCrypt)"
 
-#: luckyLUKS/main.py:44
+#: luckyLUKS/main.py:51
 msgid ""
 "When called without any arguments a setup dialog will be shown before "
 "unlocking,\n"
@@ -61,62 +61,63 @@ msgstr ""
 
 #. L10n: used by argsparse to generate help output on the console (luckyLUKS
 #. --help)
-#: luckyLUKS/main.py:57
+#: luckyLUKS/main.py:64
 msgid "usage: "
 msgstr "Aufruf: "
 
 #. L10n: used by argsparse to generate help output on the console (luckyLUKS
 #. --help)
-#: luckyLUKS/main.py:59
+#: luckyLUKS/main.py:66
 msgid "optional arguments"
 msgstr "Optionale Parameter"
 
 #. L10n: used by argsparse to generate help output on the console (luckyLUKS
 #. --help)
-#: luckyLUKS/main.py:61
+#: luckyLUKS/main.py:68
 msgid "show this help message and exit"
 msgstr "Diese Hilfe anzeigen und beenden"
 
 #. L10n: used by argsparse to generate help output on the console (luckyLUKS
 #. --help)
-#: luckyLUKS/main.py:63
+#: luckyLUKS/main.py:70
 #, python-format
 msgid "%(prog)s: error: %(message)s\n"
 msgstr "%(prog)s Fehler: %(message)s\n"
 
 #. L10n: used by argsparse to generate help output on the console (luckyLUKS
 #. --help)
-#: luckyLUKS/main.py:65
+#: luckyLUKS/main.py:72
 #, python-format
 msgid "unrecognized arguments: %s"
 msgstr "Unbekannter Parameter: %s"
 
-#: luckyLUKS/main.py:69 luckyLUKS/main.py:73
+#: luckyLUKS/main.py:76 luckyLUKS/main.py:80
 msgid "PATH"
 msgstr "PFAD"
 
-#: luckyLUKS/main.py:70
+#: luckyLUKS/main.py:77
 msgid "Path to the encrypted container file"
 msgstr "Pfad zur verschlüsselten Container Datei"
 
-#: luckyLUKS/main.py:71
+#: luckyLUKS/main.py:78
 msgid "NAME"
 msgstr "NAME"
 
-#: luckyLUKS/main.py:72
+#: luckyLUKS/main.py:79
 msgid "Choose a device name to identify the unlocked container"
 msgstr "Frei wählbarer Name zur Identifikation des geöffneten Containers"
 
-#: luckyLUKS/main.py:74
+#: luckyLUKS/main.py:81
 msgid "Where to mount the encrypted filesystem"
 msgstr "Pfad zum Einhängen des geöffneten Containers"
 
-#: luckyLUKS/main.py:76
+#: luckyLUKS/main.py:83
 msgid "show program's version number and exit"
 msgstr "Versionsinformation anzeigen und beenden"
 
-#: luckyLUKS/mainUI.py:59 luckyLUKS/setupUI.py:45 luckyLUKS/setupUI.py:358
-#: luckyLUKS/unlockUI.py:118
+#. L10n: program name - translatable for startmenu titlebar etc
+#: luckyLUKS/mainUI.py:59 luckyLUKS/setupUI.py:45 luckyLUKS/setupUI.py:360
+#: luckyLUKS/unlockUI.py:122
 msgid "luckyLUKS"
 msgstr "luckyLUKS"
 
@@ -130,7 +131,27 @@ msgstr ""
 "Bitte installieren, z.B. unter Debian/Ubuntu\n"
 "`apt-get install {program_name}`"
 
-#: luckyLUKS/mainUI.py:71
+#: luckyLUKS/mainUI.py:70
+msgid ""
+"Graphical programs should not be run as root!\n"
+"Please call as normal user."
+msgstr ""
+"Grafische Programme sollten nicht\n"
+"als Administrator gestarten werden!\n"
+"Bitte als normaler Nutzer ausführen."
+
+#: luckyLUKS/mainUI.py:72 luckyLUKS/worker.py:172
+msgid ""
+"Container file not accessible\n"
+"or path does not exist:\n"
+"\n"
+"{file_path}"
+msgstr ""
+"Kein Zugriff auf die gewünschte Container Datei:\n"
+"\n"
+"{file_path}"
+
+#: luckyLUKS/mainUI.py:76
 msgid ""
 "Invalid arguments:\n"
 "Please call without any arguments\n"
@@ -166,68 +187,68 @@ msgstr ""
 "Weitere Informationen auf der Homepage\n"
 "<a href=\"{project_url}\">{project_url}</a>"
 
-#: luckyLUKS/mainUI.py:125
+#: luckyLUKS/mainUI.py:129
 msgid "Handle encrypted container"
 msgstr "Verschlüsselten Container verwalten"
 
-#: luckyLUKS/mainUI.py:127
+#: luckyLUKS/mainUI.py:131
 msgid "Name:"
 msgstr "Name:"
 
-#: luckyLUKS/mainUI.py:130
+#: luckyLUKS/mainUI.py:134
 msgid "File:"
 msgstr "Datei:"
 
-#: luckyLUKS/mainUI.py:134
+#: luckyLUKS/mainUI.py:138
 msgid "Mount:"
 msgstr "Pfad:"
 
-#: luckyLUKS/mainUI.py:137
+#: luckyLUKS/mainUI.py:141
 msgid "Status:"
 msgstr "Status:"
 
-#: luckyLUKS/mainUI.py:155
-msgid "Setting access rights .."
-msgstr "Setze Administrator Rechte .."
+#: luckyLUKS/mainUI.py:160 luckyLUKS/mainUI.py:215
+msgid "Hide"
+msgstr "Minimieren"
 
-#: luckyLUKS/mainUI.py:168
-msgid "Container is {unlocked_green_bold}"
-msgstr "Container ist {unlocked_green_bold}"
-
-#: luckyLUKS/mainUI.py:169
-msgid "unlocked"
-msgstr "geöffnet"
-
-#: luckyLUKS/mainUI.py:170
-msgid "Close Container"
-msgstr "Container Schliessen"
-
-#: luckyLUKS/mainUI.py:174 luckyLUKS/mainUI.py:204 luckyLUKS/setupUI.py:413
-#: luckyLUKS/unlockUI.py:178
+#: luckyLUKS/mainUI.py:163 luckyLUKS/mainUI.py:201 luckyLUKS/setupUI.py:414
+#: luckyLUKS/unlockUI.py:182
 msgid "Quit"
 msgstr "Beenden"
 
-#: luckyLUKS/mainUI.py:183
+#: luckyLUKS/mainUI.py:178
+msgid "Container is {unlocked_green_bold}"
+msgstr "Container ist {unlocked_green_bold}"
+
+#: luckyLUKS/mainUI.py:179
+msgid "unlocked"
+msgstr "geöffnet"
+
+#: luckyLUKS/mainUI.py:180
+msgid "Close Container"
+msgstr "Container Schliessen"
+
+#: luckyLUKS/mainUI.py:181
 msgid "{device_name} is unlocked"
 msgstr "{device_name} ist geöffnet"
 
-#: luckyLUKS/mainUI.py:185
+#: luckyLUKS/mainUI.py:183
 msgid "Container is {closed_red_bold}"
 msgstr "Container ist {closed_red_bold}"
 
-#: luckyLUKS/mainUI.py:186
+#: luckyLUKS/mainUI.py:184
 msgid "closed"
 msgstr "verschlossen"
 
-#: luckyLUKS/mainUI.py:187 luckyLUKS/setupUI.py:95
+#: luckyLUKS/mainUI.py:185 luckyLUKS/setupUI.py:96
 msgid "Unlock Container"
 msgstr "Container Öffnen"
 
-#: luckyLUKS/mainUI.py:189
+#: luckyLUKS/mainUI.py:186
 msgid "{device_name} is closed"
 msgstr "{device_name} ist verschlossen"
 
-#: luckyLUKS/mainUI.py:198
+#: luckyLUKS/mainUI.py:195
 msgid ""
 "<b>{device_name}</b> >> {container_path}\n"
 "is currently <b>unlocked</b>,\n"
@@ -238,29 +259,19 @@ msgstr ""
 "Container jetzt schliessen\n"
 "und das Programm beenden?"
 
+#: luckyLUKS/mainUI.py:212 luckyLUKS/mainUI.py:222
+msgid "Show"
+msgstr "Anzeigen"
+
 #: luckyLUKS/mainUI.py:249
 msgid "Closing Container .."
 msgstr "Schliesse Container .."
 
-#: luckyLUKS/mainUI.py:279 luckyLUKS/unlockUI.py:198
+#: luckyLUKS/mainUI.py:279 luckyLUKS/unlockUI.py:202
 msgid "Initializing .."
 msgstr "Initialisiere .."
 
-#: luckyLUKS/mainUI.py:313
-msgid ""
-"Permanent `sudo` authorization for {program}\n"
-"has been successfully added to /etc/sudoers.d/lucky-luks\n"
-"for user `{username}`"
-msgstr ""
-"Administrator Rechte für {program}\n"
-"erfolgreich in /etc/sudoers.d/lucky-luks\n"
-"für den Benutzer `{username}` freigegeben."
-
-#: luckyLUKS/mainUI.py:347 luckyLUKS/setupUI.py:525
-msgid "Error"
-msgstr "Fehler"
-
-#: luckyLUKS/setupUI.py:62
+#: luckyLUKS/setupUI.py:63
 msgid ""
 "<b>Unlock encrypted LUKS container</b>\n"
 "Please select container file and name\n"
@@ -270,32 +281,32 @@ msgstr ""
 "Bitte Container Datei und Namen wählen\n"
 "und optional einen EInhängepunkt"
 
-#: luckyLUKS/setupUI.py:68 luckyLUKS/setupUI.py:105
+#: luckyLUKS/setupUI.py:69 luckyLUKS/setupUI.py:106
 msgid "container file"
 msgstr "Container Datei"
 
-#: luckyLUKS/setupUI.py:72
+#: luckyLUKS/setupUI.py:73
 msgid "choose file"
 msgstr "Datei auswählen"
 
-#: luckyLUKS/setupUI.py:76 luckyLUKS/setupUI.py:113
+#: luckyLUKS/setupUI.py:77 luckyLUKS/setupUI.py:114
 msgid "device name"
 msgstr "Gerätename"
 
-#: luckyLUKS/setupUI.py:80
+#: luckyLUKS/setupUI.py:81
 msgid "[mount point]"
 msgstr "[Einhängepunkt]"
 
-#: luckyLUKS/setupUI.py:84
+#: luckyLUKS/setupUI.py:85
 msgid "choose folder"
 msgstr "Verzeichnis auswählen"
 
-#: luckyLUKS/setupUI.py:89 luckyLUKS/setupUI.py:138 luckyLUKS/setupUI.py:571
-#: luckyLUKS/setupUI.py:596
+#: luckyLUKS/setupUI.py:90 luckyLUKS/setupUI.py:139 luckyLUKS/setupUI.py:542
+#: luckyLUKS/setupUI.py:567
 msgid "Help"
 msgstr "Hilfe"
 
-#: luckyLUKS/setupUI.py:99
+#: luckyLUKS/setupUI.py:100
 msgid ""
 "<b>Create new encrypted LUKS container</b>\n"
 "Please choose container file and name\n"
@@ -305,28 +316,28 @@ msgstr ""
 "Bitte Container Datei und Namen auswählen,\n"
 "und Dateisystem und Grösse des Containers angeben"
 
-#: luckyLUKS/setupUI.py:109
+#: luckyLUKS/setupUI.py:110
 msgid "set file"
 msgstr "Datei auswählen"
 
-#: luckyLUKS/setupUI.py:117
+#: luckyLUKS/setupUI.py:118
 msgid "container size"
 msgstr "Container Grösse"
 
-#: luckyLUKS/setupUI.py:128
+#: luckyLUKS/setupUI.py:129
 msgid "filesystem"
 msgstr "Dateisystem"
 
-#: luckyLUKS/setupUI.py:144
+#: luckyLUKS/setupUI.py:145
 msgid "Create New Container"
 msgstr "Neuen Container erstellen"
 
-#: luckyLUKS/setupUI.py:149 luckyLUKS/setupUI.py:420 luckyLUKS/setupUI.py:432
-#: luckyLUKS/setupUI.py:437 luckyLUKS/unlockUI.py:203
+#: luckyLUKS/setupUI.py:150 luckyLUKS/setupUI.py:421 luckyLUKS/setupUI.py:433
+#: luckyLUKS/setupUI.py:438 luckyLUKS/unlockUI.py:207
 msgid "Unlock"
 msgstr "Öffnen"
 
-#: luckyLUKS/setupUI.py:179
+#: luckyLUKS/setupUI.py:180
 msgid ""
 "<b>Creating new LUKS container</b>\n"
 "patience .. this might take a while"
@@ -334,27 +345,27 @@ msgstr ""
 "<b>Erstelle neuen LUKS Container</b>\n"
 "bitte Geduld .. das kann eine Weile dauern"
 
-#: luckyLUKS/setupUI.py:184 luckyLUKS/setupUI.py:219 luckyLUKS/setupUI.py:241
+#: luckyLUKS/setupUI.py:185 luckyLUKS/setupUI.py:220 luckyLUKS/setupUI.py:242
 msgid "Step"
 msgstr "Schritt"
 
-#: luckyLUKS/setupUI.py:185
+#: luckyLUKS/setupUI.py:186
 msgid "Initializing Container File"
 msgstr "Erstelle Container Datei"
 
-#: luckyLUKS/setupUI.py:220
+#: luckyLUKS/setupUI.py:221
 msgid "Initializing Encryption"
 msgstr "Initialisiere Verschlüsselung"
 
-#: luckyLUKS/setupUI.py:233
+#: luckyLUKS/setupUI.py:234
 msgid "Initialize LUKS aborted"
 msgstr "Abbruch durch den Benutzer"
 
-#: luckyLUKS/setupUI.py:242
+#: luckyLUKS/setupUI.py:243
 msgid "Initializing Filesystem"
 msgstr "Erstelle Dateisystem"
 
-#: luckyLUKS/setupUI.py:257
+#: luckyLUKS/setupUI.py:258
 msgid ""
 "<b>{device_name}\n"
 "successfully created!</b>\n"
@@ -364,15 +375,16 @@ msgstr ""
 "erfolgreich erstellt!</b>\n"
 "Auf `Öffnen` klicken, um den neuen Container zu benutzen"
 
-#: luckyLUKS/setupUI.py:258 luckyLUKS/setupUI.py:384
+#: luckyLUKS/setupUI.py:259 luckyLUKS/setupUI.py:385 luckyLUKS/util.py:71
+#: luckyLUKS/util.py:127
 msgid "Success"
 msgstr "Erfolgreich"
 
-#: luckyLUKS/setupUI.py:299
+#: luckyLUKS/setupUI.py:300
 msgid "Done"
 msgstr "Abgeschlossen"
 
-#: luckyLUKS/setupUI.py:329
+#: luckyLUKS/setupUI.py:330
 msgid ""
 "<b>Successfully unlocked!</b>\n"
 "\n"
@@ -392,27 +404,27 @@ msgstr ""
 "   Es wird nur eine Abkürzung zum\n"
 "   `Container öffnen` Dialog erstellt.\n"
 
-#: luckyLUKS/setupUI.py:338
+#: luckyLUKS/setupUI.py:339
 msgid "Create shortcut"
 msgstr "Eintrag erstellen"
 
-#: luckyLUKS/setupUI.py:339
+#: luckyLUKS/setupUI.py:340
 msgid "No, thanks"
 msgstr "Nein, danke"
 
-#: luckyLUKS/setupUI.py:362
+#: luckyLUKS/setupUI.py:364
 msgid "Unlock {device_name}"
 msgstr "{device_name} öffnen"
 
-#: luckyLUKS/setupUI.py:364
+#: luckyLUKS/setupUI.py:367
 msgid "Encrypted Container Tool"
 msgstr "Programm für verschlüsselte Container"
 
-#: luckyLUKS/setupUI.py:367
+#: luckyLUKS/setupUI.py:368
 msgid "Encrypted Container"
 msgstr "Verschlüsselter Container"
 
-#: luckyLUKS/setupUI.py:384
+#: luckyLUKS/setupUI.py:385
 msgid ""
 "<b>` {name} `</b>\n"
 "added to start menu"
@@ -420,7 +432,7 @@ msgstr ""
 "<b>` {name} `</b>\n"
 "Zum Startmenu hinzugefügt"
 
-#: luckyLUKS/setupUI.py:391 luckyLUKS/setupUI.py:393
+#: luckyLUKS/setupUI.py:392 luckyLUKS/setupUI.py:394
 msgid ""
 "Adding to start menu not possible,\n"
 "please place your shortcut manually.\n"
@@ -434,7 +446,7 @@ msgstr ""
 "Desktop-Datei wurde gespeichert unter:\n"
 "{location}"
 
-#: luckyLUKS/setupUI.py:411 luckyLUKS/unlockUI.py:176
+#: luckyLUKS/setupUI.py:412 luckyLUKS/unlockUI.py:180
 msgid ""
 "Currently creating new container!\n"
 "Do you really want to quit?"
@@ -442,7 +454,7 @@ msgstr ""
 "Es wird zur Zeit ein neuer Container erstellt!\n"
 "Das Programm wirklich beenden?"
 
-#: luckyLUKS/setupUI.py:423
+#: luckyLUKS/setupUI.py:424
 msgid ""
 "No tools to format the filesystem found\n"
 "Please install, eg for Debian/Ubuntu\n"
@@ -452,27 +464,27 @@ msgstr ""
 "Bitte installieren, z.B. unter Debian/Ubuntu `apt-get install e2fslibs "
 "ntfs-3g`"
 
-#: luckyLUKS/setupUI.py:426 luckyLUKS/setupUI.py:452
+#: luckyLUKS/setupUI.py:427 luckyLUKS/setupUI.py:453
 msgid "Create"
 msgstr "Erstellen"
 
-#: luckyLUKS/setupUI.py:431
+#: luckyLUKS/setupUI.py:432
 msgid "Please choose a container file"
 msgstr "Bitte Container Datei auswählen"
 
-#: luckyLUKS/setupUI.py:436
+#: luckyLUKS/setupUI.py:437
 msgid "Please choose a folder as mountpoint"
 msgstr "Bitte ein Verzeichnis als Einhängepunkt auswählen"
 
-#: luckyLUKS/setupUI.py:445 luckyLUKS/setupUI.py:458
+#: luckyLUKS/setupUI.py:446 luckyLUKS/setupUI.py:459
 msgid "new_container.bin"
 msgstr "neuer_container.bin"
 
-#: luckyLUKS/setupUI.py:449
+#: luckyLUKS/setupUI.py:450
 msgid "Please create a container file"
 msgstr "Bitte Container Datei erstellen"
 
-#: luckyLUKS/setupUI.py:455
+#: luckyLUKS/setupUI.py:456
 msgid ""
 "File already exists:\n"
 "{filename}\n"
@@ -486,7 +498,7 @@ msgstr ""
 "<b>Bitte Container\n"
 "als neue Datei erstellen!</b>"
 
-#: luckyLUKS/setupUI.py:542
+#: luckyLUKS/setupUI.py:513
 msgid ""
 "<b>Create a new encrypted LUKS container</b>:\n"
 "\n"
@@ -552,7 +564,7 @@ msgstr ""
 "Weitere Informationen auf der Homepage\n"
 "<a href=\"{project_url}\">{project_url}</a>\n"
 
-#: luckyLUKS/setupUI.py:575
+#: luckyLUKS/setupUI.py:546
 msgid ""
 "<b>Unlock an encrypted container file</b>:\n"
 "\n"
@@ -596,7 +608,7 @@ msgstr ""
 "Weitere Informationen auf der Homepage\n"
 "<a href=\"{project_url}\">{project_url}</a>\n"
 
-#: luckyLUKS/unlockUI.py:123
+#: luckyLUKS/unlockUI.py:127
 msgid ""
 "Always allow luckyLUKS to be run\n"
 "with administrative privileges"
@@ -604,7 +616,7 @@ msgstr ""
 "Administrator Rechte für luckyLUKS \n"
 "dauerhaft freigeben"
 
-#: luckyLUKS/unlockUI.py:154
+#: luckyLUKS/unlockUI.py:158
 msgid ""
 "Please choose a passphrase\n"
 "to encrypt the new container:\n"
@@ -616,15 +628,15 @@ msgstr ""
 "Achtung, das Passwort wird\n"
 "auf dem Display angezeigt!"
 
-#: luckyLUKS/unlockUI.py:155
+#: luckyLUKS/unlockUI.py:159
 msgid "Enter new Passphrase"
 msgstr "Neues Passwort eingeben"
 
-#: luckyLUKS/unlockUI.py:229
+#: luckyLUKS/unlockUI.py:233
 msgid "Checking passphrase .."
 msgstr "Überprüfe Passwort .."
 
-#: luckyLUKS/unlockUI.py:255
+#: luckyLUKS/unlockUI.py:259
 msgid ""
 "Please enter\n"
 "container passphrase:"
@@ -632,7 +644,7 @@ msgstr ""
 "Bitte das Passwort zum Öffnen\n"
 "des verschlüsselten Containers eingeben:"
 
-#: luckyLUKS/unlockUI.py:257
+#: luckyLUKS/unlockUI.py:261
 msgid ""
 "Wrong passphrase, please retry!\n"
 "Enter container passphrase:"
@@ -640,7 +652,19 @@ msgstr ""
 "Falsches Passwort, bitte erneut versuchen!\n"
 "Passwort des verschlüsselten Containers eingeben:"
 
-#: luckyLUKS/util.py:51
+#: luckyLUKS/util.py:65
+msgid ""
+"Permanent `sudo` authorization for\n"
+"{program}\n"
+"has been successfully added for user `{username}` to \n"
+"/etc/sudoers.d/lucky-luks\n"
+msgstr ""
+"Administrator Rechte für\n"
+"{program}\n"
+"erfolgreich in /etc/sudoers.d/lucky-luks\n"
+"für den Benutzer `{username}` freigegeben.\n"
+
+#: luckyLUKS/util.py:81
 msgid ""
 "luckyLUKS needs administrative privileges.\n"
 "Please enter your password:"
@@ -648,19 +672,35 @@ msgstr ""
 "luckyLUKS benötigt Administrator Rechte.\n"
 "Bitte Passwort eingeben:"
 
-#: luckyLUKS/util.py:73
+#: luckyLUKS/util.py:100 luckyLUKS/util.py:119
 msgid "<b>Sorry, incorrect password.</b>\n"
 msgstr "<b>Falsches Passwort, bitte erneut versuchen.</b>\n"
 
-#: luckyLUKS/util.py:85
+#: luckyLUKS/util.py:111
 msgid ""
-"You are not allowed to execute this script with sudo\n"
-"Please check your sudo configuration"
+"You are not allowed to execute this script with `sudo`.\n"
+"If you want to modify your `sudo` configuration,\n"
+"please enter the <b>root/administrator</b> password.\n"
 msgstr ""
 "Fehlende Berechtigung, dieses Programm mit `sudo` auszuführen.\n"
-"Bitte Konfiguration von `sudo` überprüfen."
+"Um die Konfiguration von `sudo` anzupassen,\n"
+"bitte das <b>root/Administrator</b> Passwort eingeben.\n"
 
-#: luckyLUKS/util.py:89 luckyLUKS/util.py:92
+#: luckyLUKS/util.py:124
+msgid ""
+"`sudo` configuration successfully modified, now\n"
+"you can use luckyLUKS with your user password.\n"
+"\n"
+"If you want to grant permanent administrative rights\n"
+"just tick the checkbox in the following dialog.\n"
+msgstr ""
+"Konfiguration von `sudo` erfolgreich geändert, Starten von\n"
+"luckyLUKS ist jetzt mit dem Passwort des Nutzers möglich.\n"
+"\n"
+"Um Administratorrechte dauerhaft zu vergeben\n"
+"einfach die Checkbox im folgenden Dialog auswählen.\n"
+
+#: luckyLUKS/util.py:144
 msgid ""
 "Communication with sudo process failed\n"
 "{error}"
@@ -668,13 +708,17 @@ msgstr ""
 "Fehler in der Kommunikation mit `sudo`\n"
 "{error}"
 
-#: luckyLUKS/util.py:159 luckyLUKS/util.py:179 luckyLUKS/worker.py:90
+#: luckyLUKS/util.py:190 luckyLUKS/util.py:211 luckyLUKS/worker.py:90
 msgid ""
 "Error in communication:\n"
 "{error}"
 msgstr ""
 "Kommunikationsfehler:\n"
 "{error}"
+
+#: luckyLUKS/util.py:266
+msgid "Error"
+msgstr "Fehler"
 
 #: luckyLUKS/worker.py:51
 msgid "Please call with sudo."
@@ -692,22 +736,24 @@ msgstr ""
 msgid "Helper process received unknown command"
 msgstr "Hilfsprozess hat eine unbekannte Anweisung bekommen"
 
-#: luckyLUKS/worker.py:161 luckyLUKS/worker.py:331
+#: luckyLUKS/worker.py:165 luckyLUKS/worker.py:338
 msgid "Device Name is empty"
 msgstr "Kein Gerätename angegeben"
 
-#: luckyLUKS/worker.py:163
+#: luckyLUKS/worker.py:168 luckyLUKS/worker.py:344
 msgid ""
-"Container file not accessible\n"
-"or path does not exist:\n"
+"Device Name is contains characters,\n"
+"not supported by your version of device mapper.\n"
 "\n"
-"{file_path}"
+"Please restrict the name to 0-9, A-Z, a-z and #+-.:=@_"
 msgstr ""
-"Kein Zugriff auf die gewünschte Container Datei:\n"
+"Der Gerätename enthält Zeichen,\n"
+"die von der installierten Version des Mappers\n"
+"leider nicht unterstützt werden.\n"
 "\n"
-"{file_path}"
+"Bitte den Namen nur mit 0-9, A-Z, a-z und #+-.:=@_ bilden"
 
-#: luckyLUKS/worker.py:166
+#: luckyLUKS/worker.py:175
 msgid ""
 "Container file\n"
 "{file_path}\n"
@@ -717,7 +763,7 @@ msgstr ""
 "{file_path}\n"
 "gehört nicht dem Benutzer {username}"
 
-#: luckyLUKS/worker.py:182
+#: luckyLUKS/worker.py:191
 msgid ""
 "Could not unlock container:\n"
 "{file_path}\n"
@@ -731,7 +777,7 @@ msgstr ""
 "von einem anderen Container verwendet.\n"
 "Bitte den Namen ändern, um diesen Container zu öffnen"
 
-#: luckyLUKS/worker.py:201
+#: luckyLUKS/worker.py:209
 msgid ""
 "Device Name too long:\n"
 "Only up to 16 characters possible, even less for unicode\n"
@@ -742,7 +788,7 @@ msgstr ""
 "wird Unicode verwendet etwas weniger.\n"
 "(ungefähr 8 nicht-ASCII Buchstaben möglich)"
 
-#: luckyLUKS/worker.py:204 luckyLUKS/worker.py:334
+#: luckyLUKS/worker.py:212 luckyLUKS/worker.py:341
 msgid ""
 "Illegal Device Name!\n"
 "Names starting with `-` or using `/` are not possible"
@@ -751,7 +797,7 @@ msgstr ""
 "Namen, die mit einem Bindestrich anfangen (`-`),\n"
 "oder `/` verwenden sind nicht möglich."
 
-#: luckyLUKS/worker.py:210
+#: luckyLUKS/worker.py:218
 msgid ""
 "Mount point not accessible\n"
 "or path does not exist:\n"
@@ -762,7 +808,7 @@ msgstr ""
 "\n"
 "{mount_dir}"
 
-#: luckyLUKS/worker.py:213
+#: luckyLUKS/worker.py:221
 msgid ""
 "Already mounted at mount point:\n"
 "\n"
@@ -772,7 +818,7 @@ msgstr ""
 "\n"
 "{mount_dir}"
 
-#: luckyLUKS/worker.py:216
+#: luckyLUKS/worker.py:224
 msgid ""
 "Designated mount directory\n"
 "{mount_dir}\n"
@@ -782,7 +828,7 @@ msgstr ""
 "{mount_dir}\n"
 "gehört nicht dem Benutzer {username}"
 
-#: luckyLUKS/worker.py:220
+#: luckyLUKS/worker.py:228
 msgid ""
 "Designated mount directory\n"
 "{mount_dir}\n"
@@ -792,7 +838,7 @@ msgstr ""
 "{mount_dir}\n"
 "ist nicht leer."
 
-#: luckyLUKS/worker.py:247
+#: luckyLUKS/worker.py:255
 msgid ""
 "Container file is not a LUKS encrypted device:\n"
 "{file_path}\n"
@@ -809,15 +855,15 @@ msgstr ""
 "und `tcplay` installiert sein (z.B. in Debian/Ubuntu `apt-get install "
 "tcplay`)"
 
-#: luckyLUKS/worker.py:290
+#: luckyLUKS/worker.py:297
 msgid "Unable to close container, device is busy"
 msgstr "Container wird zur Zeit verwendet, Schliessen nicht möglich."
 
-#: luckyLUKS/worker.py:321
+#: luckyLUKS/worker.py:328
 msgid "Container Filename not supplied"
 msgstr "Keine Container Datei angegeben"
 
-#: luckyLUKS/worker.py:324
+#: luckyLUKS/worker.py:331
 msgid ""
 "Container File already exits:\n"
 "\n"
@@ -827,7 +873,7 @@ msgstr ""
 "\n"
 "{file_path}"
 
-#: luckyLUKS/worker.py:327
+#: luckyLUKS/worker.py:334
 msgid ""
 "Folder for Container File does not exist:\n"
 "{folder_path}"
@@ -835,7 +881,7 @@ msgstr ""
 "Verzeichnis für die Container Datei existiert nicht:\n"
 "{folder_path}"
 
-#: luckyLUKS/worker.py:342
+#: luckyLUKS/worker.py:354
 msgid ""
 "Device Name too long:\n"
 "Only up to 16 characters possible, even less for unicode \n"
@@ -846,7 +892,7 @@ msgstr ""
 "wird Unicode verwendet etwas weniger.\n"
 "(ungefähr 8 nicht-ASCII Buchstaben möglich)"
 
-#: luckyLUKS/worker.py:345
+#: luckyLUKS/worker.py:357
 msgid ""
 "Device Name already in use:\n"
 "\n"
@@ -856,7 +902,7 @@ msgstr ""
 "\n"
 "{device_name}"
 
-#: luckyLUKS/worker.py:349
+#: luckyLUKS/worker.py:361
 msgid ""
 "Container size too small\n"
 "to create encrypted filesystem\n"
@@ -866,7 +912,7 @@ msgstr ""
 "um ein verschlüsseltes Dateisystem anzulegen.\n"
 "Bitte mindestens 5MB auswählen."
 
-#: luckyLUKS/worker.py:355
+#: luckyLUKS/worker.py:367
 msgid ""
 "Not enough free disc space for container:\n"
 "\n"
@@ -878,15 +924,19 @@ msgstr ""
 "{space_needed} MB benötigt\n"
 "{space_available} MB vorhanden"
 
-#: luckyLUKS/worker.py:361
+#: luckyLUKS/worker.py:373
 msgid "Unknown filesystem type: {filesystem_type}"
 msgstr "Unbekanntes Dateisystem: {filesystem_type}"
 
-#: luckyLUKS/worker.py:438
+#: luckyLUKS/worker.py:455
+msgid "Cannot change sudo rights, invalid username"
+msgstr "Ungültiger Benutzername, Ändern der sudo-Rechte nicht möglich."
+
+#: luckyLUKS/worker.py:459
 msgid ""
 "I`m afraid I can`t do that.\n"
 "\n"
-"To be able to permit permanent admin rights,\n"
+"To be able to permit permanent changes to sudo rights,\n"
 "please make sure the program is owned by root\n"
 "and not writeable by others.\n"
 "Execute the following commands in your shell:\n"
@@ -897,7 +947,7 @@ msgid ""
 msgstr ""
 "`Das kann ich nicht tun, Dave`\n"
 "\n"
-"Um dauerhafte Administrator Rechte vergeben zu können,\n"
+"Um dauerhafte Rechte mit `sudo` vergeben zu können,\n"
 "muss das Programm dem User `root` gehören,\n"
 "andere Nutzer dürfen es nicht verändern können!\n"
 "Bitte die folgenden Befehle auf der Kommandozeile eingeben:\n"

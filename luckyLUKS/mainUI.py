@@ -1,7 +1,7 @@
 """
 This module contains the main window of the application
 
-luckyLUKS Copyright (c) 2014, Jasper van Hoorn (muzius@gmail.com)
+luckyLUKS Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,8 +23,7 @@ from PyQt4.QtGui import QApplication, QWidget, QMainWindow, QDesktopWidget, QDia
     QSystemTrayIcon, QMessageBox, QIcon, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle
 
 from luckyLUKS import util, PROJECT_URL
-from luckyLUKS.unlockUI import SudoDialog, UnlockContainerDialog
-from luckyLUKS.setupUI import SetupDialog
+from luckyLUKS.unlockUI import UnlockContainerDialog, UserInputError
 
 
 class MainWindow(QMainWindow):
@@ -56,49 +55,54 @@ class MainWindow(QMainWindow):
         self.is_unlocked = False
         self.is_initialized = False
 
+        # L10n: program name - translatable for startmenu titlebar etc
         self.setWindowTitle(_('luckyLUKS'))
         self.setWindowIcon(QIcon.fromTheme('dialog-password'))
 
         # check if cryptsetup and sudo are installed
         not_installed_msg = _('{program_name} executable not found!\nPlease install, eg for Debian/Ubuntu\n`apt-get install {program_name}`')
-        if not util.is_installed(''):
-            self.show_alert(not_installed_msg.format(program_name='cryptsetup'), critical=True)
+        if not util.is_installed('cryptsetup'):
+            util.show_alert(self, not_installed_msg.format(program_name='cryptsetup'), critical=True)
         if not util.is_installed('sudo'):
-            self.show_alert(not_installed_msg.format(program_name='sudo'), critical=True)
+            util.show_alert(self, not_installed_msg.format(program_name='sudo'), critical=True)
+        # quick sanity checks before asking for passwd
+        if os.getuid() == 0:
+            util.show_alert(self, _('Graphical programs should not be run as root!\nPlease call as normal user.'), critical=True)
+        if self.encrypted_container and not os.path.exists(self.encrypted_container):
+            util.show_alert(self, _('Container file not accessible\nor path does not exist:\n\n{file_path}').format(file_path=self.encrypted_container), critical=True)
 
         # only either encrypted_container or luks_device_name supplied
         if bool(self.encrypted_container) != bool(self.luks_device_name):
-            self.show_alert(_('Invalid arguments:\n'
-                              'Please call without any arguments\n'
-                              'or supply both container and name.\n\n'
-                              '<b>{executable} -c CONTAINER -n NAME [-m MOUNTPOINT]</b>\n\n'
-                              'CONTAINER = Path of the encrypted container file\n'
-                              'NAME = A (unique) name to identify the unlocked container\n'
-                              'Optional: MOUNTPOINT = where to mount the encrypted filesystem\n\n'
-                              'If automatic mounting is configured on your system,\n'
-                              'explicitly setting a mountpoint is not required\n\n'
-                              'For more information, visit\n'
-                              '<a href="{project_url}">{project_url}</a>'
-                              ).format(executable=os.path.basename(sys.argv[0]),
-                                       project_url=PROJECT_URL), critical=True)
+            util.show_alert(self, _('Invalid arguments:\n'
+                                    'Please call without any arguments\n'
+                                    'or supply both container and name.\n\n'
+                                    '<b>{executable} -c CONTAINER -n NAME [-m MOUNTPOINT]</b>\n\n'
+                                    'CONTAINER = Path of the encrypted container file\n'
+                                    'NAME = A (unique) name to identify the unlocked container\n'
+                                    'Optional: MOUNTPOINT = where to mount the encrypted filesystem\n\n'
+                                    'If automatic mounting is configured on your system,\n'
+                                    'explicitly setting a mountpoint is not required\n\n'
+                                    'For more information, visit\n'
+                                    '<a href="{project_url}">{project_url}</a>'
+                                    ).format(executable=os.path.basename(sys.argv[0]),
+                                             project_url=PROJECT_URL), critical=True)
 
         # spawn worker process with root privileges
         try:
-            self.modify_sudoers = False  # bit of a hack: pass setattr() of this to dialog to enable call by reference on boolean
-            worker_process = util.spawn_worker(passwordUI=lambda msg: SudoDialog(parent=self,
-                                                                                 message=msg,
-                                                                                 toggle_function=lambda val: setattr(self, 'modify_sudoers', val)))
+            self.worker = util.WorkerMonitor(self)
             # start communication thread
-            self.worker = util.PipeMonitor(self, worker_process, com_errorhandler=lambda msg: self.show_alert(msg, critical=True))
             self.worker.start()
 
         except util.SudoException as se:
-            self.show_alert(format_exception(se), critical=True)
+            util.show_alert(self, format_exception(se), critical=True)
             return
 
         # if no arguments supplied, display dialog to gather this information
         if self.encrypted_container is None and self.luks_device_name is None:
+
+            from luckyLUKS.setupUI import SetupDialog
             sd = SetupDialog(self)
+
             if sd.exec_() == QDialog.Accepted:
                 self.luks_device_name = sd.get_luks_device_name()
                 self.encrypted_container = sd.get_encrypted_container()
@@ -148,19 +152,25 @@ class MainWindow(QMainWindow):
         widget.setLayout(main_grid)
         widget.setContentsMargins(10, 10, 10, 10)
         self.setCentralWidget(widget)
+        
+        # tray popup menu
+        tray_popup = QMenu(self)
+        tray_popup.addAction(QIcon.fromTheme('dialog-password'), self.luks_device_name).setEnabled(False)
+        tray_popup.addSeparator()
+        self.tray_toggle_action = QAction(QApplication.style().standardIcon(QStyle. SP_DesktopIcon), _('Hide'), self)
+        self.tray_toggle_action.triggered.connect(self.toggle_main_window)
+        tray_popup.addAction(self.tray_toggle_action)
+        quit_action = QAction(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), _('Quit'), self)
+        quit_action.triggered.connect(self.tray_quit)
+        tray_popup.addAction(quit_action)
+        # systray
+        self.tray = QSystemTrayIcon(self)
+        self.tray.setIcon(QIcon.fromTheme('dialog-password'))
+        self.tray.setContextMenu(tray_popup)
+        self.tray.activated.connect(self.toggle_main_window)
+        self.tray.show()
 
-        self.tray = None
-
-        if self.modify_sudoers:  # adding user/program to /etc/sudoers.d/ requested
-            self.disable_ui(_('Setting access rights ..'))
-            self.worker.execute(command={'type': 'request',
-                                         'msg': 'authorize'},
-                                success_callback=lambda msg: self.on_authorized(errormessage=''),
-                                error_callback=self.on_authorized)
-        else:
-            self.init_status()
-
-        self.is_initialized = True
+        self.init_status()
 
     def refresh(self):
         """ Update widgets to reflect current container status. Adds systray icon if needed """
@@ -168,25 +178,12 @@ class MainWindow(QMainWindow):
             self.label_status.setText(_('Container is {unlocked_green_bold}').format(
                 unlocked_green_bold='<font color="#006400"><b>' + _('unlocked') + '</b></font>'))
             self.button_toggle_status.setText(_('Close Container'))
-            if self.tray is None:
-                # create tray popup menu
-                tray_popup = QMenu(self)
-                quit_action = QAction(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), _('Quit'), self)
-                quit_action.triggered.connect(self.tray_quit)
-                tray_popup.addAction(quit_action)
-                # create systray
-                self.tray = QSystemTrayIcon(self)
-                self.tray.setIcon(QIcon.fromTheme('dialog-password'))
-                self.tray.setContextMenu(tray_popup)
-                self.tray.activated.connect(self.toggle_main_window)
-                self.tray.show()
             self.tray.setToolTip(_('{device_name} is unlocked').format(device_name=self.luks_device_name))
         else:
             self.label_status.setText(_('Container is {closed_red_bold}').format(
                 closed_red_bold='<font color="#b22222"><b>' + _('closed') + '</b></font>'))
             self.button_toggle_status.setText(_('Unlock Container'))
-            if self.tray is not None:
-                self.tray.setToolTip(_('{device_name} is closed').format(device_name=self.luks_device_name))
+            self.tray.setToolTip(_('{device_name} is closed').format(device_name=self.luks_device_name))
 
         self.show()
 
@@ -195,8 +192,8 @@ class MainWindow(QMainWindow):
         if not self.is_unlocked:
             QApplication.instance().quit()
         elif not self.is_waiting_for_worker:
-            message = _('<b>{device_name}</b> >> {container_path}\n' +
-                        'is currently <b>unlocked</b>,\n' +
+            message = _('<b>{device_name}</b> >> {container_path}\n'
+                        'is currently <b>unlocked</b>,\n'
                         'Close Container now and quit?').format(device_name=self.luks_device_name,
                                                                 container_path=self.encrypted_container)
 
@@ -207,19 +204,22 @@ class MainWindow(QMainWindow):
             else:
                 self.show()
 
-    def toggle_main_window(self, activation_reason):
+    def toggle_main_window(self, tray_icon_clicked):
         """ Triggered by clicking on the systray icon: show/hide main window """
-        if activation_reason == QSystemTrayIcon.Trigger:  # don't activate on rightclick/contextmenu
+        if not tray_icon_clicked or tray_icon_clicked == QSystemTrayIcon.Trigger:  # don't activate on rightclick/contextmenu
             if self.isVisible():
                 self.hide()
+                self.tray_toggle_action.setText(_('Show'))
             else:
                 self.show()
+                self.tray_toggle_action.setText(_('Hide'))
 
     def closeEvent(self, event):
         """ Triggered by closing the window: If the container is unlocked, the program won't quit but remain in the systray. """
         if not self.is_waiting_for_worker:
             if self.is_unlocked:
                 self.hide()
+                self.tray_toggle_action.setText(_('Show'))
                 event.ignore()
             else:
                 event.accept()
@@ -236,8 +236,8 @@ class MainWindow(QMainWindow):
             try:
                 UnlockContainerDialog(self, self.worker, self.luks_device_name, self.encrypted_container, self.mount_point).communicate()
                 self.is_unlocked = True
-            except util.UserInputError as uie:
-                self.show_alert(format_exception(uie))
+            except UserInputError as uie:
+                util.show_alert(self, format_exception(uie))
                 self.is_unlocked = False
             self.refresh()
 
@@ -265,7 +265,7 @@ class MainWindow(QMainWindow):
             :type shutdown: bool
         """
         if error:
-            self.show_alert(message)
+            util.show_alert(self, message)
         else:
             self.is_unlocked = False
         if not error and shutdown:  # automatic shutdown only if container successfully closed
@@ -287,6 +287,7 @@ class MainWindow(QMainWindow):
                                 error_callback=lambda msg: self.on_initialized(msg, error=True))
         else:  # unlocked by setup-dialog -> just refresh UI
             self.enable_ui()
+        self.is_initialized = True  # qt event loop can start now
 
     def on_initialized(self, message, error=False):
         """ Callback after worker send current state of container
@@ -296,29 +297,10 @@ class MainWindow(QMainWindow):
             :type critical: bool
         """
         if error:
-            self.show_alert(message, critical=True)
+            util.show_alert(self, message, critical=True)
         else:
             self.is_unlocked = (True if message == 'unlocked' else False)
             self.enable_ui()
-
-    def on_authorized(self, errormessage):
-        """ Callback after worker tried to modify /etc/sudoers.d/lucky-luks
-            :param errormessage: Contains an error description if an error occured, otherwise empty
-            :type errormessage: str
-        """
-        self.show()  # qt needs parent win visible when showing modal dlgs
-        if errormessage:
-            self.show_alert(errormessage, critical=False)
-        else:
-            message = _('Permanent `sudo` authorization for {program}\n' +
-                        'has been successfully added to /etc/sudoers.d/lucky-luks\n' +
-                        'for user `{username}`').format(
-                program=os.path.abspath(sys.argv[0]),
-                username=os.getenv("USER"))
-            mb = QMessageBox(QMessageBox.Information, '', message, QMessageBox.Ok, self)
-            mb.exec_()
-
-        self.init_status()
 
     def enable_ui(self):
         """ Enable buttons and refresh state """
@@ -334,18 +316,3 @@ class MainWindow(QMainWindow):
         self.is_waiting_for_worker = True
         self.button_toggle_status.setText(reason)
         self.button_toggle_status.setEnabled(False)
-
-    def show_alert(self, message, critical=False):
-        """ Helper to show error message
-            :param message: The message that gets displayed in a modal dialog
-            :type message: str/unicode
-            :param critical: If critical, quit application (default=False)
-            :type critical: bool
-        """
-        if message != '':
-            md_type = QMessageBox.Critical if critical else QMessageBox.Warning
-            mb = QMessageBox(md_type, _('Error'), message, QMessageBox.Ok, self)
-            mb.exec_()
-
-        if critical:
-            QApplication.instance().quit()

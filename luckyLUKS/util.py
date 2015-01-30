@@ -1,7 +1,7 @@
 """
 Helper to establish a root-worker process and ipc handler.
 
-luckyLUKS Copyright (c) 2014, Jasper van Hoorn (muzius@gmail.com)
+luckyLUKS Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,8 +19,11 @@ import fcntl
 import subprocess
 import sys
 import json
+import traceback
 from PyQt4.QtCore import QThread, QEvent
-from PyQt4.QtGui import QApplication
+from PyQt4.QtGui import QApplication, QMessageBox
+
+from luckyLUKS.unlockUI import PasswordDialog, SudoDialog, UserInputError
 
 
 class SudoException(Exception):
@@ -29,116 +32,143 @@ class SudoException(Exception):
     pass
 
 
-class UserInputError(Exception):
-
-    """ Used to handle problems arising from unsuitable user input """
-    pass
-
-
-def spawn_worker(passwordUI):
-    """ Init worker subprocess with sudo && setup ipc handler
-        :param passwordUI: A UI dialog that lets the user enter the password
-        :type passwordUI: :class:`unlockUI.PasswordDialog`
-        :returns: An initialized Python subprocess object running the worker process with elevated privileges
-        :rtype: :class:`subprocess.Popen`
-        :raises: SudoException
-    """
-    # using epoll to wait for feedback from sudo
-    pipe_events = select.epoll()
-    worker_process = _connect_to_sudo()
-    pipe_events.register(worker_process.stdout.fileno(), select.EPOLLIN)
-    sudo_prompt = '[sudo] password for ' + os.getenv('USER')
-    dlg_message = _('luckyLUKS needs administrative privileges.\nPlease enter your password:')
-    incorrent_pw_entered = False
-
-    try:
-        while True:
-            __, event = pipe_events.poll()[0]  # blocking
-            if event & select.EPOLLIN:
-                # sudo process wrote to pipe
-                msg = worker_process.stdout.read()
-                if 'ESTABLISHED' in msg:
-                    # Helper process initialized
-                    # from here on all com-messages on the pipe will be terminated with newline -> switch back to blocking IO
-                    fl = fcntl.fcntl(worker_process.stdout.fileno(), fcntl.F_GETFL)
-                    fcntl.fcntl(worker_process.stdout.fileno(), fcntl.F_SETFL, fl & (~os.O_NONBLOCK))
-                    break
-                elif sudo_prompt in msg:
-                    try:
-                        worker_process.stdin.write(passwordUI(dlg_message).get_password() + '\n')
-                        worker_process.stdin.flush()
-                        # change dialog text in case another try is needed
-                        if not incorrent_pw_entered:
-                            incorrent_pw_entered = True
-                            dlg_message = _('<b>Sorry, incorrect password.</b>\n') + dlg_message
-                    except UserInputError:  # user cancelled dlg -> quit without msg
-                        raise SudoException()
-
-            elif event & select.EPOLLERR or event & select.EPOLLHUP:
-                # react to error/hangup (msg has most likely been read before)
-                if 'incorrect password attempts' in msg:
-                    # max password attempts reached -> restart sudo process and continue
-                    pipe_events.unregister(worker_process.stdout.fileno())
-                    worker_process = _connect_to_sudo()
-                    pipe_events.register(worker_process.stdout.fileno(), select.EPOLLIN)
-                elif 'not allowed to execute' in msg:
-                    raise SudoException(_('You are not allowed to execute this script with sudo\nPlease check your sudo configuration'))
-                elif msg != '':
-                    raise SudoException(msg)
-                else:
-                    raise SudoException(_('Communication with sudo process failed\n{error}').format(error=u''))
-
-    except IOError as ioe:
-        raise SudoException(_('Communication with sudo process failed\n{error}').format(error=format_exception(ioe)))
-    finally:
-        pipe_events.unregister(worker_process.stdout.fileno())
-        pipe_events.close()
-
-    return worker_process
-
-
-def _connect_to_sudo():
-    """ Calls worker with sudo and initializes pipes for communication
-        :returns : An initialized Python subprocess object with a non-blocking stdout, that waits for password input
-        :rtype: :class:`subprocess.Popen`
-    """
-    # since output from sudo gets parsed, it needs to be run without localization
-    # saving original language settings to pass to the worker process
-    # TODO: strip/recreate env instead of copy?
-    original_language = os.getenv("LANGUAGE", "")
-    env_lang_cleared = os.environ.copy()
-    env_lang_cleared['LANGUAGE'] = 'C'
-    cmd = ['sudo', '-S', 'LANGUAGE=' + original_language, sys.argv[0], '--ishelperprocess']
-    sudo_process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, universal_newlines=True, env=env_lang_cleared)
-    # switch pipe to non-blocking IO
-    fd = sudo_process.stdout.fileno()
-    fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-    fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
-    return sudo_process
-
-
-class PipeMonitor(QThread):
+class WorkerMonitor(QThread):
 
     """ Establishes an asynchronous communication channel with the worker process:
-        Since the worker executes only one task at a time a queue is not needed.
-        After execute is called with command and callbacks further commands will get blocked
+        Since the worker executes only one task at a time queueing/sophisticated ipc are not needed.
+        After execute is called with command and callbacks, further commands will get blocked
         until an answer from the worker arrives. The answer will get injected into the UI-loop
-        -> the UI stays responsive, and thus has to disable buttons etc to prevent additional commands
+        -> the UI stays responsive, and thus has to disable buttons etc to prevent the user from
+           sending additional commands
     """
 
-    def __init__(self, parent, worker_process, com_errorhandler):
+    def __init__(self, parent):
         """ Daemon thread - because of blocking readline()
-            :param worker_process: A Python subprocess object initialized with a privileged worker process
-            :type worker_process: :class:`subprocess.Popen`
-            :param com_errorhandler: The function to be called if communication with the worker fails.
-            :type com_errorhandler: function that displays an errormessage and quits the program afterwards
+            :param parent: The parent widget to be passed to modal dialogs
+            :type parent: :class:`PyQt4.QtGui.QWidget`
+            :raises: SudoException
         """
-        super(PipeMonitor, self).__init__()
+        super(WorkerMonitor, self).__init__()
         self.daemon = True  # forced kill needed
-        self.worker = worker_process
         self.parent = parent
-        self.com_errorhandler = com_errorhandler
         self.success_callback, self.error_callback = None, None
+        self.modify_sudoers = False
+        self.worker = None
+        self._spawn_worker()
+
+        if self.modify_sudoers:  # adding user/program to /etc/sudoers.d/ requested
+            self.execute({'type': 'request', 'msg': 'authorize'}, None, None)
+            response = json.loads(self.worker.stdout.readline().strip(), encoding='utf-8')  # blocks
+            if response['type'] == 'error':
+                show_alert(self.parent, response['msg'])
+            else:
+                message = _('Permanent `sudo` authorization for\n'
+                            '{program}\n'
+                            'has been successfully added for user `{username}` to \n'
+                            '/etc/sudoers.d/lucky-luks\n').format(
+                    program=os.path.abspath(sys.argv[0]),
+                    username=os.getenv("USER"))
+                show_info(self.parent, message, _('Success'))
+
+    def _spawn_worker(self):
+        """ Init worker subprocess with sudo && setup ipc handler
+            :raises: SudoException
+        """
+        # using poll to wait for feedback from sudo
+        self.pipe_events = select.poll()
+        self._connect_to_sudo()
+        sudo_prompt = '[sudo] password for ' + os.getenv('USER')
+        dlg_message = _('luckyLUKS needs administrative privileges.\nPlease enter your password:')
+        incorrent_pw_entered = False
+
+        try:
+            while True:
+                __, event = self.pipe_events.poll()[0]  # blocking
+                # sudo process wrote to pipe -> read message
+                msg = self.worker.stdout.read()
+
+                if event & select.POLLIN:
+                    if 'ESTABLISHED' in msg:
+                        # Helper process initialized
+                        # from here on all com-messages on the pipe will be terminated with newline -> switch back to blocking IO
+                        fl = fcntl.fcntl(self.worker.stdout.fileno(), fcntl.F_GETFL)
+                        fcntl.fcntl(self.worker.stdout.fileno(), fcntl.F_SETFL, fl & (~os.O_NONBLOCK))
+                        break
+
+                    elif sudo_prompt in msg:
+                        self.worker.stdin.write(SudoDialog(parent=self.parent,
+                                                           message=_('<b>Sorry, incorrect password.</b>\n') + dlg_message if incorrent_pw_entered else dlg_message,
+                                                           toggle_function=lambda val: setattr(self, 'modify_sudoers', val)
+                                                           ).get_password() + '\n')
+                        self.worker.stdin.flush()
+                        incorrent_pw_entered = True
+
+                    elif 'incorrect password attempts' in msg:
+                        # max password attempts reached -> restart sudo process and continue
+                        self._connect_to_sudo()
+
+                    elif 'not allowed to execute' in msg or 'not in the sudoers file' in msg:
+                        dlg_su_message = _('You are not allowed to execute this script with `sudo`.\n'
+                                           'If you want to modify your `sudo` configuration,\n'
+                                           'please enter the <b>root/administrator</b> password.\n')
+                        incorrent_pw_entered = False
+                        while True:
+                            master, slave = os.openpty()  # su has to be run from a terminal
+                            p = subprocess.Popen("su -c '" + sys.argv[0] + " --ishelperprocess --sudouser " + str(os.getuid()) + "'", shell=True, stdin=slave, stderr=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, close_fds=True)
+                            os.write(master, PasswordDialog(parent=self.parent,
+                                                            message=_('<b>Sorry, incorrect password.</b>\n') + dlg_su_message if incorrent_pw_entered else dlg_su_message
+                                                            ).get_password() + '\n')
+                            p.wait()
+
+                            if p.returncode == 0:
+                                show_info(self.parent, _('`sudo` configuration successfully modified, now\n'
+                                                         'you can use luckyLUKS with your user password.\n\n'
+                                                         'If you want to grant permanent administrative rights\n'
+                                                         'just tick the checkbox in the following dialog.\n'), _('Success'))
+                                incorrent_pw_entered = False
+                                self._connect_to_sudo()
+                                break
+                            elif p.returncode == 1:
+                                incorrent_pw_entered = True
+                            else:
+                                raise SudoException(p.stdout.read())  # worker prints exceptions to stdout to keep them seperated from su: Authentication failure
+
+                elif event & select.POLLERR or event & select.POLLHUP:
+                    raise SudoException(msg)
+
+        except SudoException:  # don't touch
+            raise
+        except UserInputError:  # user cancelled dlg -> quit without msg
+            raise SudoException()
+        except:  # catch ANY other exception to show via gui
+            raise SudoException(_('Communication with sudo process failed\n{error}').format(error=''.join(traceback.format_exception(*sys.exc_info()))))
+        finally:
+            try:
+                self.pipe_events.unregister(self.worker.stdout.fileno())
+            except KeyError:
+                pass  # fd might already gone (IOError etc)
+            del self.pipe_events
+
+    def _connect_to_sudo(self):
+        """ Calls worker process with sudo and initializes pipes for communication """
+        if self.worker is not None:
+            # disconnect event listener and wait for process termination
+            self.pipe_events.unregister(self.worker.stdout.fileno())
+            self.worker.wait()
+        # since output from sudo gets parsed, it needs to be run without localization
+        # saving original language settings to pass to the worker process
+        # TODO: strip/recreate env instead of copy?
+        original_language = os.getenv("LANGUAGE", "")
+        env_lang_cleared = os.environ.copy()
+        env_lang_cleared['LANGUAGE'] = 'C'
+        cmd = ['sudo', '-S', 'LANGUAGE=' + original_language, sys.argv[0], '--ishelperprocess']
+        self.worker = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, universal_newlines=True, env=env_lang_cleared)
+        # switch pipe to non-blocking IO
+        fd = self.worker.stdout.fileno()
+        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+        # connect event listener
+        self.pipe_events.register(self.worker.stdout.fileno(), select.POLLIN)
 
     def run(self):
         """ Listens on workers stdout and executes callbacks when answers arrive """
@@ -156,7 +186,8 @@ class PipeMonitor(QThread):
                 self.success_callback, self.error_callback = None, None
 
             except (IOError, ValueError, AssertionError) as communication_error:
-                QApplication.postEvent(self.parent, WorkerEvent(self.com_errorhandler, _('Error in communication:\n{error}').format(error=format_exception(communication_error))))
+                QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
+                                                                response=_('Error in communication:\n{error}').format(error=format_exception(communication_error))))
                 return
 
     def execute(self, command, success_callback, error_callback):
@@ -170,13 +201,14 @@ class PipeMonitor(QThread):
         """
         try:
             assert('type' in command and 'msg' in command)  # valid command obj?
-            assert(self.success_callback is None and self.error_callback is None)  # channel clear?
+            assert(self.success_callback is None and self.error_callback is None)  # channel clear? (no qeue neccessary for the backend process)
             self.success_callback = success_callback
             self.error_callback = error_callback
             self.worker.stdin.write(json.dumps(command) + '\n')
             self.worker.stdin.flush()
         except (IOError, AssertionError) as communication_error:
-            QApplication.postEvent(self.parent, WorkerEvent(self.com_errorhandler, _('Error in communication:\n{error}').format(error=format_exception(communication_error))))
+            QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
+                                                            response=_('Error in communication:\n{error}').format(error=format_exception(communication_error))))
 
 
 class WorkerEvent(QEvent):
@@ -199,10 +231,54 @@ class WorkerEvent(QEvent):
 
 
 def is_installed(executable):
-    """ Checks if executable is present in path
+    """ Checks if executable is present
+        Because the executables will be run by the priviledged worker process,
+        the usual root path gets added to the users environment path.
         :param executable: executable to search for
         :type executable: str
         :returns: True if executable found
         :rtype: bool
     """
-    return any([os.path.exists(os.path.join(p, executable)) for p in os.environ["PATH"].split(os.pathsep)])
+    return any([os.path.exists(os.path.join(p, executable)) for p in os.environ["PATH"].split(os.pathsep) + ['/sbin','/usr/sbin']])
+
+
+def show_info(parent, message, title=''):
+    """ Helper to show info message
+        :param parent: The parent widget to be passed to the modal dialog
+        :type parent: :class:`PyQt4.QtGui.QWidget`
+        :param message: The message that gets displayed in a modal dialog
+        :type message: str/unicode
+        :param title: Displayed in the dialogs titlebar
+        :type title: str/unicode
+    """
+    show_message(parent, message, title, QMessageBox.Information)
+
+
+def show_alert(parent, message, critical=False):
+    """ Helper to show error message
+        :param parent: The parent widget to be passed to the modal dialog
+        :type parent: :class:`PyQt4.QtGui.QWidget`
+        :param message: The message that gets displayed in a modal dialog
+        :type message: str/unicode
+        :param critical: If critical, quit application (default=False)
+        :type critical: bool
+    """
+    show_message(parent, message, _('Error'), QMessageBox.Critical if critical else QMessageBox.Warning)
+    if critical:
+        QApplication.instance().quit()
+
+
+def show_message(parent, message, title, message_type):
+    """ Generic helper to show message
+        :param parent: The parent widget to be passed to the modal dialog
+        :type parent: :class:`PyQt4.QtGui.QWidget`
+        :param message: The message that gets displayed in a modal dialog
+        :type message: str/unicode
+        :param title: Displayed in the dialogs titlebar
+        :type title: str/unicode
+        :param message_type: Type of message box to be used
+        :type message_type: :class:`QMessageBox.Icon`
+    """
+    if message != '':
+        mb = QMessageBox(message_type, title, message, QMessageBox.Ok, parent)
+        mb.exec_()

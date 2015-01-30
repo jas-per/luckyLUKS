@@ -2,7 +2,7 @@
 luckyLUKS is a GTK-GUI for creating and (un-)locking LUKS volumes from container files.
 For more information visit: http://github.com/jas-per/luckyLUKS
 
-Copyright (c) 2014, Jasper van Hoorn (muzius@gmail.com)
+Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

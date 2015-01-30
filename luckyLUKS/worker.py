@@ -5,7 +5,7 @@ user account while all calls to cryptsetup and mount will be executed from a sep
 worker process with administrator privileges. Everything that runs with elevated privs
 is included in this module.
 
-Copyright (c) 2014, Jasper van Hoorn (muzius@gmail.com)
+Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -49,11 +49,11 @@ def init():
 
     if os.getuid() != 0:
         sys.stdout.write(_('Please call with sudo.'))
-        sys.exit()
+        sys.exit(1)
     elif os.getenv("SUDO_USER") is None or os.getenv("SUDO_UID") is None or os.getenv("SUDO_GID") is None:
         sys.stdout.write(_('Missing information of the calling user in sudo environment.\n'
                            'Please make sure sudo is configured correctly.'))
-        sys.exit()
+        sys.exit(1)
     else:
         # send ack to establish simple json encoded request/response protocol using \n as terminator
         sys.stdout.write('ESTABLISHED')
@@ -79,7 +79,7 @@ def init():
                 elif cmd['msg'] == 'create':
                     worker.create_container(cmd['device_name'], cmd['container_path'], cmd['container_size'], cmd['filesystem_type'])
                 elif cmd['msg'] == 'authorize':
-                    worker.modify_sudoers()
+                    worker.modify_sudoers(os.getenv("SUDO_UID"), nopassword=True)
                 else:
                     raise WorkerException(_('Helper process received unknown command'))
             except UserAbort:
@@ -89,7 +89,7 @@ def init():
             except KeyError as ke:
                 response = {'type': 'error', 'msg': _('Error in communication:\n{error}').format(error=format_exception(ke))}  # thrown if required parameters missing
             except:  # catch ANY exception (including warnings) to show via gui
-                response = {'type': 'error', 'msg': format_exception(''.join(traceback.format_exception(*sys.exc_info())))}
+                response = {'type': 'error', 'msg': ''.join(traceback.format_exception(*sys.exc_info()))}
             sys.stdout.write(json.dumps(response) + '\n')
             sys.stdout.flush()
 
@@ -105,10 +105,14 @@ class WorkerHelper():
     """
 
     def __init__(self):
-        """ Determine cryptsetup version and tcplay installation """
+        """ Determine cryptsetup/devmapper version and tcplay installation """
         # since version 1.6 cryptsetup allows unified handling of different container types (eg truecrypt) - slight change in syntax required
         version = subprocess.check_output(['cryptsetup', '--version'], stderr=subprocess.STDOUT, universal_newlines=True).split()[1]
         self.is_cryptsetup_legacy = (int(version.split('.')[0]) < 2 and int(version.split('.')[1]) < 6)
+        # mangling for non whitelisted characters was introduced in version 1.02.71 of dmsetup because udev needs mangled device names to work
+        # see https://bugzilla.redhat.com/show_bug.cgi?id=736486 and https://git.fedorahosted.org/cgit/lvm2.git/tree/WHATS_NEW_DM
+        version = subprocess.check_output(['dmsetup', '--version'], stderr=subprocess.STDOUT, universal_newlines=True).split()[2]
+        self.is_dmsetup_nomangle = (int(version.split('.')[0]) < 2 and int(version.split('.')[1]) < 3 and int(version.split('.')[2]) < 72)
         # check if tcplay installed
         self.is_tc_installed = any([os.path.exists(os.path.join(p, 'tcplay')) for p in os.environ["PATH"].split(os.pathsep)])
 
@@ -159,6 +163,11 @@ class WorkerHelper():
         # device_name and container_path valid?
         if device_name is '':
             raise WorkerException(_('Device Name is empty'))
+        # block non conforming device names when using older device mapper to prevent problems with udev
+        if self.is_dmsetup_nomangle and device_name not in self.get_device_mapper_name(device_name):
+            raise WorkerException(_('Device Name is contains characters,\n'
+                                    'not supported by your version of device mapper.\n\n'
+                                    'Please restrict the name to 0-9, A-Z, a-z and #+-.:=@_'))
         if not os.path.exists(container_path):
             raise WorkerException(_('Container file not accessible\nor path does not exist:\n\n{file_path}').format(file_path=container_path))
         # check access rights to container file
@@ -182,9 +191,8 @@ class WorkerHelper():
                 raise WorkerException(_('Could not unlock container:\n{file_path}\n'
                                         '<b>{device_name}</b> is already unlocked\n'
                                         'using a different container\n'
-                                        'Please change the name to unlock this container').format(
-                                        file_path=container_path,
-                                        device_name=device_name))
+                                        'Please change the name to unlock this container').
+                                      format(file_path=container_path, device_name=device_name))
 
         # container is not unlocked
         else:
@@ -253,9 +261,8 @@ class WorkerHelper():
 
             with open(os.devnull) as DEVNULL:
                 while not is_unlocked:
-                    resp = self.communicate('getPassword')
                     p = subprocess.Popen(open_command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
-                    __, errors = p.communicate(resp['msg'])
+                    __, errors = p.communicate(self.communicate('getPassword')['msg'])
                     if p.returncode == 0:
                         is_unlocked = True
                     elif p.returncode == 2:  # cryptsetup: no permission (bad passphrase)
@@ -333,6 +340,11 @@ class WorkerHelper():
         if device_name[0:1] is '-' or '/' in device_name:  # cryptsetup thinks -isanoption and "/" is not supported by devmapper
             raise WorkerException(_('Illegal Device Name!\nNames starting with `-` or using `/` are not possible'))
 
+        if self.is_dmsetup_nomangle and device_name not in self.get_device_mapper_name(device_name):
+            raise WorkerException(_('Device Name is contains characters,\n'
+                                    'not supported by your version of device mapper.\n\n'
+                                    'Please restrict the name to 0-9, A-Z, a-z and #+-.:=@_'))
+
         try:
             name_len = len(bytes(device_name, 'utf-8'))  # PY3
         except TypeError:
@@ -352,9 +364,9 @@ class WorkerHelper():
         free_space = os.statvfs(container_dir)
         free_space = free_space.f_bavail * free_space.f_bsize
         if container_size > free_space:
-            raise WorkerException(_('Not enough free disc space for container:\n\n{space_needed} MB needed\n{space_available} MB available').format(
-                                    space_needed=str(int(container_size / 1024 / 1024)),
-                                    space_available=str(int(free_space / 1024 / 1024))))
+            raise WorkerException(_('Not enough free disc space for container:\n\n{space_needed} MB needed\n{space_available} MB available').
+                                  format(space_needed=str(int(container_size / 1024 / 1024)),
+                                         space_available=str(int(free_space / 1024 / 1024))))
 
         # validate filesystem
         if filesystem_type not in ['ext4', 'ext2', 'ntfs']:
@@ -373,7 +385,7 @@ class WorkerHelper():
         if p.returncode != 0:
             #'sudo -u' might add this -> don't display
             raise WorkerException(errors.replace('Sessions still open, not unmounting', '').strip())
-            # TODO: this only works with english locale .. get rid of the problem (strip env?) or remove msg in all languages
+            # TODO: this can only work with english locale, but this errormessage doesn't seem to be localized in sudo yet .. get rid of the problem (strip env?) or remove msg in all languages
 
         # STEP2: #####
         # ask user for password and initialize LUKS container
@@ -414,29 +426,38 @@ class WorkerHelper():
 
         # remove group/other read/execute rights from fs root if possible
         if filesystem_type != 'ntfs':
-            os.mkdir('/tmp/' + device_name)
+            tmp_mount = os.path.join('/tmp/',device_name)
+            os.mkdir(tmp_mount)
             try:
-                subprocess.check_output(['mount', device_mapper_name, '/tmp/' + device_name], stderr=subprocess.STDOUT, universal_newlines=True)
+                subprocess.check_output(['mount', device_mapper_name, tmp_mount], stderr=subprocess.STDOUT, universal_newlines=True)
             except subprocess.CalledProcessError as cpe:
                 raise WorkerException(cpe.output)
-            os.chown('/tmp/' + device_name, int(os.getenv("SUDO_UID")), int(os.getenv("SUDO_GID")))
-            os.chmod('/tmp/' + device_name, 0o700)
+            os.chown(tmp_mount, int(os.getenv("SUDO_UID")), int(os.getenv("SUDO_GID")))
+            os.chmod(tmp_mount, 0o700)
 
         # finally close container
         self.close_container(device_name, container_path)
         # and clear tmp
         if filesystem_type != 'ntfs':
-            os.rmdir('/tmp/' + device_name)
+            os.rmdir(os.path.join('/tmp/',device_name))
 
-    def modify_sudoers(self):
-        """ Adds sudo access to the program without password for the current user (/etc/sudoers.d/) """
+    def modify_sudoers(self, user_id, nopassword=False):
+        """ Adds sudo access to the program (without password) for the current user (/etc/sudoers.d/)
+            :param user_id: unix user id
+            :type user_id: int
+            :returns: should access be granted without password
+            :rtype: bool
+        """
         program_path = os.path.abspath(sys.argv[0])
-        if (os.stat(program_path).st_uid != 0
-            or os.stat(program_path).st_gid != 0
-            or os.stat(program_path).st_mode & stat.S_IWOTH):
+        try:
+            user_name = pwd.getpwuid(int(user_id))[0]
+        except KeyError:
+            raise WorkerException(_('Cannot change sudo rights, invalid username'))
+
+        if (os.stat(program_path).st_uid != 0 or os.stat(program_path).st_gid != 0 or os.stat(program_path).st_mode & stat.S_IWOTH):
 
             raise WorkerException(_('I`m afraid I can`t do that.\n\n'
-                                    'To be able to permit permanent admin rights,\n'
+                                    'To be able to permit permanent changes to sudo rights,\n'
                                     'please make sure the program is owned by root\n'
                                     'and not writeable by others.\n'
                                     'Execute the following commands in your shell:\n\n'
@@ -445,7 +466,8 @@ class WorkerHelper():
 
         sudoers_file_path = '/etc/sudoers.d/lucky-luks'
         sudoers_file = open(sudoers_file_path, 'a')
-        sudoers_file.write("{username} ALL = (root) NOPASSWD: {program}\n".format(username=pwd.getpwuid(int(os.getenv("SUDO_UID")))[0],
+        sudoers_file.write("{username} ALL = (root) {nopasswd}{program}\n".format(username=user_name,
+                                                                                  nopasswd='NOPASSWD: ' if nopassword else '',
                                                                                   program=program_path))
         sudoers_file.close()
 
