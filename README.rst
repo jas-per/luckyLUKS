@@ -9,7 +9,7 @@ luckyLUKS was brought to life to offer an equivalent to the Windows TrueCrypt pr
 - You can easily add some encrypted private data to an unencrypted external harddrive you want to share with friends or take with you while travelling
 - Lots of users are already quite familiar with all this, because their first touch with data encryption has been TrueCrypt which uses the encrypted container approach
 
-luckyLUKS follows a keep-it-simple philosophy that aims to keep users from shooting themselves in the foot and might be a bit too simple for power users - please use ZuluCrypt and/or cryptsetup/tcplay on the command line if you need special options when creating new containers. On the other hand, to unlock existing containers luckyLUKS offers all you need and the possibility to create a shortcut to a container in your start menu or on the desktop. From the shortcut its just one click and you can enter your password to unlock the container. To get a better understanding of the technical details please see the FAQ at the end of this page.
+luckyLUKS follows a keep-it-simple philosophy that aims to keep users from shooting themselves in the foot and might be a bit too simple for power users - please use `ZuluCrypt <https://code.google.com/p/zulucrypt/>`_ and/or `cryptsetup <https://code.google.com/p/cryptsetup/>`_/`tcplay <https://github.com/bwalex/tc-play>`_ on the command line if you need special options when creating new containers. On the other hand, to unlock existing containers luckyLUKS offers all you need and the possibility to create a shortcut to a container in your start menu or on the desktop. From the shortcut its just one click and you can enter your password to unlock the container. To get a better understanding of the technical details please see the FAQ at the end of this page.
 
 
 Installation
@@ -23,22 +23,43 @@ For Ubuntu and derivates just use this ppa::
 
 For other debian based distributions download this debian package and install manually:
 
+`python-luckyluks_0.9.6-1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v0.9.6/python-luckyluks_0.9.6-1_all.deb>`_
 
-`python-luckyluks_0.9.6-1_all.deb <https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks/+files/python-luckyluks_0.9.6-1_all.deb>`_
+On other distriubution you can use the following zip-packaged python file:
 
-make sure you have the following installed:
-`cryptsetup`, `sudo` and `python-qt4`
+`luckyLUKS-0.9.6 <https://github.com/jas-per/luckyLUKS/releases/download/v0.9.6/luckyLUKS-0.9.6>`_
 
-add `tcplay` if you want to use TrueCrypt containers
+This file contains all resources and can be executed directly by the python intepreter. Place in /usr/bin and change ownership to root for security::
 
+    > sudo mv luckyLUKS-0.9.6 /usr/bin/
+    > sudo chown root:root /usr/bin/luckyLUKS-0.9.6
+    > sudo chmod 755 /usr/bin/luckyLUKS-0.9.6
 
-TODO: manual install
+Then start with 'luckyLUKS-0.9.6' on the command line and create a desktop shortcut manually.
+
+Dependencies
+------------
+
+To run luckyLUKS, make sure you have the following installed:
+
+- `cryptsetup`
+- `sudo`
+- `python-qt4`
+- `tcplay` (if you want to use TrueCrypt containers)
+
+When using the ubuntu-ppa or debian package, these will get installed automatically, if you use the zip-package please install the dependencies manually with your distributions repository tools.
 
 
 FAQ
 ===
 
 TODO
+
+Bugs
+====
+
+Please report all bugs on the github issue tracker. Since this is a GUI tool, the most important information is the exact name of the distribution you're using including the version/year. I will try to make sure luckyLUKS works with any recent distribution (from ~2012 on), providing the exact name and version will help reproducing bugs on a virtual machine a lot.
+
 
 Translations
 ============
