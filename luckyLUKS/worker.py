@@ -27,6 +27,12 @@ import pwd
 import errno
 import stat
 import warnings
+import threading
+import signal
+try:
+    import queue
+except ImportError:  # py2
+    import Queue as queue
 
 
 class WorkerException(Exception):
@@ -41,11 +47,36 @@ class UserAbort(Exception):
     pass
 
 
-def init():
+def com_thread(cmdqueue):
+    """ Monitors the incoming pipe and puts commands in a queue. Normal signals cannot be sent 
+        from the parent to a privileged childprocess, this thread detects if the parent closes the pipe instead,
+        to signal the main thread and all its child processes.
+        :param cmdqueue: Queue to pass incoming commands to main thread
+        :type cmdqueue: queue
+    """
+    while True:
+        try:
+            buf = sys.stdin.readline().strip()# blocks
+            if not buf:  # check if input pipe closed
+                break
+            cmd = json.loads(buf, encoding='utf-8')
+            # utf8 encode all py2 unicode names&paths
+            # when a user enters unicode, the shell that get called here has to be able to handle utf8 of course
+            # -> more or less a given, if you intend to USE unicode on your system anyway (eg for filesystem paths ..)
+            cmd = {prop: val if val is None or isinstance(val, int) or isinstance(val, str) else val.encode('utf-8') for prop, val in cmd.items()}
+            cmdqueue.put(cmd)
+        except IOError:
+            break
+    # send INT to all child processes (eg currently creating new container with dd etc..)
+    os.killpg(0, signal.SIGINT)
+
+
+def run():
     """ Initialize helper and setup ipc. Reads json encoded, newline terminated commands from stdin,
         performs the requested command and returns the json encoded, newline terminated answer on stdout.
-        All commands are executed sequentially, no need to use threads here, just block on stdin.readline() """
-    worker = WorkerHelper()
+        All commands are executed sequentially, but stdin.readline() gets read in another thread that monitors
+        the incoming pipe and passes to a queue or quits the helper process if the parent closes the pipe.
+        This is needed because normal signals cannot be sent to a privileged childprocess """
 
     if os.getuid() != 0:
         sys.stdout.write(_('Please call with sudo.'))
@@ -58,17 +89,21 @@ def init():
         # send ack to establish simple json encoded request/response protocol using \n as terminator
         sys.stdout.write('ESTABLISHED')
         sys.stdout.flush()
+    
+    # start thread to monitor the incomming pipe, communicate via queue
+    cmdqueue = queue.Queue()
+    worker = WorkerHelper(cmdqueue)
+    t = threading.Thread(target=com_thread, args = (cmdqueue,))
+    t.start()
+    # create process group to be able to quit all child processes of the worker
+    os.setpgrp()
 
     with warnings.catch_warnings():
         warnings.filterwarnings('error')  # catch warnings to keep them from messing up the pipe
         while True:
             response = {'type': 'response', 'msg': 'success'}  # return success unless exception
             try:
-                cmd = json.loads(sys.stdin.readline().strip(), encoding='utf-8')  # blocks
-                # utf8 encode all py2 unicode names&paths
-                # of course when a user enters unicode, the shell that get called here has to be able to handle utf8,
-                # -> more or less a given, if you intend to USE unicode on your system anyway (eg for filesystem paths ..)
-                cmd = {prop: val if val is None or isinstance(val, int) or isinstance(val, str) else val.encode('utf-8') for prop, val in cmd.items()}
+                cmd = cmdqueue.get(timeout=sys.maxint)  # timeout needed to be able to get KeyboardInterrupt in time
                 if cmd['msg'] == 'status':
                     is_unlocked = worker.check_status(cmd['device_name'], cmd['container_path'], cmd['mount_point'])
                     response['msg'] = 'unlocked' if is_unlocked else 'closed'
@@ -82,13 +117,18 @@ def init():
                     worker.modify_sudoers(os.getenv("SUDO_UID"), nopassword=True)
                 else:
                     raise WorkerException(_('Helper process received unknown command'))
+            except queue.Empty:
+                continue  # timeout reached on queue.get() -> keep polling
             except UserAbort:
                 continue  # no response needed
             except WorkerException as we:
                 response = {'type': 'error', 'msg': format_exception(we)}
             except KeyError as ke:
                 response = {'type': 'error', 'msg': _('Error in communication:\n{error}').format(error=format_exception(ke))}  # thrown if required parameters missing
-            except:  # catch ANY exception (including warnings) to show via gui
+            except KeyboardInterrupt:
+                # gets raised by killpg -> quit
+                sys.exit(0)
+            except Exception:  # catch ANY exception (including warnings) to show via gui
                 response = {'type': 'error', 'msg': ''.join(traceback.format_exception(*sys.exc_info()))}
             sys.stdout.write(json.dumps(response) + '\n')
             sys.stdout.flush()
@@ -104,8 +144,9 @@ class WorkerHelper():
         -> modify_sudoers() adds sudo access to the program without password for the current user (/etc/sudoers.d/)
     """
 
-    def __init__(self):
+    def __init__(self, cmdqueue=None):
         """ Determine cryptsetup/devmapper version and tcplay installation """
+        self.cmdqueue = cmdqueue
         # since version 1.6 cryptsetup allows unified handling of different container types (eg truecrypt) - slight change in syntax required
         version = subprocess.check_output(['cryptsetup', '--version'], stderr=subprocess.STDOUT, universal_newlines=True).split()[1]
         self.is_cryptsetup_legacy = (int(version.split('.')[0]) < 2 and int(version.split('.')[1]) < 6)
@@ -126,10 +167,7 @@ class WorkerHelper():
         """
         sys.stdout.write(json.dumps({'type': 'request', 'msg': request}) + '\n')
         sys.stdout.flush()
-        response = json.loads(sys.stdin.readline().strip(), encoding='utf-8')  # blocks
-        # utf8 encode all py2 unicode
-        response = {prop: val if val is None or isinstance(val, int) or isinstance(val, str) else val.encode('utf-8') for prop, val in response.items()}
-        # valid response obj?
+        response = self.cmdqueue.get()  # wait for response
         try:
             assert('type' in response and 'msg' in response)
         except AssertionError:

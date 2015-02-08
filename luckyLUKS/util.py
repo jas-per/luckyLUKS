@@ -140,7 +140,7 @@ class WorkerMonitor(QThread):
             raise
         except UserInputError:  # user cancelled dlg -> quit without msg
             raise SudoException()
-        except:  # catch ANY other exception to show via gui
+        except Exception:  # catch ANY other exception to show via gui
             raise SudoException(_('Communication with sudo process failed\n{error}').format(error=''.join(traceback.format_exception(*sys.exc_info()))))
         finally:
             try:
@@ -157,7 +157,7 @@ class WorkerMonitor(QThread):
             self.worker.wait()
         # since output from sudo gets parsed, it needs to be run without localization
         # saving original language settings to pass to the worker process
-        # TODO: strip/recreate env instead of copy?
+        # TODO: this way, sanitizing env is handled by sudo - strip/recreate env here instead of copy?
         original_language = os.getenv("LANGUAGE", "")
         env_lang_cleared = os.environ.copy()
         env_lang_cleared['LANGUAGE'] = 'C'
@@ -174,7 +174,11 @@ class WorkerMonitor(QThread):
         """ Listens on workers stdout and executes callbacks when answers arrive """
         while True:
             try:
-                response = json.loads(self.worker.stdout.readline().strip(), encoding='utf-8')  # blocks
+                buf = self.worker.stdout.readline()# blocks
+                if buf:  # check if worker output pipe closed
+                    response = json.loads(buf.strip(), encoding='utf-8')
+                else:
+                    return
                 assert('type' in response and 'msg' in response)
                 assert(self.success_callback is not None and self.error_callback is not None)  # there should be somebody waiting for an answer!
                 # valid response received

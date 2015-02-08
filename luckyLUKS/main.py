@@ -115,7 +115,7 @@ def startUI(parsed_args):
     if main_win.is_initialized:
         sys.exit(application.exec_())
     else:
-        sys.exit(1)
+        sys.exit(0)
 
 
 def startWorker(sudouser=None):
@@ -123,13 +123,15 @@ def startWorker(sudouser=None):
     from luckyLUKS import worker
     if sudouser is not None:
         # helper called with su to configure sudo
-        # this is not completely kosher since you also gain the possibility to give other user userids sudo access to luckyLUKS
-        # TODO: check if sudo!?!
-        try:
-            worker.WorkerHelper().modify_sudoers(sudouser)
-            sys.exit(0)
-        except worker.WorkerException as we:
-            sys.stdout.write(format_exception(we))
+        if os.getuid() == 0 and os.getenv("SUDO_UID") is None:
+            try:
+                worker.WorkerHelper().modify_sudoers(sudouser)
+                sys.exit(0)
+            except worker.WorkerException as we:
+                sys.stdout.write(format_exception(we))
+                sys.exit(2)
+        else:
+            # deny giving other user userids sudo access to luckyLUKS if not called with su
             sys.exit(2)
     else:
-        worker.init()
+        worker.run()
