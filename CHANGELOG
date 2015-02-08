@@ -1,3 +1,10 @@
+luckyluks (0.9.7) unstable; urgency=low
+
+  * better cleanup: detect input pipe close to exit worker process
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Fri, 06 Feb 2015 21:53:41 +0100
+
+
 luckyluks (0.9.6) unstable; urgency=low
 
   * add show/hide to systray context menu (required for unity)
