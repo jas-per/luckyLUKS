@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # coding=utf-8
 """ config for setuptools/stdeb """
 
@@ -43,7 +43,6 @@ setup(name='luckyLUKS',
                    'Natural Language :: English',
                    'Natural Language :: German',
                    'Operating System :: POSIX :: Linux',
-                   'Programming Language :: Python :: 2.7',
                    'Programming Language :: Python :: 3',
                    'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
                    'Topic :: Utilities',

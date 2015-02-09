@@ -1,4 +1,4 @@
-PYTHON=python
+PYTHON=python3
 
 NAME=$(shell ${PYTHON} setup.py --name)
 LOWER_NAME  = $(shell echo $(NAME) | tr A-Z a-z)
@@ -18,6 +18,7 @@ dist_deb: dist
 	cd dist_deb && tar -xvzf ${LOWER_NAME}_${VERSION}.orig.tar.gz
 	cd dist_deb/${NAME}-${VERSION} && ${PYTHON} setup.py --command-packages=stdeb.command debianize --extra-cfg-file setup.cfg
 	cp CHANGELOG dist_deb/${NAME}-${VERSION}/debian/changelog
+	mv dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install dist_deb/${NAME}-${VERSION}/debian/${PYTHON}-${LOWER_NAME}.install
 	echo 'lucky-luks.1.gz usr/share/man/man1' >> dist_deb/${NAME}-${VERSION}/debian/${PYTHON}-${LOWER_NAME}.install
 	echo 'lucky-luks usr/bin' >> dist_deb/${NAME}-${VERSION}/debian/${PYTHON}-${LOWER_NAME}.install
 	echo 'README.rst usr/share/doc/${PYTHON}-${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/${PYTHON}-${LOWER_NAME}.install

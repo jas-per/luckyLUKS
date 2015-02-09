@@ -1,4 +1,4 @@
-luckyluks (0.9.7) unstable; urgency=low
+luckyluks (0.9.7-1) unstable; urgency=low
 
   * better cleanup: detect input pipe close to exit worker process
 

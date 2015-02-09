@@ -13,14 +13,13 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
-from __future__ import unicode_literals
-
 import sys
 import os.path
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
-    QSystemTrayIcon, QMessageBox, QIcon, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
+    QSystemTrayIcon, QMessageBox, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle
+from PyQt5.QtGui import QIcon
 
 from luckyLUKS import util, PROJECT_URL
 from luckyLUKS.unlockUI import UnlockContainerDialog, UserInputError
@@ -38,11 +37,11 @@ class MainWindow(QMainWindow):
             If no arguments were supplied on the command line a setup dialog will be shown.
             All commands will be executed from a separate worker process with administrator privileges that gets initialized here.
             :param device_name: The device mapper name
-            :type device_name: str/unicode or None
+            :type device_name: str or None
             :param container_path: The path of the container file
-            :type container_path: str/unicode or None
+            :type container_path: str or None
             :param mount_point: The path of an optional mount point
-            :type mount_point: str/unicode or None
+            :type mount_point: str or None
         """
         super(MainWindow, self).__init__()
 
@@ -94,7 +93,7 @@ class MainWindow(QMainWindow):
             self.worker.start()
 
         except util.SudoException as se:
-            util.show_alert(self, format_exception(se), critical=True)
+            util.show_alert(self, str(se), critical=True)
             return
 
         # if no arguments supplied, display dialog to gather this information
@@ -197,9 +196,10 @@ class MainWindow(QMainWindow):
                         'Close Container now and quit?').format(device_name=self.luks_device_name,
                                                                 container_path=self.encrypted_container)
 
-            mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-            mb.setButtonText(QMessageBox.Ok, _('Quit'))
-            if mb.exec_() == QMessageBox.Ok:
+            mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Cancel, self)
+            mb.addButton(_('Quit'), QMessageBox.AcceptRole)
+            mb.setDefaultButton(QMessageBox.Cancel)
+            if mb.exec_() == QMessageBox.AcceptRole:
                 self.do_close_container(shutdown=True)
             else:
                 self.show()
@@ -237,7 +237,7 @@ class MainWindow(QMainWindow):
                 UnlockContainerDialog(self, self.worker, self.luks_device_name, self.encrypted_container, self.mount_point).communicate()
                 self.is_unlocked = True
             except UserInputError as uie:
-                util.show_alert(self, format_exception(uie))
+                util.show_alert(self, str(uie))
                 self.is_unlocked = False
             self.refresh()
 
@@ -311,7 +311,7 @@ class MainWindow(QMainWindow):
     def disable_ui(self, reason):
         """ Disable buttons and display waiting message
             :param reason: A waiting message that gets displayed
-            :type reason: str/unicode
+            :type reason: str
         """
         self.is_waiting_for_worker = True
         self.button_toggle_status.setText(reason)

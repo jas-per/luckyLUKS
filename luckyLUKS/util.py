@@ -20,8 +20,8 @@ import subprocess
 import sys
 import json
 import traceback
-from PyQt4.QtCore import QThread, QEvent
-from PyQt4.QtGui import QApplication, QMessageBox
+from PyQt5.QtCore import QThread, QEvent
+from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from luckyLUKS.unlockUI import PasswordDialog, SudoDialog, UserInputError
 
@@ -191,7 +191,7 @@ class WorkerMonitor(QThread):
 
             except (IOError, ValueError, AssertionError) as communication_error:
                 QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
-                                                                response=_('Error in communication:\n{error}').format(error=format_exception(communication_error))))
+                                                                response=_('Error in communication:\n{error}').format(error=str(communication_error))))
                 return
 
     def execute(self, command, success_callback, error_callback):
@@ -212,7 +212,7 @@ class WorkerMonitor(QThread):
             self.worker.stdin.flush()
         except (IOError, AssertionError) as communication_error:
             QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
-                                                            response=_('Error in communication:\n{error}').format(error=format_exception(communication_error))))
+                                                            response=_('Error in communication:\n{error}').format(error=str(communication_error))))
 
 
 class WorkerEvent(QEvent):

@@ -59,12 +59,7 @@ def com_thread(cmdqueue):
             buf = sys.stdin.readline().strip()# blocks
             if not buf:  # check if input pipe closed
                 break
-            cmd = json.loads(buf, encoding='utf-8')
-            # utf8 encode all py2 unicode names&paths
-            # when a user enters unicode, the shell that get called here has to be able to handle utf8 of course
-            # -> more or less a given, if you intend to USE unicode on your system anyway (eg for filesystem paths ..)
-            cmd = {prop: val if val is None or isinstance(val, int) or isinstance(val, str) else val.encode('utf-8') for prop, val in cmd.items()}
-            cmdqueue.put(cmd)
+            cmdqueue.put(json.loads(buf, encoding='utf-8'))
         except IOError:
             break
     # send INT to all child processes (eg currently creating new container with dd etc..)
@@ -103,7 +98,7 @@ def run():
         while True:
             response = {'type': 'response', 'msg': 'success'}  # return success unless exception
             try:
-                cmd = cmdqueue.get(timeout=sys.maxint)  # timeout needed to be able to get KeyboardInterrupt in time
+                cmd = cmdqueue.get(timeout=32767)  # timeout needed to be able to get KeyboardInterrupt in time
                 if cmd['msg'] == 'status':
                     is_unlocked = worker.check_status(cmd['device_name'], cmd['container_path'], cmd['mount_point'])
                     response['msg'] = 'unlocked' if is_unlocked else 'closed'
@@ -122,9 +117,9 @@ def run():
             except UserAbort:
                 continue  # no response needed
             except WorkerException as we:
-                response = {'type': 'error', 'msg': format_exception(we)}
+                response = {'type': 'error', 'msg': str(we)}
             except KeyError as ke:
-                response = {'type': 'error', 'msg': _('Error in communication:\n{error}').format(error=format_exception(ke))}  # thrown if required parameters missing
+                response = {'type': 'error', 'msg': _('Error in communication:\n{error}').format(error=str(ke))}  # thrown if required parameters missing
             except KeyboardInterrupt:
                 # gets raised by killpg -> quit
                 sys.exit(0)
@@ -235,11 +230,7 @@ class WorkerHelper():
         # container is not unlocked
         else:
             # validate device name
-            try:
-                name_len = len(bytes(device_name, 'utf-8'))  # PY3
-            except TypeError:
-                name_len = len(device_name)
-            if name_len > 16:
+            if len(bytes(device_name, 'utf-8')) > 16:
                 # the goal here is not to confuse the user:
                 # thus Name==Label of the partition inside the encrypted container -> because thats what usually gets presented to the user (filemanager)
                 # see checks in create_container below for length restictions on partition labels
@@ -383,11 +374,7 @@ class WorkerHelper():
                                     'not supported by your version of device mapper.\n\n'
                                     'Please restrict the name to 0-9, A-Z, a-z and #+-.:=@_'))
 
-        try:
-            name_len = len(bytes(device_name, 'utf-8'))  # PY3
-        except TypeError:
-            name_len = len(device_name)
-        if name_len > 16:  # ext-labels are the most restricted (max 16Bytes)
+        if len(bytes(device_name, 'utf-8')) > 16:  # ext-labels are the most restricted (max 16Bytes)
             # dev-mapper and ntfs-label would support slightly longer strings, but hey: DOS allowed only 8chars and unicode wasn't even supported ;)
             raise WorkerException(_('Device Name too long:\nOnly up to 16 characters possible, even less for unicode \n(roughly 8 non-ascii characters possible)'))
 
@@ -538,12 +525,9 @@ class WorkerHelper():
             :rtype: str
         """
         dm_name = '/dev/mapper/'
-        try:  # use single-char list for python3 (splitting 2 or more byte utf8-encoded chars..)
-            device_name = bytes(device_name, 'utf-8')
-            device_name = [chr(byte) for byte in device_name]
-        except TypeError:
-            # already a utf-8 encoded bytestring in python2
-            pass
+        # use single-char list for python3 (splitting 2 or more byte utf8-encoded chars..)
+        device_name = bytes(device_name, 'utf-8')
+        device_name = [chr(byte) for byte in device_name]
 
         for char in device_name:
             if ((char >= '0' and char <= '9') or

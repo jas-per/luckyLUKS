@@ -13,17 +13,15 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
-from __future__ import unicode_literals
-from __future__ import division
-
 import os
 import sys
 import codecs
 import subprocess
 
-from PyQt4.QtCore import QTimer, Qt
-from PyQt4.QtGui import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
+from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
     QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar
+from PyQt5.QtGui import QIcon
 
 from luckyLUKS import PROJECT_URL
 from luckyLUKS.unlockUI import FormatContainerDialog, UnlockContainerDialog, UserInputError
@@ -195,14 +193,14 @@ class SetupDialog(QDialog):
         # calculate designated container size for worker and progress indicator
         size = self.create_container_size.value()
         size = size * (1024 * 1024 * 1024 if self.create_size_unit.currentIndex() == 1 else 1024 * 1024)  # GB vs MB
-        location = self.encode_qt_output(self.create_container_file.text())
+        location = self.create_container_file.text()
         # start timer for progressbar updates during container creation
         self.create_timer.timeout.connect(lambda: self.display_progress_percent(location, size))
         self.create_timer.start(500)
 
         self.worker.execute(command={'type': 'request',
                                      'msg': 'create',
-                                     'device_name': self.encode_qt_output(self.create_device_name.text()),
+                                     'device_name': self.create_device_name.text(),
                                      'container_path': location,
                                      'container_size': size,
                                      'filesystem_type': str(self.create_filesystem_type.currentText())
@@ -256,7 +254,7 @@ class SetupDialog(QDialog):
         self.unlock_container_file.setText(self.create_container_file.text())
         self.unlock_device_name.setText(self.create_device_name.text())
         show_info(self, _('<b>{device_name}\nsuccessfully created!</b>\nClick on unlock to use the new container')
-                  .format(device_name=self.encode_qt_output(self.create_device_name.text())), _('Success'))
+                  .format(device_name=self.create_device_name.text()), _('Success'))
         # reset create ui and switch to unlock tab
         self.create_container_file.setText('')
         self.create_device_name.setText('')
@@ -323,7 +321,7 @@ class SetupDialog(QDialog):
                 self.accept()
 
         except UserInputError as error:
-            show_alert(self, format_exception(error))
+            show_alert(self, str(error))
 
     def show_create_startmenu_entry(self):
         """ Shown after successfull unlock with setup dialog -> ask for shortcut creation """
@@ -335,10 +333,10 @@ class SetupDialog(QDialog):
                      '   to the unlock container dialog.\n').format(
             device_name=self.get_luks_device_name())
         )
-        mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-        mb.setButtonText(QMessageBox.Ok, _('Create shortcut'))
-        mb.setButtonText(QMessageBox.Cancel, _('No, thanks'))
-        if mb.exec_() == QMessageBox.Ok:
+        mb = QMessageBox(QMessageBox.Question, '', message, parent=self)
+        mb.addButton( _('Create shortcut'), QMessageBox.AcceptRole)
+        mb.addButton( _('No, thanks'), QMessageBox.RejectRole)
+        if mb.exec_() ==  QMessageBox.AcceptRole:
             self.create_startmenu_entry()
 
     def create_startmenu_entry(self):
@@ -388,7 +386,7 @@ class SetupDialog(QDialog):
                 # move to homedir instead
                 from shutil import move
                 move(desktop_file_path, home_dir_path)
-                show_alert(self, format_exception(cpe.output))
+                show_alert(self, str(cpe.output))
                 show_info(self, _('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=home_dir_path))
         else:
             show_info(self, _('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=desktop_file_path))
@@ -410,9 +408,10 @@ class SetupDialog(QDialog):
         """
         if self.is_creating_countainer:
             message = _('Currently creating new container!\nDo you really want to quit?')
-            mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-            mb.setButtonText(QMessageBox.Ok, _('Quit'))
-            return mb.exec_() == QMessageBox.Ok
+            mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Cancel, self)
+            mb.addButton( _('Quit'), QMessageBox.AcceptRole)
+            mb.setDefaultButton(QMessageBox.Cancel)
+            return mb.exec_() == QMessageBox.AcceptRole
         else:
             return True
 
@@ -429,7 +428,7 @@ class SetupDialog(QDialog):
 
     def on_select_file_clicked(self):
         """ Triggered by clicking the select button next to container file (unlock) """
-        self.unlock_container_file.setText(QFileDialog.getOpenFileName(self, _('Please choose a container file'), os.getenv("HOME")))
+        self.unlock_container_file.setText(QFileDialog.getOpenFileName(self, _('Please choose a container file'), os.getenv("HOME"))[0])
         self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
 
     def on_select_mountpoint_clicked(self):
@@ -446,10 +445,10 @@ class SetupDialog(QDialog):
         def_path = os.path.join(os.getenv("HOME"), _('new_container.bin'))
 
         while True:
-            save_path = self.encode_qt_output(QFileDialog.getSaveFileName(self,
-                                                                          _('Please create a container file'),
-                                                                          def_path,
-                                                                          options=QFileDialog.DontConfirmOverwrite))
+            save_path = QFileDialog.getSaveFileName(self,
+                                                    _('Please create a container file'),
+                                                    def_path,
+                                                    options=QFileDialog.DontConfirmOverwrite)[0]
             self.buttons.button(QDialogButtonBox.Ok).setText(_('Create'))
 
             if os.path.exists(save_path):
@@ -475,38 +474,25 @@ class SetupDialog(QDialog):
         self.create_progressbars[0].setValue(new_value)
 
     def get_encrypted_container(self):
-        """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
+        """ Getter for QLineEdit text
             :returns: The container file path
-            :rtype: str/unicode
+            :rtype: str
         """
-        return self.encode_qt_output(self.unlock_container_file.text())
+        return self.unlock_container_file.text()
 
     def get_luks_device_name(self):
-        """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
+        """ Getter for QLineEdit text
             :returns: The device name
-            :rtype: str/unicode
+            :rtype: str
         """
-        return self.encode_qt_output(self.unlock_device_name.text())
+        return self.unlock_device_name.text()
 
     def get_mount_point(self):
-        """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
+        """ Getter for QLineEdit text
             :returns: The mount point path
-            :rtype: str/unicode or None
+            :rtype: str or None
         """
-        mp = self.encode_qt_output(self.unlock_mountpoint.text())
-        return mp if mp != '' else None
-
-    def encode_qt_output(self, qstring_or_str):
-        """ Normalize output from QLineEdit
-            :param qstring_or_str: Output from QLineEdit.text()
-            :type qstring_or_str: str/QString
-            :returns: python unicode (instead of QString in py2)
-            :rtype: str/unicode
-        """
-        try:
-            return qstring_or_str.strip()
-        except AttributeError:  # py2: 'QString' object has no attribute strip
-            return unicode(qstring_or_str.trimmed().toUtf8(), encoding="UTF-8")
+        return self.unlock_mountpoint.text() if self.unlock_mountpoint.text() != '' else None
 
     def show_help_create(self):
         """ Triggered by clicking the help button (create tab) """

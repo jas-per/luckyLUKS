@@ -18,9 +18,10 @@ GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
 from __future__ import unicode_literals
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QDialog, QMessageBox, QDialogButtonBox, \
-    QIcon, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QMessageBox, QDialogButtonBox, \
+    QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox
+from PyQt5.QtGui import QIcon
 
 
 class UserInputError(Exception):
@@ -82,13 +83,6 @@ class PasswordDialog(QDialog):
         else:
             self.pw_box.setFocus()
 
-    def get_pw(self):
-        """ Get pw inputfiled value, returns python unicode instead of QString in py2"""
-        try:
-            return str(self.pw_box.text())
-        except UnicodeEncodeError:
-            return unicode(self.pw_box.text().toUtf8(), encoding="UTF-8")
-
     def get_password(self):
         """ Dialog runs itself and returns the password/-phrase entered
             or throws an exception if the user cancelled/closed the dialog
@@ -98,7 +92,7 @@ class PasswordDialog(QDialog):
         """
         try:
             if self.exec_():
-                return self.get_pw()
+                return self.pw_box.text()
             else:
                 raise UserInputError()
         finally:
@@ -178,9 +172,10 @@ class FormatContainerDialog(PasswordDialog):
             :rtype: bool
         """
         message = _('Currently creating new container!\nDo you really want to quit?')
-        mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-        mb.setButtonText(QMessageBox.Ok, _('Quit'))
-        return mb.exec_() == QMessageBox.Ok
+        mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Cancel, self)
+        mb.addButton( _('Quit'), QMessageBox.AcceptRole)
+        mb.setDefaultButton(QMessageBox.Cancel)
+        return mb.exec_() == QMessageBox.AcceptRole
 
 
 class UnlockContainerDialog(PasswordDialog):
@@ -232,7 +227,7 @@ class UnlockContainerDialog(PasswordDialog):
             self.buttons.setEnabled(False)
             self.header_text.setText(_('Checking passphrase ..'))
             self.worker.execute(command={'type': 'response',
-                                         'msg': self.get_pw()
+                                         'msg': self.pw_box.text()
                                          },
                                 success_callback=self.on_worker_reply,
                                 error_callback=self.on_error)

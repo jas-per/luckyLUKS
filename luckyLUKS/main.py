@@ -19,33 +19,14 @@ import os.path
 import sys
 import argparse
 import types
+import builtins
 
 
 def luckyLUKS(translation, *args, **kwargs):
     """ main entry point: initialize gettext, parse arguments and start either GUI or worker """
-    try:
-        # py3:
-        import builtins
-        translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
-        translation.ugettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
-        commandline_unicode_arg = lambda arg: arg
-        argparse._ = _ = translation.gettext  # gettext for argsparse
-        builtins.format_exception = str  # format exception message for gui
-    except:
-        # py2: explicit unicode for qt string translations, exception output and commandline args parsing
-        import __builtin__ as builtins
-        translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
-        translation.ugettext_qt = types.MethodType(lambda self, msg: self.ugettext(msg).replace('\n', '<br>'), translation)
-        commandline_unicode_arg = lambda arg: arg.decode(sys.getfilesystemencoding())
-        argparse._ = _ = translation.ugettext  # gettext for argsparse
-        # format exception message for gui
-
-        def format_exception(exception):
-            try:
-                return str(exception).decode('utf-8')
-            except UnicodeEncodeError:
-                return unicode(exception.message)
-        builtins.format_exception = format_exception
+    translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
+    builtins._ = translation.gettext_qt
+    argparse._ = translation.gettext  # gettext for argsparse
 
     parser = argparse.ArgumentParser(description=_('GUI for creating and unlocking LUKS/TrueCrypt volumes from container files'),
                                      epilog=_('When called without any arguments a setup dialog will be shown before unlocking,\n'
@@ -73,11 +54,11 @@ def luckyLUKS(translation, *args, **kwargs):
 
     # if argument not specified or empty set value to None
     # error messages will be shown by the GUI, not on the command line
-    parser.add_argument('-c', dest='container', type=commandline_unicode_arg, nargs='?', metavar=_('PATH'),
+    parser.add_argument('-c', dest='container', type=str, nargs='?', metavar=_('PATH'),
                         help=_('Path to the encrypted container file'))
-    parser.add_argument('-n', dest='name', type=commandline_unicode_arg, nargs='?', metavar=_('NAME'),
+    parser.add_argument('-n', dest='name', type=str, nargs='?', metavar=_('NAME'),
                         help=_('Choose a device name to identify the unlocked container'))
-    parser.add_argument('-m', dest='mountpoint', type=commandline_unicode_arg, nargs='?', metavar=_('PATH'),
+    parser.add_argument('-m', dest='mountpoint', type=str, nargs='?', metavar=_('PATH'),
                         help=_('Where to mount the encrypted filesystem'))
     parser.add_argument('-v', '--version', action='version', version="luckyLUKS " + VERSION_STRING,
                         help=_("show program's version number and exit"))
@@ -88,19 +69,15 @@ def luckyLUKS(translation, *args, **kwargs):
 
     # worker will be created by calling the script again (but this time with su privileges)
     if parsed_args.ishelperprocess:
-        # the backend process uses utf8 encoded str in py2
-        builtins._ = translation.gettext_qt
         startWorker(parsed_args.sudouser)
     else:
-        # unicode translations for the qt gui
-        builtins._ = translation.ugettext_qt
         startUI(parsed_args)
 
 
 def startUI(parsed_args):
     """ Import the required GUI elements and create main window """
-    from PyQt4.QtGui import QApplication
-    from PyQt4.QtCore import QLocale, QTranslator, QLibraryInfo
+    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtCore import QLocale, QTranslator, QLibraryInfo
     from luckyLUKS.mainUI import MainWindow
 
     # l10n qt-gui elements
