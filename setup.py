@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-# coding=utf-8
 """ config for setuptools/stdeb """
 
 from setuptools import setup
@@ -34,7 +32,7 @@ setup(name='luckyLUKS',
       platforms=['Linux'],
       packages=['luckyLUKS'],
       package_data={'luckyLUKS': ['locale/*/LC_MESSAGES/*']},
-      scripts=['lucky-luks'],
+      scripts=['luckyluks'],
       keywords='python tools utils cryptsetup LUKS TrueCrypt encryption container block device mapper GUI tcplay',
       license='GPL',
       classifiers=['Development Status :: 5 - Production/Stable',

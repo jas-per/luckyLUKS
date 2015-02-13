@@ -48,7 +48,7 @@ class UserAbort(Exception):
 
 
 def com_thread(cmdqueue):
-    """ Monitors the incoming pipe and puts commands in a queue. Normal signals cannot be sent 
+    """ Monitors the incoming pipe and puts commands in a queue. Normal signals cannot be sent
         from the parent to a privileged childprocess, this thread detects if the parent closes the pipe instead,
         to signal the main thread and all its child processes.
         :param cmdqueue: Queue to pass incoming commands to main thread
@@ -56,7 +56,7 @@ def com_thread(cmdqueue):
     """
     while True:
         try:
-            buf = sys.stdin.readline().strip()# blocks
+            buf = sys.stdin.readline().strip()  # blocks
             if not buf:  # check if input pipe closed
                 break
             cmd = json.loads(buf, encoding='utf-8')
@@ -89,11 +89,11 @@ def run():
         # send ack to establish simple json encoded request/response protocol using \n as terminator
         sys.stdout.write('ESTABLISHED')
         sys.stdout.flush()
-    
+
     # start thread to monitor the incomming pipe, communicate via queue
     cmdqueue = queue.Queue()
     worker = WorkerHelper(cmdqueue)
-    t = threading.Thread(target=com_thread, args = (cmdqueue,))
+    t = threading.Thread(target=com_thread, args=(cmdqueue,))
     t.start()
     # create process group to be able to quit all child processes of the worker
     os.setpgrp()
@@ -103,7 +103,7 @@ def run():
         while True:
             response = {'type': 'response', 'msg': 'success'}  # return success unless exception
             try:
-                cmd = cmdqueue.get(timeout=sys.maxint)  # timeout needed to be able to get KeyboardInterrupt in time
+                cmd = cmdqueue.get(timeout=32767)  # timeout needed to be able to get KeyboardInterrupt in time
                 if cmd['msg'] == 'status':
                     is_unlocked = worker.check_status(cmd['device_name'], cmd['container_path'], cmd['mount_point'])
                     response['msg'] = 'unlocked' if is_unlocked else 'closed'
@@ -156,6 +156,11 @@ class WorkerHelper():
         self.is_dmsetup_nomangle = (int(version.split('.')[0]) < 2 and int(version.split('.')[1]) < 3 and int(version.split('.')[2]) < 72)
         # check if tcplay installed
         self.is_tc_installed = any([os.path.exists(os.path.join(p, 'tcplay')) for p in os.environ["PATH"].split(os.pathsep)])
+        # http://bugs.python.org/issue16903 (backward compat python3: solved in 3.2.4 but debian wheezy and ubuntu precise come with 3.2.3)
+        # up to 3.2.3: communicate with universal_newlines=True accepts bytes and doesn't accept strings
+        # since 3.2.4: accepts strings and doesn't accept bytes
+        from pkg_resources import parse_version
+        self.is_popen_communicate_broken = parse_version('3') < parse_version(sys.version) < parse_version('3.2.4')
 
     def communicate(self, request):
         """ Helper to get an synchronous response from UI (obtain Passphrase or signal create progress)
@@ -175,7 +180,8 @@ class WorkerHelper():
         # quit if abort or unexpected msg from ui
         if response['type'] != 'response':
             raise UserAbort()
-
+        if self.is_popen_communicate_broken:
+            response['msg'] = response['msg'].encode('utf-8')
         return response
 
     def check_status(self, device_name, container_path, mount_point=None):
@@ -464,7 +470,7 @@ class WorkerHelper():
 
         # remove group/other read/execute rights from fs root if possible
         if filesystem_type != 'ntfs':
-            tmp_mount = os.path.join('/tmp/',device_name)
+            tmp_mount = os.path.join('/tmp/', device_name)
             os.mkdir(tmp_mount)
             try:
                 subprocess.check_output(['mount', device_mapper_name, tmp_mount], stderr=subprocess.STDOUT, universal_newlines=True)
@@ -477,7 +483,7 @@ class WorkerHelper():
         self.close_container(device_name, container_path)
         # and clear tmp
         if filesystem_type != 'ntfs':
-            os.rmdir(os.path.join('/tmp/',device_name))
+            os.rmdir(os.path.join('/tmp/', device_name))
 
     def modify_sudoers(self, user_id, nopassword=False):
         """ Adds sudo access to the program (without password) for the current user (/etc/sudoers.d/)

@@ -179,7 +179,7 @@ class FormatContainerDialog(PasswordDialog):
         """
         message = _('Currently creating new container!\nDo you really want to quit?')
         mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-        mb.setButtonText(QMessageBox.Ok, _('Quit'))
+        mb.button.setText(QMessageBox.Ok, _('Quit'))
         return mb.exec_() == QMessageBox.Ok
 
 

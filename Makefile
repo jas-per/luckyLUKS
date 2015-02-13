@@ -16,12 +16,19 @@ dist_deb: dist
 	mkdir dist_deb
 	cp dist/${NAME}-${VERSION}.tar.gz dist_deb/${LOWER_NAME}_${VERSION}.orig.tar.gz
 	cd dist_deb && tar -xvzf ${LOWER_NAME}_${VERSION}.orig.tar.gz
-	cd dist_deb/${NAME}-${VERSION} && ${PYTHON} setup.py --command-packages=stdeb.command debianize --extra-cfg-file setup.cfg
+	cd dist_deb/${NAME}-${VERSION} && ${PYTHON} setup.py --command-packages=stdeb.command debianize --extra-cfg-file setup.cfg --with-python2=True --with-python3=True
 	cp CHANGELOG dist_deb/${NAME}-${VERSION}/debian/changelog
-	echo 'lucky-luks.1.gz usr/share/man/man1' >> dist_deb/${NAME}-${VERSION}/debian/${PYTHON}-${LOWER_NAME}.install
-	echo 'lucky-luks usr/bin' >> dist_deb/${NAME}-${VERSION}/debian/${PYTHON}-${LOWER_NAME}.install
-	echo 'README.rst usr/share/doc/${PYTHON}-${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/${PYTHON}-${LOWER_NAME}.install
+	echo 'README.rst' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.docs
+	echo 'README.rst' >> dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.docs
+	echo 'luckyluks.1.gz' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.manpages
+	echo 'luckyluks.1.gz' >> dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.manpages
+	echo 'luckyluks usr/bin' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install
+	cp dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.install
 	sed -e "s/dh_desktop//g" -i dist_deb/${NAME}-${VERSION}/debian/rules
+	echo 'override_dh_install:' >> dist_deb/${NAME}-${VERSION}/debian/rules
+	echo '\tdh_install --sourcedir=./' >> dist_deb/${NAME}-${VERSION}/debian/rules
+	echo '\tsed -i '\''1c#!/usr/bin/env python2'\'' debian/python-${LOWER_NAME}/usr/bin/${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/rules
+	echo '\tsed -i '\''1c#!/usr/bin/env python3'\'' debian/python3-${LOWER_NAME}/usr/bin/${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	cd dist_deb/${NAME}-${VERSION} && debuild -S -sa
  
 dist_zip:
@@ -58,7 +65,7 @@ init_locale:
 	else ${PYTHON} setup.py init_catalog -l ${NEW_LANG} -i ${NAME}/locale/${NAME}.pot -d ${NAME}/locale; fi;
 
 manpage:
-	help2man -n 'GUI for creating and unlocking LUKS/TrueCrypt volumes from container files' -N --no-discard-stderr ./lucky-luks | gzip -9 > lucky-luks.1.gz
+	help2man -n 'GUI for creating and unlocking LUKS/TrueCrypt volumes from container files' -N --no-discard-stderr ./luckyluks | gzip -9 > luckyluks.1.gz
 
 install:
 	${PYTHON} setup.py install --install-layout=deb
@@ -85,6 +92,6 @@ check:
 
 clean:
 	${PYTHON} setup.py clean
-	rm -rf build/ dist build ${NAME}-${VERSION} ${NAME}.egg-info deb_dist dist_zip dist_deb debian lucky-luks.1.gz
+	rm -rf build/ dist build ${NAME}-${VERSION} ${NAME}.egg-info deb_dist dist_zip dist_deb debian luckyluks.1.gz
 	find . -name '*.pyc' -delete
 

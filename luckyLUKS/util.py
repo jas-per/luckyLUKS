@@ -174,7 +174,7 @@ class WorkerMonitor(QThread):
         """ Listens on workers stdout and executes callbacks when answers arrive """
         while True:
             try:
-                buf = self.worker.stdout.readline()# blocks
+                buf = self.worker.stdout.readline()  # blocks
                 if buf:  # check if worker output pipe closed
                     response = json.loads(buf.strip(), encoding='utf-8')
                 else:
@@ -243,7 +243,7 @@ def is_installed(executable):
         :returns: True if executable found
         :rtype: bool
     """
-    return any([os.path.exists(os.path.join(p, executable)) for p in os.environ["PATH"].split(os.pathsep) + ['/sbin','/usr/sbin']])
+    return any([os.path.exists(os.path.join(p, executable)) for p in os.environ["PATH"].split(os.pathsep) + ['/sbin', '/usr/sbin']])
 
 
 def show_info(parent, message, title=''):

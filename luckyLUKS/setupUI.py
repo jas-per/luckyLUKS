@@ -336,8 +336,8 @@ class SetupDialog(QDialog):
             device_name=self.get_luks_device_name())
         )
         mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-        mb.setButtonText(QMessageBox.Ok, _('Create shortcut'))
-        mb.setButtonText(QMessageBox.Cancel, _('No, thanks'))
+        mb.button(QMessageBox.Ok).setText(_('Create shortcut'))
+        mb.button(QMessageBox.Cancel).setText(_('No, thanks'))
         if mb.exec_() == QMessageBox.Ok:
             self.create_startmenu_entry()
 
@@ -411,7 +411,7 @@ class SetupDialog(QDialog):
         if self.is_creating_countainer:
             message = _('Currently creating new container!\nDo you really want to quit?')
             mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-            mb.setButtonText(QMessageBox.Ok, _('Quit'))
+            mb.button(QMessageBox.Ok).setText(_('Quit'))
             return mb.exec_() == QMessageBox.Ok
         else:
             return True

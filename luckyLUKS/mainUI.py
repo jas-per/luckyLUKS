@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
         widget.setLayout(main_grid)
         widget.setContentsMargins(10, 10, 10, 10)
         self.setCentralWidget(widget)
-        
+
         # tray popup menu
         tray_popup = QMenu(self)
         tray_popup.addAction(QIcon.fromTheme('dialog-password'), self.luks_device_name).setEnabled(False)
@@ -192,13 +192,13 @@ class MainWindow(QMainWindow):
         if not self.is_unlocked:
             QApplication.instance().quit()
         elif not self.is_waiting_for_worker:
+            self.show()
             message = _('<b>{device_name}</b> >> {container_path}\n'
                         'is currently <b>unlocked</b>,\n'
                         'Close Container now and quit?').format(device_name=self.luks_device_name,
                                                                 container_path=self.encrypted_container)
-
             mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-            mb.setButtonText(QMessageBox.Ok, _('Quit'))
+            mb.button(QMessageBox.Ok).setText(_('Quit'))
             if mb.exec_() == QMessageBox.Ok:
                 self.do_close_container(shutdown=True)
             else:
