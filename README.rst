@@ -9,8 +9,11 @@ luckyLUKS was brought to life to offer an equivalent to the Windows TrueCrypt pr
 - You can easily add some encrypted private data to an unencrypted external harddrive you want to share with friends or take with you while travelling
 - Lots of users are already quite familiar with all this, because their first touch with data encryption has been TrueCrypt which uses the encrypted container approach
 
-luckyLUKS follows a keep-it-simple philosophy that aims to keep users from shooting themselves in the foot and might be a bit too simple for power users - please use `ZuluCrypt <https://code.google.com/p/zulucrypt/>`_ and/or `cryptsetup <https://code.google.com/p/cryptsetup/>`_/`tcplay <https://github.com/bwalex/tc-play>`_ on the command line if you need special options when creating new containers. On the other hand, to unlock existing containers luckyLUKS offers all you need and the possibility to create a shortcut to a container in your start menu or on the desktop. From the shortcut its just one click and you can enter your password to unlock the container. To get a better understanding of the technical details please see the FAQ at the end of this page.
+luckyLUKS follows a keep-it-simple philosophy that aims to keep users from shooting themselves in the foot and might be a bit too simple for power users - please use `ZuluCrypt <https://code.google.com/p/zulucrypt/>`_ and/or `cryptsetup <https://code.google.com/p/cryptsetup/>`_/`tcplay <https://github.com/bwalex/tc-play>`_ on the command line if you need special options when creating new containers. On the other hand, to unlock existing containers luckyLUKS offers all you need and the possibility to create a shortcut to a container in your start menu or on the desktop. From the shortcut its just one click and you can enter your password to unlock the container. To get a better understanding of the technical details please see the FAQ at the end of this page, for a first impression watch this screencast:
 
+.. image:: screencast.gif
+    :align: center
+    :alt: screencast of luckyLUKS
 
 Installation
 ============
