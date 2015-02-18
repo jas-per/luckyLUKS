@@ -20,10 +20,11 @@ import os.path
 
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
-    QSystemTrayIcon, QMessageBox, QIcon, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle
+    QSystemTrayIcon, QMessageBox, QIcon, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle, QLayout
 
-from luckyLUKS import util, PROJECT_URL
+from luckyLUKS import utils, PROJECT_URL
 from luckyLUKS.unlockUI import UnlockContainerDialog, UserInputError
+from luckyLUKS.utilsUI import show_alert
 
 
 class MainWindow(QMainWindow):
@@ -61,40 +62,40 @@ class MainWindow(QMainWindow):
 
         # check if cryptsetup and sudo are installed
         not_installed_msg = _('{program_name} executable not found!\nPlease install, eg for Debian/Ubuntu\n`apt-get install {program_name}`')
-        if not util.is_installed('cryptsetup'):
-            util.show_alert(self, not_installed_msg.format(program_name='cryptsetup'), critical=True)
-        if not util.is_installed('sudo'):
-            util.show_alert(self, not_installed_msg.format(program_name='sudo'), critical=True)
+        if not utils.is_installed('cryptsetup'):
+            show_alert(self, not_installed_msg.format(program_name='cryptsetup'), critical=True)
+        if not utils.is_installed('sudo'):
+            show_alert(self, not_installed_msg.format(program_name='sudo'), critical=True)
         # quick sanity checks before asking for passwd
         if os.getuid() == 0:
-            util.show_alert(self, _('Graphical programs should not be run as root!\nPlease call as normal user.'), critical=True)
+            show_alert(self, _('Graphical programs should not be run as root!\nPlease call as normal user.'), critical=True)
         if self.encrypted_container and not os.path.exists(self.encrypted_container):
-            util.show_alert(self, _('Container file not accessible\nor path does not exist:\n\n{file_path}').format(file_path=self.encrypted_container), critical=True)
+            show_alert(self, _('Container file not accessible\nor path does not exist:\n\n{file_path}').format(file_path=self.encrypted_container), critical=True)
 
         # only either encrypted_container or luks_device_name supplied
         if bool(self.encrypted_container) != bool(self.luks_device_name):
-            util.show_alert(self, _('Invalid arguments:\n'
-                                    'Please call without any arguments\n'
-                                    'or supply both container and name.\n\n'
-                                    '<b>{executable} -c CONTAINER -n NAME [-m MOUNTPOINT]</b>\n\n'
-                                    'CONTAINER = Path of the encrypted container file\n'
-                                    'NAME = A (unique) name to identify the unlocked container\n'
-                                    'Optional: MOUNTPOINT = where to mount the encrypted filesystem\n\n'
-                                    'If automatic mounting is configured on your system,\n'
-                                    'explicitly setting a mountpoint is not required\n\n'
-                                    'For more information, visit\n'
-                                    '<a href="{project_url}">{project_url}</a>'
-                                    ).format(executable=os.path.basename(sys.argv[0]),
-                                             project_url=PROJECT_URL), critical=True)
+            show_alert(self, _('Invalid arguments:\n'
+                               'Please call without any arguments\n'
+                               'or supply both container and name.\n\n'
+                               '<b>{executable} -c CONTAINER -n NAME [-m MOUNTPOINT]</b>\n\n'
+                               'CONTAINER = Path of the encrypted container file\n'
+                               'NAME = A (unique) name to identify the unlocked container\n'
+                               'Optional: MOUNTPOINT = where to mount the encrypted filesystem\n\n'
+                               'If automatic mounting is configured on your system,\n'
+                               'explicitly setting a mountpoint is not required\n\n'
+                               'For more information, visit\n'
+                               '<a href="{project_url}">{project_url}</a>'
+                               ).format(executable=os.path.basename(sys.argv[0]),
+                                        project_url=PROJECT_URL), critical=True)
 
         # spawn worker process with root privileges
         try:
-            self.worker = util.WorkerMonitor(self)
+            self.worker = utils.WorkerMonitor(self)
             # start communication thread
             self.worker.start()
 
-        except util.SudoException as se:
-            util.show_alert(self, format_exception(se), critical=True)
+        except utils.SudoException as se:
+            show_alert(self, format_exception(se), critical=True)
             return
 
         # if no arguments supplied, display dialog to gather this information
@@ -186,6 +187,7 @@ class MainWindow(QMainWindow):
             self.tray.setToolTip(_('{device_name} is closed').format(device_name=self.luks_device_name))
 
         self.show()
+        self.setFixedSize(self.sizeHint())
 
     def tray_quit(self):
         """ Triggered by clicking on `quit` in the systray popup: asks to close an unlocked container """
@@ -237,7 +239,7 @@ class MainWindow(QMainWindow):
                 UnlockContainerDialog(self, self.worker, self.luks_device_name, self.encrypted_container, self.mount_point).communicate()
                 self.is_unlocked = True
             except UserInputError as uie:
-                util.show_alert(self, format_exception(uie))
+                show_alert(self, format_exception(uie))
                 self.is_unlocked = False
             self.refresh()
 
@@ -265,7 +267,7 @@ class MainWindow(QMainWindow):
             :type shutdown: bool
         """
         if error:
-            util.show_alert(self, message)
+            show_alert(self, message)
         else:
             self.is_unlocked = False
         if not error and shutdown:  # automatic shutdown only if container successfully closed
@@ -297,7 +299,7 @@ class MainWindow(QMainWindow):
             :type critical: bool
         """
         if error:
-            util.show_alert(self, message, critical=True)
+            show_alert(self, message, critical=True)
         else:
             self.is_unlocked = (True if message == 'unlocked' else False)
             self.enable_ui()

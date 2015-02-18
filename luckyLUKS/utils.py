@@ -21,9 +21,10 @@ import sys
 import json
 import traceback
 from PyQt4.QtCore import QThread, QEvent
-from PyQt4.QtGui import QApplication, QMessageBox
+from PyQt4.QtGui import QApplication
 
 from luckyLUKS.unlockUI import PasswordDialog, SudoDialog, UserInputError
+from luckyLUKS.utilsUI import show_alert, show_info
 
 
 class SudoException(Exception):
@@ -244,45 +245,3 @@ def is_installed(executable):
         :rtype: bool
     """
     return any([os.path.exists(os.path.join(p, executable)) for p in os.environ["PATH"].split(os.pathsep) + ['/sbin', '/usr/sbin']])
-
-
-def show_info(parent, message, title=''):
-    """ Helper to show info message
-        :param parent: The parent widget to be passed to the modal dialog
-        :type parent: :class:`PyQt4.QtGui.QWidget`
-        :param message: The message that gets displayed in a modal dialog
-        :type message: str/unicode
-        :param title: Displayed in the dialogs titlebar
-        :type title: str/unicode
-    """
-    show_message(parent, message, title, QMessageBox.Information)
-
-
-def show_alert(parent, message, critical=False):
-    """ Helper to show error message
-        :param parent: The parent widget to be passed to the modal dialog
-        :type parent: :class:`PyQt4.QtGui.QWidget`
-        :param message: The message that gets displayed in a modal dialog
-        :type message: str/unicode
-        :param critical: If critical, quit application (default=False)
-        :type critical: bool
-    """
-    show_message(parent, message, _('Error'), QMessageBox.Critical if critical else QMessageBox.Warning)
-    if critical:
-        QApplication.instance().quit()
-
-
-def show_message(parent, message, title, message_type):
-    """ Generic helper to show message
-        :param parent: The parent widget to be passed to the modal dialog
-        :type parent: :class:`PyQt4.QtGui.QWidget`
-        :param message: The message that gets displayed in a modal dialog
-        :type message: str/unicode
-        :param title: Displayed in the dialogs titlebar
-        :type title: str/unicode
-        :param message_type: Type of message box to be used
-        :type message_type: :class:`QMessageBox.Icon`
-    """
-    if message != '':
-        mb = QMessageBox(message_type, title, message, QMessageBox.Ok, parent)
-        mb.exec_()

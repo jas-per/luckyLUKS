@@ -112,7 +112,7 @@ def run():
                 elif cmd['msg'] == 'close':
                     worker.close_container(cmd['device_name'], cmd['container_path'])
                 elif cmd['msg'] == 'create':
-                    worker.create_container(cmd['device_name'], cmd['container_path'], cmd['container_size'], cmd['filesystem_type'])
+                    worker.create_container(cmd['device_name'], cmd['container_path'], cmd['container_size'], cmd['filesystem_type'], cmd['encryption_format'])
                 elif cmd['msg'] == 'authorize':
                     worker.modify_sudoers(os.getenv("SUDO_UID"), nopassword=True)
                 else:
@@ -296,10 +296,10 @@ class WorkerHelper():
                 open_command = ['cryptsetup', 'luksOpen' if self.is_cryptsetup_legacy else 'open', container_path, device_name]
             else:
                 if not self.is_tc_installed or self.is_cryptsetup_legacy:
-                    raise WorkerException(_('Container file is not a LUKS encrypted device:\n{file_path}\n\n'
-                                            'If you want to open a TrueCrypt container\n'
+                    raise WorkerException(_('Container file is not a LUKS encrypted device:\n{file_path}\n\n').format(file_path=container_path) +
+                                          _('If you want to use TrueCrypt containers\n'
                                             'make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n'
-                                            'and `tcplay` is installed (eg for Debian/Ubuntu `apt-get install tcplay`)').format(file_path=container_path))
+                                            'and `tcplay` is installed (eg for Debian/Ubuntu `apt-get install tcplay`)'))
                 else:
                     open_command = ['cryptsetup', 'open', '--type', 'tcrypt', container_path, device_name]
 
@@ -347,7 +347,7 @@ class WorkerHelper():
                 if cpe.returncode != errno.EIO or len(cpe.output.splitlines()) > 1:
                     raise WorkerException(cpe.output)
 
-    def create_container(self, device_name, container_path, container_size, filesystem_type):
+    def create_container(self, device_name, container_path, container_size, filesystem_type, encryption_format):
         """ Creates a new LUKS container with requested size and filesystem after validating parameters
             Three step process: asks for passphrase after initializing container with random bits,
             and signals successful LUKS initialization before writing the filesystem
@@ -359,6 +359,8 @@ class WorkerHelper():
             :type container_size: int
             :param filesystem_type: The type of the filesystem inside the new container (supported: 'ext4', 'ext2', 'ntfs')
             :type filesystem_type: str
+            :param encryption_format: The type of the encryption format used for the new container (supported: 'LUKS', 'TrueCrypt')
+            :type encryption_format: str
             :raises: WorkerException
         """
         # STEP0: #####
@@ -412,9 +414,13 @@ class WorkerHelper():
                                   format(space_needed=str(int(container_size / 1024 / 1024)),
                                          space_available=str(int(free_space / 1024 / 1024))))
 
-        # validate filesystem
+        # validate encryption_format and filesystem
         if filesystem_type not in ['ext4', 'ext2', 'ntfs']:
             raise WorkerException(_('Unknown filesystem type: {filesystem_type}').format(filesystem_type=str(filesystem_type)))
+        if encryption_format == 'Truecrypt' and (not self.is_tc_installed or self.is_cryptsetup_legacy):
+            raise WorkerException(_('If you want to use TrueCrypt containers\n'
+                                    'make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n'
+                                    'and `tcplay` is installed (eg for Debian/Ubuntu `apt-get install tcplay`)'))
 
         # STEP1: #####
         # create container file by filling allocated space with random bits
@@ -432,24 +438,58 @@ class WorkerHelper():
             # TODO: this can only work with english locale, but this errormessage doesn't seem to be localized in sudo yet .. get rid of the problem (strip env?) or remove msg in all languages
 
         # STEP2: #####
-        # ask user for password and initialize LUKS container
+        # ask user for password and initialize LUKS/TrueCrypt container
 
         resp = self.communicate('getPassword')
-        cmd = ['cryptsetup', 'luksFormat', '-q', container_path]
-        with open(os.devnull) as DEVNULL:
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
-            __, errors = p.communicate(resp['msg'])
-        if p.returncode != 0 or errors:
-            raise WorkerException(errors)
 
-        # STEP3: #####
-        # open encrypted container and format with filesystem
+        if encryption_format == 'LUKS':
+            # cryptsetup takes care of loopback device itself
+            cmd = ['cryptsetup', 'luksFormat', '-q', container_path]
+            with open(os.devnull) as DEVNULL:
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+                __, errors = p.communicate(resp['msg'])
+            if p.returncode != 0 or errors:
+                raise WorkerException(errors)
+
+            open_command = ['cryptsetup', 'luksOpen' if self.is_cryptsetup_legacy else 'open', container_path, device_name]
+
+        elif encryption_format == 'TrueCrypt':
+            # with tcplay, the loopback device has to be set up manually
+            try:
+                available_loopback_device = subprocess.check_output(['losetup', '-f'], stderr=subprocess.STDOUT, universal_newlines=True).strip()
+                subprocess.check_output(['losetup', available_loopback_device, container_path], stderr=subprocess.STDOUT, universal_newlines=True)
+            except subprocess.CalledProcessError as cpe:
+                raise WorkerException(cpe.output)
+            with open(os.devnull) as DEVNULL:
+                from time import sleep
+                cmd = ['tcplay', '-c', '-d', available_loopback_device, '--insecure-erase']  # secure erase already done with dd
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+                # tcplay needs the password twice & confirm -> using sleep instead of parsing output (crypt-init takes ages with tcplay anyway)
+                sleep(1)
+                p.stdin.write(resp['msg'] + '\n')
+                sleep(1)
+                p.stdin.write(resp['msg'] + '\n')
+                sleep(1)
+                p.stdin.write('y\n')
+                __, err = p.communicate()
+            if p.returncode != 0:
+                raise WorkerException(str(err))
+            try:
+                subprocess.check_output(['losetup', '-d', available_loopback_device], stderr=subprocess.STDOUT, universal_newlines=True)
+            except subprocess.CalledProcessError as cpe:
+                raise WorkerException(cpe.output)
+
+            open_command = ['cryptsetup', 'open', '--type', 'tcrypt', container_path, device_name]
+
+        else:
+            raise WorkerException(_('Unknown encryption format: {enc_fmt}').format(enc_fmt=encryption_format))
 
         self.communicate('formatDone')  # signal status
 
-        cmd = ['cryptsetup', 'luksOpen' if self.is_cryptsetup_legacy else 'open', container_path, device_name]
+        # STEP3: #####
+        # open encrypted container and format with filesystem
         with open(os.devnull) as DEVNULL:
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+            p = subprocess.Popen(open_command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
             __, errors = p.communicate(resp['msg'])
         del resp  # get rid of pw
         if p.returncode != 0 or errors:

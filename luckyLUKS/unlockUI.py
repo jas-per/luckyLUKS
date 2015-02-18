@@ -20,7 +20,7 @@ from __future__ import unicode_literals
 
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QDialog, QMessageBox, QDialogButtonBox, \
-    QIcon, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox
+    QIcon, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout
 
 
 class UserInputError(Exception):
@@ -42,9 +42,10 @@ class PasswordDialog(QDialog):
             :param title: Displayed in the dialogs titlebar
             :type title: str or None
         """
-        super(PasswordDialog, self).__init__(parent)
+        super(PasswordDialog, self).__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
         self.setWindowTitle(title)
         self.layout = QVBoxLayout()
+        self.layout.setSizeConstraint(QLayout.SetFixedSize)
         self.layout.setSpacing(10)
 
         # create icon and label
@@ -155,10 +156,24 @@ class FormatContainerDialog(PasswordDialog):
             :type parent: :class:`gtk.Widget`
         """
         super(FormatContainerDialog, self).__init__(parent,
-                                                    message=_('Please choose a passphrase\nto encrypt the new container:\nAttention, the passphrase\nwill be SHOWN on screen'),
+                                                    message=_('Please choose a passphrase\nto encrypt the new container:\n'),
                                                     title=_('Enter new Passphrase'))
-        # show input on screen
-        self.pw_box.setEchoMode(QLineEdit.Normal)
+        # display passphrase checkbox and set default to show input
+        self.show_cb = QCheckBox(_('Display passphrase'))
+        self.show_cb.stateChanged.connect(self.on_cb_toggled)
+        self.show_box = QHBoxLayout()
+        self.show_box.addWidget(self.show_cb)
+        self.layout.insertLayout(2, self.show_box)
+        self.show_cb.setChecked(True)
+
+    def on_cb_toggled(self):
+        """ Event handler for checkbox toggle: show/hide passphrase input on screen """
+        if self.show_cb.isChecked():
+            # show input on screen
+            self.pw_box.setEchoMode(QLineEdit.Normal)
+        else:
+            # hide input on screen
+            self.pw_box.setEchoMode(QLineEdit.Password)
 
     def closeEvent(self, event):
         """ Event handler confirm close """
@@ -179,7 +194,7 @@ class FormatContainerDialog(PasswordDialog):
         """
         message = _('Currently creating new container!\nDo you really want to quit?')
         mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-        mb.button.setText(QMessageBox.Ok, _('Quit'))
+        mb.button(QMessageBox.Ok).setText(_('Quit'))
         return mb.exec_() == QMessageBox.Ok
 
 

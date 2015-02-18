@@ -23,11 +23,11 @@ import subprocess
 
 from PyQt4.QtCore import QTimer, Qt
 from PyQt4.QtGui import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
-    QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar
+    QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar, QLayout
 
-from luckyLUKS import PROJECT_URL
 from luckyLUKS.unlockUI import FormatContainerDialog, UnlockContainerDialog, UserInputError
-from luckyLUKS.util import show_info, show_alert, is_installed
+from luckyLUKS.utilsUI import QExpander, HelpDialog, show_info, show_alert
+from luckyLUKS.utils import is_installed
 
 
 class SetupDialog(QDialog):
@@ -41,7 +41,7 @@ class SetupDialog(QDialog):
         """ :param parent: The parent window/dialog used to enable modal behaviour
             :type parent: :class:`PyQt4.QtGui.QWidget`
         """
-        super(SetupDialog, self).__init__(parent)
+        super(SetupDialog, self).__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
         self.setWindowTitle(_('luckyLUKS'))
 
         self.worker = parent.worker
@@ -49,6 +49,7 @@ class SetupDialog(QDialog):
 
         # build ui
         self.layout = QVBoxLayout()
+        self.layout.setSizeConstraint(QLayout.SetFixedSize)
         style = QApplication.style()
         # set up stacked layout: initially only the main tab pane (unlock/create)
         self.main_pane = QStackedWidget()
@@ -59,14 +60,15 @@ class SetupDialog(QDialog):
 
         # Unlock Tab
         unlock_grid = QGridLayout()
-        unlock_grid.setColumnMinimumWidth(1, 200)
-        uheader = QLabel(_('<b>Unlock encrypted LUKS container</b>\n'
-                           'Please select container file and name\n'
-                           'and optionally a mount point'))
+        unlock_grid.setColumnMinimumWidth(1, 220)
+        uheader = QLabel(_('<b>Unlock an encrypted container</b>\n') +
+                         _('Please select container file and name'))
         uheader.setContentsMargins(0, 10, 0, 10)
         unlock_grid.addWidget(uheader, 0, 0, 1, 3, Qt.AlignCenter)
 
-        unlock_grid.addWidget(QLabel(_('container file')), 1, 0)
+        label = QLabel(_('container file'))
+        label.setIndent(5)
+        unlock_grid.addWidget(label, 1, 0)
         self.unlock_container_file = QLineEdit()
         unlock_grid.addWidget(self.unlock_container_file, 1, 1)
         button_choose_file = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '', self)
@@ -74,22 +76,32 @@ class SetupDialog(QDialog):
         unlock_grid.addWidget(button_choose_file, 1, 2)
         button_choose_file.clicked.connect(self.on_select_file_clicked)
 
-        unlock_grid.addWidget(QLabel(_('device name')), 2, 0)
+        label = QLabel(_('device name'))
+        label.setIndent(5)
+        unlock_grid.addWidget(label, 2, 0)
         self.unlock_device_name = QLineEdit()
         unlock_grid.addWidget(self.unlock_device_name, 2, 1)
+        # advanced settings
+        a_settings = QExpander(_('Advanced'), self, False)
+        unlock_grid.addWidget(a_settings, 3, 0, 1, 3)
 
-        unlock_grid.addWidget(QLabel(_('[mount point]')), 3, 0)
+        label = QLabel(_('mount point'))
+        label.setIndent(5)
+        unlock_grid.addWidget(label, 4, 0)
         self.unlock_mountpoint = QLineEdit()
-        unlock_grid.addWidget(self.unlock_mountpoint, 3, 1)
+        unlock_grid.addWidget(self.unlock_mountpoint, 4, 1)
         button_choose_mountpoint = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
         button_choose_mountpoint.setToolTip(_('choose folder'))
-        unlock_grid.addWidget(button_choose_mountpoint, 3, 2)
+        unlock_grid.addWidget(button_choose_mountpoint, 4, 2)
         button_choose_mountpoint.clicked.connect(self.on_select_mountpoint_clicked)
 
-        unlock_grid.setRowStretch(4, 1)
+        a_settings.addWidgets([unlock_grid.itemAtPosition(4, column).widget() for column in range(0, 3)])
+
+        unlock_grid.setRowStretch(5, 1)
+        unlock_grid.setRowMinimumHeight(5, 10)
         button_help_unlock = QPushButton(style.standardIcon(QStyle.SP_DialogHelpButton), _('Help'))
         button_help_unlock.clicked.connect(self.show_help_unlock)
-        unlock_grid.addWidget(button_help_unlock, 5, 2)
+        unlock_grid.addWidget(button_help_unlock, 6, 2)
 
         unlock_tab = QWidget()
         unlock_tab.setLayout(unlock_grid)
@@ -97,13 +109,14 @@ class SetupDialog(QDialog):
 
         # Create Tab
         create_grid = QGridLayout()
-        cheader = QLabel(_('<b>Create new encrypted LUKS container</b>\n'
-                           'Please choose container file and name\n'
-                           'and select filesystem and size'))
+        cheader = QLabel(_('<b>Create a new encrypted container</b>\n') +
+                         _('Please choose container file, name and size'))
         cheader.setContentsMargins(0, 10, 0, 10)
         create_grid.addWidget(cheader, 0, 0, 1, 3, Qt.AlignCenter)
 
-        create_grid.addWidget(QLabel(_('container file')), 1, 0)
+        label = QLabel(_('container file'))
+        label.setIndent(5)
+        create_grid.addWidget(label, 1, 0)
         self.create_container_file = QLineEdit()
         create_grid.addWidget(self.create_container_file, 1, 1)
         button_choose_file = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
@@ -111,11 +124,15 @@ class SetupDialog(QDialog):
         create_grid.addWidget(button_choose_file, 1, 2)
         button_choose_file.clicked.connect(self.on_save_file_clicked)
 
-        create_grid.addWidget(QLabel(_('device name')), 2, 0)
+        label = QLabel(_('device name'))
+        label.setIndent(5)
+        create_grid.addWidget(label, 2, 0)
         self.create_device_name = QLineEdit()
         create_grid.addWidget(self.create_device_name, 2, 1)
 
-        create_grid.addWidget(QLabel(_('container size')), 3, 0)
+        label = QLabel(_('container size'))
+        label.setIndent(5)
+        create_grid.addWidget(label, 3, 0)
         self.create_container_size = QSpinBox()
         self.create_container_size.setRange(1, 1000000000)
         self.create_container_size.setValue(1)
@@ -125,20 +142,39 @@ class SetupDialog(QDialog):
         self.create_size_unit.addItems(['MB', 'GB'])
         self.create_size_unit.setCurrentIndex(1)
         create_grid.addWidget(self.create_size_unit, 3, 2)
+        # advanced settings
+        a_settings = QExpander(_('Advanced'), self, False)
+        create_grid.addWidget(a_settings, 4, 0, 1, 3)
 
-        create_grid.addWidget(QLabel(_('filesystem')), 4, 0)
+        label = QLabel(_('format'))
+        label.setIndent(5)
+        create_grid.addWidget(label, 5, 0)
+        self.create_encryption_format = QComboBox()
+        self.create_encryption_format.addItem('LUKS')
+        self.create_encryption_format.addItem('TrueCrypt')
+        if not is_installed('tcplay'):
+            self.create_encryption_format.setEnabled(False)
+        self.create_encryption_format.setCurrentIndex(0)
+        create_grid.addWidget(self.create_encryption_format, 5, 1)
+        a_settings.addWidgets([create_grid.itemAtPosition(5, column).widget() for column in range(0, 2)])
+
+        label = QLabel(_('filesystem'))
+        label.setIndent(5)
+        create_grid.addWidget(label, 6, 0)
         filesystems = ['ext4', 'ext2', 'ntfs']
         self.create_filesystem_type = QComboBox()
         for filesystem in filesystems:
             if is_installed('mkfs.' + filesystem):
                 self.create_filesystem_type.addItem(filesystem)
         self.create_filesystem_type.setCurrentIndex(0)
-        create_grid.addWidget(self.create_filesystem_type, 4, 1)
+        create_grid.addWidget(self.create_filesystem_type, 6, 1)
+        a_settings.addWidgets([create_grid.itemAtPosition(6, column).widget() for column in range(0, 2)])
 
-        create_grid.setRowStretch(5, 1)
+        create_grid.setRowStretch(7, 1)
+        create_grid.setRowMinimumHeight(7, 10)
         button_help_create = QPushButton(style.standardIcon(QStyle.SP_DialogHelpButton), _('Help'))
         button_help_create.clicked.connect(self.show_help_create)
-        create_grid.addWidget(button_help_create, 6, 2)
+        create_grid.addWidget(button_help_create, 8, 2)
 
         create_tab = QWidget()
         create_tab.setLayout(create_grid)
@@ -205,7 +241,8 @@ class SetupDialog(QDialog):
                                      'device_name': self.encode_qt_output(self.create_device_name.text()),
                                      'container_path': location,
                                      'container_size': size,
-                                     'filesystem_type': str(self.create_filesystem_type.currentText())
+                                     'filesystem_type': str(self.create_filesystem_type.currentText()),
+                                     'encryption_format': str(self.create_encryption_format.currentText()),
                                      },
                             success_callback=self.on_luksFormat_prompt,
                             error_callback=lambda msg: self.display_create_failed(msg, stop_timer=True))
@@ -510,58 +547,44 @@ class SetupDialog(QDialog):
 
     def show_help_create(self):
         """ Triggered by clicking the help button (create tab) """
-        message = _('''<b>Create a new encrypted LUKS container</b>:
-
-Enter the path of the <b>new container file</b> in the textbox
-or click the button for a graphical create file dialog.
-
-The <b>device name</b> will be used to identify
-the unlocked container. It can be any name
-up to 16 characters, as long as it is unique.
-
-Enter the <b>size</b> of the container in GB or MB.
-
-The choice of <b>filesystem</b> is mostly relevant, if you
-want to access your encrypted data from MS Windows as well
-(otherwise just use the default)
-
-ext4 -> supported by all recent GNU/Linux distributions (default)
-ext2 -> older GNU/Linux filesystem (standard until ~2009)
-ntfs -> standard MS Windows filesystem, encrypted data
-        can be accessed with BOTH Linux and Windows
-        (use `FreeOFTE` or `doxbox` on Windows)
-
-Since access permissions cannot be mapped
-from ntfs to Linux, access to ntfs devices
-is usually not restricted -> take care
-when using unlocked ntfs devices in a multiuser environment!
-
-For more information, visit
-<a href="{project_url}">{project_url}</a>
-''').format(project_url=PROJECT_URL)
-        show_info(self, message, _('Help'))
+        header_text = _('<b>Create a new encrypted container</b>\n')
+        basic_help = _('Enter the path of the <b>new container file</b> in the textbox\n'
+                       'or click the button next the box for a graphical create file dialog.\n'
+                       '\n'
+                       'The <b>device name</b> will be used to identify the unlocked container.\n'
+                       'It can be any name up to 16 unicode characters, as long as it is unique.\n'
+                       '\n'
+                       'The <b>size</b> of the container can be provided in GB or MB. The container\n'
+                       'will get initialized with random data, this can take quite a while\n'
+                       '(1 hour for a 10GB container on an external drive is not unusual)')
+        advanced_help = _('The advanced settings are relevant, if you want to access the encrypted\n'
+                          'data from both Linux and MS Windows (otherwise just use the defaults)\n'
+                          '\n'
+                          'The standard disk <b>encryption format</b> on Linux is called LUKS.\n'
+                          'With <a href="https://github.com/t-d-k/doxbox">doxbox</a> you can use LUKS containers on Windows as well.\n'
+                          'The TrueCrypt format is quite popular on Windows, and can be used\n'
+                          'on Linux if `tcplay` is installed. Please note, that "hidden" TrueCrypt\n'
+                          'partitions are not supported by luckyLUKS!\n'
+                          '\n'
+                          'Choose the ntfs <b>filesystem</b> to be able to access your data from both\n'
+                          'Linux and Windows. Since access permissions cannot be mapped from\n'
+                          'ntfs to Linux, access to ntfs devices is usually not restricted ->\n'
+                          'take care when using unlocked ntfs devices in a multiuser environment!')
+        hd = HelpDialog(self, header_text, basic_help, advanced_help)
+        hd.exec_()
 
     def show_help_unlock(self):
         """ Triggered by clicking the help button (unlock tab) """
-        message = _('''<b>Unlock an encrypted container file</b>:
-
-Select the encrypted <b>container file</b>
-by clicking the button next to the textbox.
-Supports LUKS and Truecrypt container!
-
-The <b>device name</b> will be used
-to identify the unlocked container.
-It can be any name up to 16 characters, as long as it is unique.
--> you can't give two unlocked containers the same name
-
-The last argument is optional. The <b>mount point</b> is
-the folder, where you can access the files inside the container
-after unlocking.
-If automatic mounting is configured on your system,
-explicitly setting a mountpoint is usually not needed
-(but still possible).
-
-For more information, visit
-<a href="{project_url}">{project_url}</a>
-''').format(project_url=PROJECT_URL)
-        show_info(self, message, _('Help'))
+        header_text = _('<b>Unlock an encrypted container</b>\n')
+        basic_help = _('Select the encrypted <b>container file</b> by clicking the button next to\n'
+                       'the textbox. Both LUKS and Truecrypt containers are supported!\n'
+                       '\n'
+                       'The <b>device name</b> will be used to identify the unlocked container.\n'
+                       'It can be any name up to 16 unicode characters, as long as it is unique.\n'
+                       '-> you cannot give two unlocked containers the same name')
+        advanced_help = _('The <b>mount point</b> is the folder on your computer, where you can\n'
+                          'access the files inside the container after unlocking.\n'
+                          'If automatic mounting is configured on your system (eg with udev),\n'
+                          'explicitly setting a mountpoint is not neccessary (but still possible).')
+        hd = HelpDialog(self, header_text, basic_help, advanced_help)
+        hd.exec_()
