@@ -18,9 +18,15 @@ from __future__ import unicode_literals
 import sys
 import os.path
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
-    QSystemTrayIcon, QMessageBox, QIcon, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle, QLayout
+try:
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
+        QSystemTrayIcon, QMessageBox, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle, QLayout
+    from PyQt5.QtGui import QIcon
+except ImportError:  # py2 or py3 without pyqt5
+    from PyQt4.QtCore import Qt
+    from PyQt4.QtGui import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
+        QSystemTrayIcon, QMessageBox, QIcon, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle, QLayout
 
 from luckyLUKS import utils, PROJECT_URL
 from luckyLUKS.unlockUI import UnlockContainerDialog, UserInputError

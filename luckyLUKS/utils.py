@@ -20,8 +20,13 @@ import subprocess
 import sys
 import json
 import traceback
-from PyQt4.QtCore import QThread, QEvent
-from PyQt4.QtGui import QApplication
+
+try:
+    from PyQt5.QtCore import QThread, QEvent
+    from PyQt5.QtWidgets import QApplication
+except ImportError:  # py2 or py3 without pyqt5
+    from PyQt4.QtCore import QThread, QEvent
+    from PyQt4.QtWidgets import QApplication
 
 from luckyLUKS.unlockUI import PasswordDialog, SudoDialog, UserInputError
 from luckyLUKS.utilsUI import show_alert, show_info

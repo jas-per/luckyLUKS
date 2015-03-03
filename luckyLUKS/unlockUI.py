@@ -18,9 +18,15 @@ GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
 from __future__ import unicode_literals
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QDialog, QMessageBox, QDialogButtonBox, \
-    QIcon, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout
+try:
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import QDialog, QMessageBox, QDialogButtonBox, \
+        QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout
+    from PyQt5.QtGui import QIcon
+except ImportError:  # py2 or py3 without pyqt5
+    from PyQt4.QtCore import Qt
+    from PyQt4.QtGui import QDialog, QMessageBox, QDialogButtonBox, \
+        QIcon, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout
 
 
 class UserInputError(Exception):

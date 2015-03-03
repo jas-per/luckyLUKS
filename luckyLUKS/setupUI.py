@@ -21,9 +21,14 @@ import sys
 import codecs
 import subprocess
 
-from PyQt4.QtCore import QTimer, Qt
-from PyQt4.QtGui import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
-    QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar, QLayout
+try:
+    from PyQt5.QtCore import QTimer, Qt
+    from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
+        QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar
+except ImportError:  # py2 or py3 without pyqt5
+    from PyQt4.QtCore import QTimer, Qt
+    from PyQt4.QtGui import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
+        QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar, QLayout
 
 from luckyLUKS.unlockUI import FormatContainerDialog, UnlockContainerDialog, UserInputError
 from luckyLUKS.utilsUI import QExpander, HelpDialog, show_info, show_alert

@@ -99,8 +99,12 @@ def luckyLUKS(translation, *args, **kwargs):
 
 def startUI(parsed_args):
     """ Import the required GUI elements and create main window """
-    from PyQt4.QtGui import QApplication
-    from PyQt4.QtCore import QLocale, QTranslator, QLibraryInfo
+    try:
+        from PyQt5.QtWidgets import QApplication
+        from PyQt5.QtCore import QLocale, QTranslator, QLibraryInfo
+    except ImportError:  # py2 or py3 without pyqt5
+        from PyQt4.QtGui import QApplication
+        from PyQt4.QtCore import QLocale, QTranslator, QLibraryInfo
     from luckyLUKS.mainUI import MainWindow
 
     # l10n qt-gui elements
