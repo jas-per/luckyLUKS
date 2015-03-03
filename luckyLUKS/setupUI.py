@@ -213,7 +213,7 @@ class SetupDialog(QDialog):
         self.create_pane.setLayout(self.create_status_grid)
         self.create_status_grid.setVerticalSpacing(5)
 
-        header = QLabel(_('<b>Creating new LUKS container</b>\n'
+        header = QLabel(_('<b>Creating new container</b>\n'
                           'patience .. this might take a while'))
         header.setContentsMargins(0, 10, 0, 10)
         self.create_status_grid.addWidget(header, 0, 0, 1, 3, Qt.AlignCenter)
@@ -268,7 +268,7 @@ class SetupDialog(QDialog):
                                 error_callback=self.display_create_failed)
         except UserInputError:  # user cancelled dlg
             self.worker.execute({'type': 'abort', 'msg': ''}, None, None)  # notify worker process
-            self.display_create_failed(_('Initialize LUKS aborted'))
+            self.display_create_failed(_('Initialize container aborted'))
 
     def on_creating_filesystem(self, msg):
         """ Triggered after LUKS encryption got initialized.
@@ -584,7 +584,7 @@ class SetupDialog(QDialog):
                        '-> you cannot give two unlocked containers the same name')
         advanced_help = _('The <b>mount point</b> is the folder on your computer, where you can\n'
                           'access the files inside the container after unlocking.\n'
-                          'If automatic mounting is configured on your system (eg with udev),\n'
+                          'If automatic mounting is configured on your system (eg with udisks),\n'
                           'explicitly setting a mountpoint is not neccessary (but still possible).')
         hd = HelpDialog(self, header_text, basic_help, advanced_help)
         hd.exec_()

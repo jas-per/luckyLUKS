@@ -103,7 +103,9 @@ def run():
         while True:
             response = {'type': 'response', 'msg': 'success'}  # return success unless exception
             try:
-                cmd = cmdqueue.get(timeout=32767)  # timeout needed to be able to get KeyboardInterrupt in time
+                # arbitrary timeout needed to be able to get instant KeyboardInterrupt
+                # pythons queue.get() without timeout prefers not to be interrupted by KeyboardInterrupt :)
+                cmd = cmdqueue.get(timeout=32767)
                 if cmd['msg'] == 'status':
                     is_unlocked = worker.check_status(cmd['device_name'], cmd['container_path'], cmd['mount_point'])
                     response['msg'] = 'unlocked' if is_unlocked else 'closed'
@@ -224,14 +226,7 @@ class WorkerHelper():
 
         if is_unlocked:
             # make sure container file currently in use for device name is the same as the supplied container path
-            stat_output = subprocess.check_output(['cryptsetup', 'status', device_name], stderr=subprocess.STDOUT, universal_newlines=True)
-            # parsing status output: this has been unchanged in cryptsetup since version 1.3 (April 2011) - should be safe to use
-            for line in stat_output.split('\n'):
-                if 'loop:' in line:
-                    associated_container = line[line.find('/'):].strip()
-                    break
-
-            if container_path != associated_container:
+            if container_path != self.get_container(device_name):
                 raise WorkerException(_('Could not unlock container:\n{file_path}\n'
                                         '<b>{device_name}</b> is already unlocked\n'
                                         'using a different container\n'
@@ -249,11 +244,25 @@ class WorkerHelper():
                 # the goal here is not to confuse the user:
                 # thus Name==Label of the partition inside the encrypted container -> because thats what usually gets presented to the user (filemanager)
                 # see checks in create_container below for length restictions on partition labels
-                # dev/mapper would be able to handle longer names, but only slightly longer for unicode anyways
+                # dev/mapper would only be able to handle slightly longer names for unicode anyways
                 raise WorkerException(_('Device Name too long:\nOnly up to 16 characters possible, even less for unicode\n(roughly 8 non-ascii characters possible)'))
 
             if device_name[0:1] is '-' or '/' in device_name:  # cryptsetup thinks -isanoption and "/" is not supported by devmapper
                 raise WorkerException(_('Illegal Device Name!\nNames starting with `-` or using `/` are not possible'))
+
+            # prevent container from being unlocked multiple times with different names
+            if subprocess.check_output(['losetup', '-j', container_path], stderr=subprocess.STDOUT, universal_newlines=True) != '':
+                # container is already in use -> try to find out the device name
+                existing_device_name = ''
+                encrypted_devices = subprocess.check_output(['dmsetup', 'status', '--target', 'crypt'], stderr=subprocess.STDOUT, universal_newlines=True).strip()
+                for encrypted_device in encrypted_devices.split('\n'):
+                    encrypted_device = encrypted_device[:encrypted_device.find(':')].strip()
+                    if container_path == self.get_container(encrypted_device):
+                        existing_device_name = encrypted_device
+                        break
+                raise WorkerException(_('Cannot use the container\n'
+                                        '{file_path}\n'
+                                        'The container is already in use ({existing_device}).').format(file_path=container_path, existing_device=existing_device_name))
 
             # validate mount_point if given
             if not mount_point is None:
@@ -290,35 +299,51 @@ class WorkerHelper():
         is_unlocked = self.check_status(device_name, container_path, mount_point)
         if not is_unlocked:  # just return if unlocked -> does not mount an already unlocked container
 
-            # check if LUKS container, try Truecrypt otherwise (tc container cannot be identified by design)
-            container_is_luks = (subprocess.call(['cryptsetup', 'isLuks', container_path]) == 0)
-            if container_is_luks:
-                open_command = ['cryptsetup', 'luksOpen' if self.is_cryptsetup_legacy else 'open', container_path, device_name]
-            else:
-                if not self.is_tc_installed or self.is_cryptsetup_legacy:
-                    raise WorkerException(_('Container file is not a LUKS encrypted device:\n{file_path}\n\n').format(file_path=container_path) +
-                                          _('If you want to use TrueCrypt containers\n'
-                                            'make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n'
-                                            'and `tcplay` is installed (eg for Debian/Ubuntu `apt-get install tcplay`)'))
-                else:
-                    open_command = ['cryptsetup', 'open', '--type', 'tcrypt', container_path, device_name]
+            # workaround udisks-daemon crash (udisksd from udisks2 is okay): although cryptsetup is able to handle
+            # loopback device creation/teardown itself using this crashes udisks-daemon  -> manual loopback device handling here
+            try:
+                loop_dev = subprocess.check_output(['losetup', '-f', '--show', container_path]).strip()
+            except subprocess.CalledProcessError as cpe:
+                raise WorkerException(cpe.output)  # most likely no more loopdevices available
+            crypt_initialized = False
 
-            with open(os.devnull) as DEVNULL:
-                while not is_unlocked:
-                    p = subprocess.Popen(open_command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
-                    __, errors = p.communicate(self.communicate('getPassword')['msg'])
-                    if p.returncode == 0:
-                        is_unlocked = True
-                    elif p.returncode == 2:  # cryptsetup: no permission (bad passphrase)
-                        continue
+            try:
+                # check if LUKS container, try Truecrypt otherwise (tc container cannot be identified by design)
+                container_is_luks = (subprocess.call(['cryptsetup', 'isLuks', container_path]) == 0)
+                if container_is_luks:
+                    open_command = ['cryptsetup', 'luksOpen' if self.is_cryptsetup_legacy else 'open', loop_dev, device_name]
+                else:
+                    if not self.is_tc_installed or self.is_cryptsetup_legacy:
+                        raise WorkerException(_('Container file is not a LUKS encrypted device:\n{file_path}\n\n').format(file_path=loop_dev) +
+                                              _('If you want to use TrueCrypt containers\n'
+                                                'make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n'
+                                                'and `tcplay` is installed (eg for Debian/Ubuntu `apt-get install tcplay`)'))
                     else:
-                        raise WorkerException(errors)
+                        open_command = ['cryptsetup', 'open', '--type', 'tcrypt', loop_dev, device_name]
+
+                with open(os.devnull) as DEVNULL:
+                    while not is_unlocked:
+                        p = subprocess.Popen(open_command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+                        __, errors = p.communicate(self.communicate('getPassword')['msg'])
+                        if p.returncode == 0:
+                            is_unlocked = True
+                        elif p.returncode == 2:  # cryptsetup: no permission (bad passphrase)
+                            continue
+                        else:
+                            raise WorkerException(errors)
+                crypt_initialized = True
+            finally:
+                if not crypt_initialized:
+                    self.detach_loopback_device(loop_dev)
 
             if mount_point is not None:  # only mount if optional parameter mountpoint is set
                 try:
                     subprocess.check_output(['mount', self.get_device_mapper_name(device_name), mount_point], stderr=subprocess.STDOUT, universal_newlines=True)
                 except subprocess.CalledProcessError as cpe:
                     raise WorkerException(cpe.output)
+            # signal udev to process event queue (required for older udisks)
+            with open(os.devnull) as DEVNULL:
+                subprocess.call(['udevadm', 'trigger'], stdout=DEVNULL, stderr=subprocess.STDOUT)
 
     def close_container(self, device_name, container_path):
         """ Validates input and tries to unmount /dev/mapper/<name> and close container
@@ -339,13 +364,21 @@ class WorkerHelper():
             except subprocess.CalledProcessError as cpe:
                 if 'not mounted' not in cpe.output:  # ignore if not mounted and proceed with closing the container
                     raise WorkerException(_('Unable to close container, device is busy'))
-            # unmounting successfull, close container
+            # get reference to loopback device before closing the container
+            associated_loop = self.get_loopback_device(device_name)
             try:
                 subprocess.check_output(['cryptsetup', 'luksClose' if self.is_cryptsetup_legacy else 'close', device_name], stderr=subprocess.STDOUT, universal_newlines=True)
             except subprocess.CalledProcessError as cpe:
                 # ignore single remove ioctl: bug with older versions of dev-mapper/udev, see https://bugzilla.redhat.com/show_bug.cgi?id=1024347
                 if cpe.returncode != errno.EIO or len(cpe.output.splitlines()) > 1:
                     raise WorkerException(cpe.output)
+            # remove loopback device and signal udev to process event queue (required for older udisks)
+            try:
+                subprocess.check_output(['losetup', '-d', associated_loop], stderr=subprocess.STDOUT, universal_newlines=True)
+            except subprocess.CalledProcessError as cpe:
+                raise WorkerException(cpe.output)
+            with open(os.devnull) as DEVNULL:
+                subprocess.call(['udevadm', 'trigger'], stdout=DEVNULL, stderr=subprocess.STDOUT)
 
     def create_container(self, device_name, container_path, container_size, filesystem_type, encryption_format):
         """ Creates a new LUKS container with requested size and filesystem after validating parameters
@@ -363,11 +396,12 @@ class WorkerHelper():
             :type encryption_format: str
             :raises: WorkerException
         """
-        # STEP0: #####
-        # Sanitize user input and perform some checks before starting the process to avoid failure later on
-        # eg. dd writing out random data for 3 hours to initialize the new container
-        # only to find out that there is not enough space on the device,
+        # STEP0: #########################################################################
+        # Sanitize user input and perform some checks before starting the process to avoid
+        # failure later on eg. dd writing out random data for 3 hours to initialize the
+        # new container, only to find out that there is not enough space on the device,
         # or that the designated device name is already in use on /dev/mapper
+        #
 
         # validate container file
         if os.path.basename(container_path).strip() == '':
@@ -422,8 +456,9 @@ class WorkerHelper():
                                     'make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n'
                                     'and `tcplay` is installed (eg for Debian/Ubuntu `apt-get install tcplay`)'))
 
-        # STEP1: #####
+        # STEP1: ##########################################################
         # create container file by filling allocated space with random bits
+        #
 
         count = str(int(container_size / 1024 / 1024)) + 'K'
         # oflag=excl -> fail if the output file already exists
@@ -437,93 +472,98 @@ class WorkerHelper():
             raise WorkerException(errors.replace('Sessions still open, not unmounting', '').strip())
             # TODO: this can only work with english locale, but this errormessage doesn't seem to be localized in sudo yet .. get rid of the problem (strip env?) or remove msg in all languages
 
-        # STEP2: #####
-        # ask user for password and initialize LUKS/TrueCrypt container
+        # setup loopback device with created container
+        try:
+            reserved_loopback_device = subprocess.check_output(['losetup', '-f', '--show', container_path], stderr=subprocess.STDOUT, universal_newlines=True).strip()
+        except subprocess.CalledProcessError as cpe:
+            raise WorkerException(cpe.output)
+        crypt_initialized = False
+        try:
 
-        resp = self.communicate('getPassword')
+            # STEP2: ######################################################
+            # ask user for password and initialize LUKS/TrueCrypt container
+            #
 
-        if encryption_format == 'LUKS':
-            # cryptsetup takes care of loopback device itself
-            cmd = ['cryptsetup', 'luksFormat', '-q', container_path]
+            resp = self.communicate('getPassword')
+
+            if encryption_format == 'LUKS':
+
+                cmd = ['cryptsetup', 'luksFormat', '-q', reserved_loopback_device]
+                with open(os.devnull) as DEVNULL:
+                    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+                    __, errors = p.communicate(resp['msg'])
+                if p.returncode != 0 or errors:
+                    raise WorkerException(errors)
+
+                open_command = ['cryptsetup', 'luksOpen' if self.is_cryptsetup_legacy else 'open', reserved_loopback_device, device_name]
+
+            elif encryption_format == 'TrueCrypt':
+
+                with open(os.devnull) as DEVNULL:
+                    from time import sleep
+                    cmd = ['tcplay', '-c', '-d', reserved_loopback_device, '--insecure-erase']  # secure erase already done with dd
+                    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+                    # tcplay needs the password twice & confirm -> using sleep instead of parsing output (crypt-init takes ages with tcplay anyway)
+                    sleep(1)
+                    p.stdin.write(resp['msg'] + '\n')
+                    sleep(1)
+                    p.stdin.write(resp['msg'] + '\n')
+                    sleep(1)
+                    p.stdin.write('y\n')
+                    __, err = p.communicate()
+                if p.returncode != 0:
+                    raise WorkerException(str(err))
+
+                open_command = ['cryptsetup', 'open', '--type', 'tcrypt', reserved_loopback_device, device_name]
+
+            else:
+                raise WorkerException(_('Unknown encryption format: {enc_fmt}').format(enc_fmt=encryption_format))
+
+            crypt_initialized = True
+            self.communicate('formatDone')  # signal status
+
+            # STEP3: ############################################
+            # open encrypted container and format with filesystem
+            #
+
             with open(os.devnull) as DEVNULL:
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+                p = subprocess.Popen(open_command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
                 __, errors = p.communicate(resp['msg'])
+            del resp  # get rid of pw
             if p.returncode != 0 or errors:
                 raise WorkerException(errors)
 
-            open_command = ['cryptsetup', 'luksOpen' if self.is_cryptsetup_legacy else 'open', container_path, device_name]
-
-        elif encryption_format == 'TrueCrypt':
-            # with tcplay, the loopback device has to be set up manually
+            # fs-root of created ext-filesystem should belong to the user
+            device_mapper_name = self.get_device_mapper_name(device_name)
+            if filesystem_type == 'ext4':
+                cmd = ['mkfs.ext4', '-L', device_name, '-O', '^has_journal', '-m', '0', '-q', device_mapper_name]
+            elif filesystem_type == 'ext2':
+                cmd = ['mkfs.ext2', '-L', device_name, '-m', '0', '-q', device_mapper_name]
+            elif filesystem_type == 'ntfs':
+                cmd = ['mkfs.ntfs', '-L', device_name, '-Q', '-q', device_mapper_name]
             try:
-                available_loopback_device = subprocess.check_output(['losetup', '-f'], stderr=subprocess.STDOUT, universal_newlines=True).strip()
-                subprocess.check_output(['losetup', available_loopback_device, container_path], stderr=subprocess.STDOUT, universal_newlines=True)
-            except subprocess.CalledProcessError as cpe:
-                raise WorkerException(cpe.output)
-            with open(os.devnull) as DEVNULL:
-                from time import sleep
-                cmd = ['tcplay', '-c', '-d', available_loopback_device, '--insecure-erase']  # secure erase already done with dd
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
-                # tcplay needs the password twice & confirm -> using sleep instead of parsing output (crypt-init takes ages with tcplay anyway)
-                sleep(1)
-                p.stdin.write(resp['msg'] + '\n')
-                sleep(1)
-                p.stdin.write(resp['msg'] + '\n')
-                sleep(1)
-                p.stdin.write('y\n')
-                __, err = p.communicate()
-            if p.returncode != 0:
-                raise WorkerException(str(err))
-            try:
-                subprocess.check_output(['losetup', '-d', available_loopback_device], stderr=subprocess.STDOUT, universal_newlines=True)
+                subprocess.check_output(cmd, stderr=subprocess.STDOUT, universal_newlines=True)
             except subprocess.CalledProcessError as cpe:
                 raise WorkerException(cpe.output)
 
-            open_command = ['cryptsetup', 'open', '--type', 'tcrypt', container_path, device_name]
+            # remove group/other read/execute rights from fs root if possible
+            if filesystem_type != 'ntfs':
+                from uuid import uuid4
+                tmp_mount = os.path.join('/tmp/', str(uuid4()))
+                os.mkdir(tmp_mount)
+                try:
+                    subprocess.check_output(['mount', device_mapper_name, tmp_mount], stderr=subprocess.STDOUT, universal_newlines=True)
+                except subprocess.CalledProcessError as cpe:
+                    raise WorkerException(cpe.output)
+                os.chown(tmp_mount, int(os.getenv("SUDO_UID")), int(os.getenv("SUDO_GID")))
+                os.chmod(tmp_mount, 0o700)
 
-        else:
-            raise WorkerException(_('Unknown encryption format: {enc_fmt}').format(enc_fmt=encryption_format))
-
-        self.communicate('formatDone')  # signal status
-
-        # STEP3: #####
-        # open encrypted container and format with filesystem
-        with open(os.devnull) as DEVNULL:
-            p = subprocess.Popen(open_command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
-            __, errors = p.communicate(resp['msg'])
-        del resp  # get rid of pw
-        if p.returncode != 0 or errors:
-            raise WorkerException(errors)
-
-        # fs-root of created ext-filesystem should belong to the user
-        device_mapper_name = self.get_device_mapper_name(device_name)
-        if filesystem_type == 'ext4':
-            cmd = ['mkfs.ext4', '-L', device_name, '-O', '^has_journal', '-m', '0', '-q', device_mapper_name]
-        elif filesystem_type == 'ext2':
-            cmd = ['mkfs.ext2', '-L', device_name, '-m', '0', '-q', device_mapper_name]
-        elif filesystem_type == 'ntfs':
-            cmd = ['mkfs.ntfs', '-L', device_name, '-Q', '-q', device_mapper_name]
-        try:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT, universal_newlines=True)
-        except subprocess.CalledProcessError as cpe:
-            raise WorkerException(cpe.output)
-
-        # remove group/other read/execute rights from fs root if possible
-        if filesystem_type != 'ntfs':
-            tmp_mount = os.path.join('/tmp/', device_name)
-            os.mkdir(tmp_mount)
-            try:
-                subprocess.check_output(['mount', device_mapper_name, tmp_mount], stderr=subprocess.STDOUT, universal_newlines=True)
-            except subprocess.CalledProcessError as cpe:
-                raise WorkerException(cpe.output)
-            os.chown(tmp_mount, int(os.getenv("SUDO_UID")), int(os.getenv("SUDO_GID")))
-            os.chmod(tmp_mount, 0o700)
-
-        # finally close container
-        self.close_container(device_name, container_path)
-        # and clear tmp
-        if filesystem_type != 'ntfs':
-            os.rmdir(os.path.join('/tmp/', device_name))
+        finally:
+            # cleanup: either close container or just remove loopback if early abort/exception
+            if not crypt_initialized:
+                self.detach_loopback_device(reserved_loopback_device)
+            else:
+                self.close_container(device_name, container_path)
 
     def modify_sudoers(self, user_id, nopassword=False):
         """ Adds sudo access to the program (without password) for the current user (/etc/sudoers.d/)
@@ -567,6 +607,51 @@ class WorkerHelper():
         with open(os.devnull) as DEVNULL:
             returncode = subprocess.call(['cryptsetup', 'status', device_name], stdout=DEVNULL, stderr=subprocess.STDOUT)
         return returncode == 0
+
+    def detach_loopback_device(self, loopback_device):
+        """ Detaches given loopback device
+            :param loopback_device: The loopback device path (eg /dev/loop2)
+            :type loopback_device: str
+        """
+        with open(os.devnull) as DEVNULL:
+            subprocess.call(['losetup', '-d', loopback_device], stdout=DEVNULL, stderr=subprocess.STDOUT)
+
+    def get_loopback_device(self, device_name):
+        """ Returns the corresponding loopback device path to a given device mapper name
+            :param device_name: The device mapper name
+            :type device_name: str
+            :returns: The corresponding loopback device path (eg /dev/loop2)
+            :rtype: str
+        """
+        return self.get_crypt_status(device_name, 'device:')
+
+    def get_container(self, device_name):
+        """ Returns the corresponding container path to a given device mapper name
+            :param device_name: The device mapper name
+            :type device_name: str
+            :returns: The corresponding container path
+            :rtype: str
+        """
+        return self.get_crypt_status(device_name, 'loop:')
+
+    def get_crypt_status(self, device_name, search_property):
+        """ Parses cryptsetup status output for a device mapper name
+            and returns either loopback device or container path
+            :param device_name: The device mapper name
+            :type device_name: str
+            :param search_property: The property to return from status output
+            :type search_property: 'device:' or 'loop:'
+            :returns: loopback device or container path
+            :rtype: str
+        """
+        try:
+            stat_output = subprocess.check_output(['cryptsetup', 'status', device_name], stderr=subprocess.STDOUT, universal_newlines=True)
+            # parsing status output: this has been unchanged in cryptsetup since version 1.3 (April 2011) - should be safe to use
+            for line in stat_output.split('\n'):
+                if search_property in line:
+                    return line[line.find('/'):].strip()
+        except subprocess.CalledProcessError:
+            return ''  # device not found
 
     def get_device_mapper_name(self, device_name):
         """ Mapping for filesystem access to /dev/mapper/
