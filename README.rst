@@ -26,19 +26,19 @@ For Ubuntu and derivates just use this ppa::
 
 For other debian based distributions download this debian package and install manually:
 
-`python-luckyluks_0.9.7-1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v0.9.7/python-luckyluks_0.9.7-1_all.deb>`_
+`python-luckyluks_0.9.9-1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v0.9.9/python-luckyluks_0.9.9-1_all.deb>`_
 
 On other distriubution you can use the following zip-packaged python file:
 
-`luckyLUKS-0.9.7 <https://github.com/jas-per/luckyLUKS/releases/download/v0.9.7/luckyLUKS-0.9.7>`_
+`luckyLUKS-0.9.9 <https://github.com/jas-per/luckyLUKS/releases/download/v0.9.9/luckyLUKS-0.9.9>`_
 
 This file contains all resources and can be executed directly by the python intepreter. Place in :code:`/usr/bin` and change ownership to root::
 
-    > sudo mv luckyLUKS-0.9.7 /usr/bin/
-    > sudo chown root:root /usr/bin/luckyLUKS-0.9.7
-    > sudo chmod 755 /usr/bin/luckyLUKS-0.9.7
+    > sudo mv luckyLUKS-0.9.9 /usr/bin/
+    > sudo chown root:root /usr/bin/luckyLUKS-0.9.9
+    > sudo chmod 755 /usr/bin/luckyLUKS-0.9.9
 
-Then start with :code:`luckyLUKS-0.9.7` on the command line and create a desktop shortcut manually.
+Then start with :code:`luckyLUKS-0.9.9` on the command line and create a desktop shortcut manually.
 
 Dependencies
 ------------
@@ -99,7 +99,7 @@ All encryption is worthless if you can be `forced <http://xkcd.com/538/>`_ to su
 
 While this sounds nice and easy in theory, the practical implications to obtain plausible deniability are quite difficult to ensure. Every time you access data inside a hidden container any running application might leak information about its existence, e.g.. thumbnails, last access data, search indexes .. And even if you avoid this by using a read-only operating system like tails, access to the seemingly empty part of your encrypted outer container could still be proven by analyzing e.g. the underlying filesystem or wear-level data from a solid state drive. Further information can be found in the original TrueCryt `documentation <https://veracrypt.codeplex.com/wikipage?title=Security%20Requirements%20for%20Hidden%20Volumes>`_.
 
-Long story short: Hidden volumes are not supported by luckyLUKS right now, because you really have to know what you are doing to obtain plausible deniability - learning how to unlock a hidden container on the command line is just a small part of this. On the other hand it would not be difficult to add this feature to luckyLUKS. If you have a scenario where almost plausible deniability would be good enough or if you would like to share your general thoughts on this issue, please leave your comments `here <GITHUB_ISSUE_URL>`_.
+Long story short: Hidden containers are not supported by luckyLUKS right now, because you really have to know what you are doing to obtain plausible deniability - learning how to unlock a hidden container on the command line is just a small part of this. On the other hand it would not be difficult to add this feature to luckyLUKS. If you have a scenario where almost plausible deniability would be good enough or if you would like to share your general thoughts on this issue, please leave your comments `here <https://github.com/jas-per/luckyLUKS/issues/1>`_.
 
 
 Translations
@@ -116,7 +116,7 @@ Providing an easy to use graphical interface instead of relying on command line 
 - After editing the po file has to be compiled. Poedit can do this automatically: go to :code:`Preferences` and check :code:`Automatically compile .mo file on save`. Or use :code:`make compile_locales` from the source directory.
 - To test your translation, start luckyLUKS from the command line. You might have to set the locale explicitly, if your operation system is using a different locale (eg :code:`LANG=pt_PT.utf-8 LANGUAGE=pt ./luckyluks`)
 
-Don't worry too much about previewing messages, since all dialogs resize dynamically. Just make sure the labels in the main windows get displayed nicely. When you are happy with the results, send me the .po-file you created and your translation will get included in the next release. Pull request are welcome too :)
+Don't worry too much about previewing messages, since all dialogs resize dynamically. Just make sure the labels in the main windows get displayed nicely. When you are happy with the results, send me the .po-file you created and your translation will get included in the next release. Pull requests are welcome too :)
 
 
 Bugs
