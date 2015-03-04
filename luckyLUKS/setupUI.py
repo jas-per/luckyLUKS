@@ -24,7 +24,7 @@ import subprocess
 try:
     from PyQt5.QtCore import QTimer, Qt
     from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
-        QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar
+        QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar, QLayout
 except ImportError:  # py2 or py3 without pyqt5
     from PyQt4.QtCore import QTimer, Qt
     from PyQt4.QtGui import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
@@ -471,7 +471,10 @@ class SetupDialog(QDialog):
 
     def on_select_file_clicked(self):
         """ Triggered by clicking the select button next to container file (unlock) """
-        self.unlock_container_file.setText(QFileDialog.getOpenFileName(self, _('Please choose a container file'), os.getenv("HOME")))
+        file_path = QFileDialog.getOpenFileName(self, _('Please choose a container file'), os.getenv("HOME"))
+        if isinstance(file_path, tuple):  # qt5 returns tuple path/selected filter
+            file_path = file_path[0]
+        self.unlock_container_file.setText(file_path)
         self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
 
     def on_select_mountpoint_clicked(self):
@@ -488,11 +491,13 @@ class SetupDialog(QDialog):
         def_path = os.path.join(os.getenv("HOME"), _('new_container.bin'))
 
         while True:
-            save_path = self.encode_qt_output(QFileDialog.getSaveFileName(self,
-                                                                          _('Please create a container file'),
-                                                                          def_path,
-                                                                          options=QFileDialog.DontConfirmOverwrite))
-            self.buttons.button(QDialogButtonBox.Ok).setText(_('Create'))
+            save_path = QFileDialog.getSaveFileName(self,
+                                                    _('Please create a container file'),
+                                                    def_path,
+                                                    options=QFileDialog.DontConfirmOverwrite)
+                                                                          
+            save_path = self.encode_qt_output(save_path[0]) if isinstance(save_path, tuple) else self.encode_qt_output(save_path)
+            self.buttons.button(QDialogButtonBox.Ok).setText(_('Create'))  # qt keeps changing this..
 
             if os.path.exists(save_path):
                 show_alert(self, _('File already exists:\n{filename}\n\n'

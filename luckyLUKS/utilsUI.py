@@ -16,9 +16,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
 
-from PyQt4.QtCore import pyqtSignal, Qt
-from PyQt4.QtGui import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
-    QWidget, QDialogButtonBox, QLabel, QLayout, QIcon, QPainter, QStyle, QStyleOption
+try:
+    from PyQt5.QtCore import pyqtSignal, Qt
+    from PyQt5.QtWidgets import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
+        QWidget, QDialogButtonBox, QLabel, QLayout, QStyle, QStyleOption
+    from PyQt5.QtGui import QIcon, QPainter
+except ImportError:  # py2 or py3 without pyqt5
+    from PyQt4.QtCore import pyqtSignal, Qt
+    from PyQt4.QtGui import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
+        QWidget, QDialogButtonBox, QLabel, QLayout, QIcon, QPainter, QStyle, QStyleOption
 
 from luckyLUKS import PROJECT_URL
 
