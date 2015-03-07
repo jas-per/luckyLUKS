@@ -495,7 +495,7 @@ class SetupDialog(QDialog):
                                                     _('Please create a container file'),
                                                     def_path,
                                                     options=QFileDialog.DontConfirmOverwrite)
-                                                                          
+
             save_path = self.encode_qt_output(save_path[0]) if isinstance(save_path, tuple) else self.encode_qt_output(save_path)
             self.buttons.button(QDialogButtonBox.Ok).setText(_('Create'))  # qt keeps changing this..
 

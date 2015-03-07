@@ -8,18 +8,19 @@ VENV=/tmp/venv
 
 .PHONY: dist_zip dist_deb
 
-
-dist: clean compile_locales manpage
+# requires: python-babel, help2man, pandoc
+dist: clean compile_locales manpage readme
 	${PYTHON} setup.py sdist
 
+# requires stdeb >= 0.8.5
 dist_deb: dist
 	mkdir dist_deb
 	cp dist/${NAME}-${VERSION}.tar.gz dist_deb/${LOWER_NAME}_${VERSION}.orig.tar.gz
 	cd dist_deb && tar -xvzf ${LOWER_NAME}_${VERSION}.orig.tar.gz
 	cd dist_deb/${NAME}-${VERSION} && ${PYTHON} setup.py --command-packages=stdeb.command debianize --extra-cfg-file setup.cfg --with-python2=True --with-python3=True
 	cp CHANGELOG dist_deb/${NAME}-${VERSION}/debian/changelog
-	echo 'README.rst' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.docs
-	echo 'README.rst' >> dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.docs
+	echo 'README' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.docs
+	echo 'README' >> dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.docs
 	echo 'luckyluks.1.gz' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.manpages
 	echo 'luckyluks.1.gz' >> dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.manpages
 	echo 'luckyluks usr/bin' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install
@@ -27,8 +28,8 @@ dist_deb: dist
 	sed -e "s/dh_desktop//g" -i dist_deb/${NAME}-${VERSION}/debian/rules
 	echo 'override_dh_install:' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tdh_install --sourcedir=./' >> dist_deb/${NAME}-${VERSION}/debian/rules
-	echo '\tsed -i '\''1c#!/usr/bin/env python2'\'' debian/python-${LOWER_NAME}/usr/bin/${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tsed -i '\''1c#!/usr/bin/env python3'\'' debian/python3-${LOWER_NAME}/usr/bin/${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/rules
+	echo 'override_dh_pysupport:' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	cd dist_deb/${NAME}-${VERSION} && debuild -S -sa
  
 dist_zip:
@@ -66,6 +67,9 @@ init_locale:
 
 manpage:
 	help2man -n 'GUI for creating and unlocking LUKS/TrueCrypt volumes from container files' -N --no-discard-stderr ./luckyluks | gzip -9 > luckyluks.1.gz
+	
+readme:
+	sed '/Installation/,/repository tools./d' README.rst | pandoc -r rst -w plain -o README
 
 install:
 	${PYTHON} setup.py install --install-layout=deb
@@ -92,6 +96,6 @@ check:
 
 clean:
 	${PYTHON} setup.py clean
-	rm -rf build/ dist build ${NAME}-${VERSION} ${NAME}.egg-info deb_dist dist_zip dist_deb debian luckyluks.1.gz
+	rm -rf build/ dist build ${NAME}-${VERSION} ${NAME}.egg-info deb_dist dist_zip dist_deb debian luckyluks.1.gz README
 	find . -name '*.pyc' -delete
 

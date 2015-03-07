@@ -1,3 +1,12 @@
+luckyluks (0.9.10) unstable; urgency=low
+
+  * full qt5 support (python3 version uses pyqt5 if installed)
+
+  * packaging fixes
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Sat, 07 Mar 2015 08:44:23 +0100
+
+
 luckyluks (0.9.9) unstable; urgency=low
 
   * Create TrueCrypt containers
