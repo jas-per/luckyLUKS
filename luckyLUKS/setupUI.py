@@ -384,7 +384,9 @@ class SetupDialog(QDialog):
             self.create_startmenu_entry()
 
     def create_startmenu_entry(self):
-        """ Creates a startmenu entry that lets the user skip the setup dialog and go directly to the main UI """
+        """ Creates a startmenu entry that lets the user skip the setup dialog and go directly to the main UI 
+            Includes a workaround for the safety net some desktop environments create around the startupmenu
+        """
         import random, string
         # command to be saved in shortcut: calling the script with the arguments entered in the dialog
         # put all arguments in single quotes and escape those in the strings (shell escape ' -> '\'')
@@ -395,14 +397,13 @@ class SetupDialog(QDialog):
             cmd += " -m '" + self.get_mount_point().replace("'", "'\\'''") + "'"
 
         # create .desktop-file
-        filename = "".join(i for i in self.get_luks_device_name() if i not in " \/:*?<>|")  # xdg-desktop-menu has problems with some special chars
-        # most desktop menus dont delete the .desktop files if a user removes items from the menu -> those items wont be readded later, the random part of the filename works around this behaviour
-        filename = _('luckyLUKS') + '-' + filename + '-' + ''.join(random.choice(string.ascii_letters) for i in range(4)) + '.desktop'
+        filename = _('luckyLUKS') + '-' + ''.join(i for i in self.get_luks_device_name() if i not in ' \/:*?<>|')  # xdg-desktop-menu has problems with some special chars
         if is_installed('xdg-desktop-menu'):  # create in tmp and add freedesktop menu entry
-            desktop_file_path = '/tmp'
+            # some desktop menus dont delete the .desktop files if a user removes items from the menu but keep track of those files instead
+            # those items wont be readded later, the random part of the filename works around this behaviour
+            desktop_file_path = os.path.join('/tmp', filename + '-' + ''.join(random.choice(string.ascii_letters) for i in range(4)) + '.desktop')
         else:  # or create in users home dir
-            desktop_file_path = os.path.expanduser('~')
-        desktop_file_path = os.path.join(desktop_file_path, filename)
+            desktop_file_path = os.path.join(os.path.expanduser('~'), filename + '.desktop')
 
         desktop_file = codecs.open(desktop_file_path, 'w', 'utf-8')
 
@@ -424,6 +425,11 @@ class SetupDialog(QDialog):
         os.chmod(desktop_file_path, 0o700)  # some distros need the xbit to trust the desktop file
 
         if is_installed('xdg-desktop-menu'):
+            # safest way to ensure updates: explicit uninstall followed by installing a new desktop file with different random part
+            import glob
+            for desktopfile in glob.glob(os.path.expanduser('~') + '/.local/share/applications/' + filename + '-*.desktop'):
+                with open(os.devnull) as DEVNULL:
+                    subprocess.call(['xdg-desktop-menu', 'uninstall', desktopfile], stdout=DEVNULL, stderr=subprocess.STDOUT)
             try:
                 subprocess.check_output(['xdg-desktop-menu', 'install', '--novendor', desktop_file_path], stderr=subprocess.STDOUT, universal_newlines=True)
                 os.remove(desktop_file_path)  # remove from tmp
