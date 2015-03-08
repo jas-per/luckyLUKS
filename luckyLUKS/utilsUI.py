@@ -20,11 +20,11 @@ try:
     from PyQt5.QtCore import pyqtSignal, Qt
     from PyQt5.QtWidgets import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
         QWidget, QDialogButtonBox, QLabel, QLayout, QStyle, QStyleOption
-    from PyQt5.QtGui import QIcon, QPainter
+    from PyQt5.QtGui import QPainter
 except ImportError:  # py2 or py3 without pyqt5
     from PyQt4.QtCore import pyqtSignal, Qt
     from PyQt4.QtGui import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
-        QWidget, QDialogButtonBox, QLabel, QLayout, QIcon, QPainter, QStyle, QStyleOption
+        QWidget, QDialogButtonBox, QLabel, QLayout, QPainter, QStyle, QStyleOption
 
 from luckyLUKS import PROJECT_URL
 

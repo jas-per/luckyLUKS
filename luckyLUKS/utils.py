@@ -121,9 +121,9 @@ class WorkerMonitor(QThread):
                         while True:
                             master, slave = os.openpty()  # su has to be run from a terminal
                             p = subprocess.Popen("su -c '" + sys.argv[0] + " --ishelperprocess --sudouser " + str(os.getuid()) + "'", shell=True, stdin=slave, stderr=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, close_fds=True)
-                            os.write(master, PasswordDialog(parent=self.parent,
-                                                            message=_('<b>Sorry, incorrect password.</b>\n') + dlg_su_message if incorrent_pw_entered else dlg_su_message
-                                                            ).get_password() + '\n')
+                            os.write(master, (PasswordDialog(parent=self.parent,
+                                                             message=_('<b>Sorry, incorrect password.</b>\n') + dlg_su_message if incorrent_pw_entered else dlg_su_message
+                                                             ).get_password() + '\n').encode('UTF-8'))
                             p.wait()
 
                             if p.returncode == 0:

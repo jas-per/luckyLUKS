@@ -29,6 +29,7 @@ import stat
 import warnings
 import threading
 import signal
+from time import sleep
 try:
     import queue
 except ImportError:  # py2
@@ -374,6 +375,7 @@ class WorkerHelper():
                     raise WorkerException(cpe.output)
             # remove loopback device and signal udev to process event queue (required for older udisks)
             try:
+                sleep(0.2)  # give udisks some time to process closing of container ..
                 subprocess.check_output(['losetup', '-d', associated_loop], stderr=subprocess.STDOUT, universal_newlines=True)
             except subprocess.CalledProcessError as cpe:
                 raise WorkerException(cpe.output)
@@ -500,7 +502,6 @@ class WorkerHelper():
             elif encryption_format == 'TrueCrypt':
 
                 with open(os.devnull) as DEVNULL:
-                    from time import sleep
                     cmd = ['tcplay', '-c', '-d', reserved_loopback_device, '--insecure-erase']  # secure erase already done with dd
                     p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
                     # tcplay needs the password twice & confirm -> using sleep instead of parsing output (crypt-init takes ages with tcplay anyway)

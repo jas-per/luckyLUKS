@@ -21,12 +21,12 @@ import os.path
 try:
     from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
-        QSystemTrayIcon, QMessageBox, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle, QLayout
+        QSystemTrayIcon, QMessageBox, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle
     from PyQt5.QtGui import QIcon
 except ImportError:  # py2 or py3 without pyqt5
     from PyQt4.QtCore import Qt
     from PyQt4.QtGui import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
-        QSystemTrayIcon, QMessageBox, QIcon, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle, QLayout
+        QSystemTrayIcon, QMessageBox, QIcon, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle
 
 from luckyLUKS import utils, PROJECT_URL
 from luckyLUKS.unlockUI import UnlockContainerDialog, UserInputError
@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
 
         # L10n: program name - translatable for startmenu titlebar etc
         self.setWindowTitle(_('luckyLUKS'))
-        self.setWindowIcon(QIcon.fromTheme('dialog-password'))
+        self.setWindowIcon(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)))
 
         # check if cryptsetup and sudo are installed
         not_installed_msg = _('{program_name} executable not found!\nPlease install, eg for Debian/Ubuntu\n`apt-get install {program_name}`')
@@ -131,7 +131,7 @@ class MainWindow(QMainWindow):
         main_grid = QGridLayout()
         main_grid.setSpacing(10)
         icon = QLabel()
-        icon.setPixmap(QIcon.fromTheme('dialog-password').pixmap(32))
+        icon.setPixmap(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)).pixmap(32))
         main_grid.addWidget(icon, 0, 0)
         main_grid.addWidget(QLabel('<b>' + _('Handle encrypted container') + '</b>\n'), 0, 1, alignment=Qt.AlignCenter)
 
@@ -162,7 +162,7 @@ class MainWindow(QMainWindow):
 
         # tray popup menu
         tray_popup = QMenu(self)
-        tray_popup.addAction(QIcon.fromTheme('dialog-password'), self.luks_device_name).setEnabled(False)
+        tray_popup.addAction(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)), self.luks_device_name).setEnabled(False)
         tray_popup.addSeparator()
         self.tray_toggle_action = QAction(QApplication.style().standardIcon(QStyle. SP_DesktopIcon), _('Hide'), self)
         self.tray_toggle_action.triggered.connect(self.toggle_main_window)
@@ -172,7 +172,7 @@ class MainWindow(QMainWindow):
         tray_popup.addAction(quit_action)
         # systray
         self.tray = QSystemTrayIcon(self)
-        self.tray.setIcon(QIcon.fromTheme('dialog-password'))
+        self.tray.setIcon(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)))
         self.tray.setContextMenu(tray_popup)
         self.tray.activated.connect(self.toggle_main_window)
         self.tray.show()

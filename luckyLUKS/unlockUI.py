@@ -20,13 +20,13 @@ from __future__ import unicode_literals
 
 try:
     from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QDialog, QMessageBox, QDialogButtonBox, \
-        QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout
+    from PyQt5.QtWidgets import QDialog, QMessageBox, QDialogButtonBox, QStyle, \
+        QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout, QApplication
     from PyQt5.QtGui import QIcon
 except ImportError:  # py2 or py3 without pyqt5
     from PyQt4.QtCore import Qt
-    from PyQt4.QtGui import QDialog, QMessageBox, QDialogButtonBox, \
-        QIcon, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout
+    from PyQt4.QtGui import QDialog, QMessageBox, QDialogButtonBox, QStyle, \
+        QIcon, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout, QApplication
 
 
 class UserInputError(Exception):
@@ -60,7 +60,7 @@ class PasswordDialog(QDialog):
         self.header_box.setAlignment(Qt.AlignLeft)
         self.header_text = QLabel(message)
         icon = QLabel()
-        icon.setPixmap(QIcon.fromTheme('dialog-password').pixmap(32))
+        icon.setPixmap(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)).pixmap(32))
         self.header_box.addWidget(icon)
         self.header_box.addWidget(self.header_text)
         self.layout.addLayout(self.header_box)
