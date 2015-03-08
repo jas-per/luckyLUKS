@@ -314,7 +314,7 @@ class WorkerHelper():
                 if container_is_luks:
                     open_command = ['cryptsetup', 'luksOpen' if self.is_cryptsetup_legacy else 'open', loop_dev, device_name]
                 else:
-                    if not self.is_tc_installed or self.is_cryptsetup_legacy:
+                    if self.is_cryptsetup_legacy:
                         raise WorkerException(_('Container file is not a LUKS encrypted device:\n{file_path}\n\n').format(file_path=loop_dev) +
                                               _('If you want to use TrueCrypt containers\n'
                                                 'make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n'

@@ -385,6 +385,7 @@ class SetupDialog(QDialog):
 
     def create_startmenu_entry(self):
         """ Creates a startmenu entry that lets the user skip the setup dialog and go directly to the main UI """
+        import random, string
         # command to be saved in shortcut: calling the script with the arguments entered in the dialog
         # put all arguments in single quotes and escape those in the strings (shell escape ' -> '\'')
         cmd = os.path.abspath(sys.argv[0])
@@ -394,12 +395,14 @@ class SetupDialog(QDialog):
             cmd += " -m '" + self.get_mount_point().replace("'", "'\\'''") + "'"
 
         # create .desktop-file
-        filename = "".join(i for i in self.get_luks_device_name() if i not in " \/:*?<>|")  # xdg-desktop-menu has some problems with special chars
+        filename = "".join(i for i in self.get_luks_device_name() if i not in " \/:*?<>|")  # xdg-desktop-menu has problems with some special chars
+        # most desktop menus dont delete the .desktop files if a user removes items from the menu -> those items wont be readded later, the random part of the filename works around this behaviour
+        filename = _('luckyLUKS') + '-' + filename + '-' + ''.join(random.choice(string.ascii_letters) for i in range(4)) + '.desktop'
         if is_installed('xdg-desktop-menu'):  # create in tmp and add freedesktop menu entry
             desktop_file_path = '/tmp'
         else:  # or create in users home dir
             desktop_file_path = os.path.expanduser('~')
-        desktop_file_path = os.path.join(desktop_file_path, _('luckyLUKS') + '-' + filename + '.desktop')
+        desktop_file_path = os.path.join(desktop_file_path, filename)
 
         desktop_file = codecs.open(desktop_file_path, 'w', 'utf-8')
 
