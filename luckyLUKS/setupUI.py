@@ -384,10 +384,11 @@ class SetupDialog(QDialog):
             self.create_startmenu_entry()
 
     def create_startmenu_entry(self):
-        """ Creates a startmenu entry that lets the user skip the setup dialog and go directly to the main UI 
+        """ Creates a startmenu entry that lets the user skip the setup dialog and go directly to the main UI
             Includes a workaround for the safety net some desktop environments create around the startupmenu
         """
-        import random, string
+        import random
+        import string
         # command to be saved in shortcut: calling the script with the arguments entered in the dialog
         # put all arguments in single quotes and escape those in the strings (shell escape ' -> '\'')
         cmd = os.path.abspath(sys.argv[0])

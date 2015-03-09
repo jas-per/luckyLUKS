@@ -1,3 +1,20 @@
+luckyluks (1.0.0) unstable; urgency=low
+
+  * don't require tcplay to just open TrueCrypt containers
+
+  * fallback icon for dialog-password
+
+  * workaround for .desktop file creation
+
+  * wait before detaching loopback device (workaround udisks-daemon crashes)
+
+  * bugfixes python3
+
+  * fully tested on Ubuntu 14.04 & 12.04 (Unity, KDE, XFCE, LXDE) / Kubuntu 15.04-beta1 / Debian wheezy & jessie & unstable / Tails
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Sun, 08 Mar 2015 23:56:05 +0100
+
+
 luckyluks (0.9.10) unstable; urgency=low
 
   * full qt5 support (python3 version uses pyqt5 if installed)

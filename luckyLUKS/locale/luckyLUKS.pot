@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: luckyLUKS 0.9.10\n"
+"Project-Id-Version: luckyLUKS 1.0.0\n"
 "Report-Msgid-Bugs-To: Jasper van Hoorn (muzius@gmail.com)\n"
-"POT-Creation-Date: 2015-03-07 09:06+0100\n"
+"POT-Creation-Date: 2015-03-09 01:25+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
@@ -95,7 +95,7 @@ msgid "show program's version number and exit"
 msgstr ""
 
 #. L10n: program name - translatable for startmenu titlebar etc
-#: luckyLUKS/mainUI.py:66 luckyLUKS/setupUI.py:50 luckyLUKS/setupUI.py:402
+#: luckyLUKS/mainUI.py:66 luckyLUKS/setupUI.py:50 luckyLUKS/setupUI.py:401
 #: luckyLUKS/unlockUI.py:129
 msgid "luckyLUKS"
 msgstr ""
@@ -113,7 +113,7 @@ msgid ""
 "Please call as normal user."
 msgstr ""
 
-#: luckyLUKS/mainUI.py:79 luckyLUKS/worker.py:218
+#: luckyLUKS/mainUI.py:79 luckyLUKS/worker.py:219
 msgid ""
 "Container file not accessible\n"
 "or path does not exist:\n"
@@ -164,7 +164,7 @@ msgstr ""
 msgid "Hide"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:170 luckyLUKS/mainUI.py:209 luckyLUKS/setupUI.py:456
+#: luckyLUKS/mainUI.py:170 luckyLUKS/mainUI.py:209 luckyLUKS/setupUI.py:466
 #: luckyLUKS/unlockUI.py:203
 msgid "Quit"
 msgstr ""
@@ -220,7 +220,7 @@ msgstr ""
 msgid "Initializing .."
 msgstr ""
 
-#: luckyLUKS/setupUI.py:69 luckyLUKS/setupUI.py:588
+#: luckyLUKS/setupUI.py:69 luckyLUKS/setupUI.py:598
 msgid "<b>Unlock an encrypted container</b>\n"
 msgstr ""
 
@@ -256,7 +256,7 @@ msgstr ""
 msgid "Help"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:117 luckyLUKS/setupUI.py:560
+#: luckyLUKS/setupUI.py:117 luckyLUKS/setupUI.py:570
 msgid "<b>Create a new encrypted container</b>\n"
 msgstr ""
 
@@ -284,8 +284,8 @@ msgstr ""
 msgid "Create New Container"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:191 luckyLUKS/setupUI.py:463 luckyLUKS/setupUI.py:478
-#: luckyLUKS/setupUI.py:483 luckyLUKS/unlockUI.py:228
+#: luckyLUKS/setupUI.py:191 luckyLUKS/setupUI.py:473 luckyLUKS/setupUI.py:488
+#: luckyLUKS/setupUI.py:493 luckyLUKS/unlockUI.py:228
 msgid "Unlock"
 msgstr ""
 
@@ -322,7 +322,7 @@ msgid ""
 "Click on unlock to use the new container"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:301 luckyLUKS/setupUI.py:427 luckyLUKS/utils.py:77
+#: luckyLUKS/setupUI.py:301 luckyLUKS/setupUI.py:437 luckyLUKS/utils.py:77
 #: luckyLUKS/utils.py:133
 msgid "Success"
 msgstr ""
@@ -351,25 +351,25 @@ msgstr ""
 msgid "No, thanks"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:406
+#: luckyLUKS/setupUI.py:411
 msgid "Unlock {device_name}"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:409
+#: luckyLUKS/setupUI.py:414
 msgid "Encrypted Container Tool"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:410
+#: luckyLUKS/setupUI.py:415
 msgid "Encrypted Container"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:427
+#: luckyLUKS/setupUI.py:437
 msgid ""
 "<b>` {name} `</b>\n"
 "added to start menu"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:434 luckyLUKS/setupUI.py:436
+#: luckyLUKS/setupUI.py:444 luckyLUKS/setupUI.py:446
 msgid ""
 "Adding to start menu not possible,\n"
 "please place your shortcut manually.\n"
@@ -378,40 +378,40 @@ msgid ""
 "{location}"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:454 luckyLUKS/unlockUI.py:201
+#: luckyLUKS/setupUI.py:464 luckyLUKS/unlockUI.py:201
 msgid ""
 "Currently creating new container!\n"
 "Do you really want to quit?"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:466
+#: luckyLUKS/setupUI.py:476
 msgid ""
 "No tools to format the filesystem found\n"
 "Please install, eg for Debian/Ubuntu\n"
 "`apt-get install e2fslibs ntfs-3g`"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:469 luckyLUKS/setupUI.py:500
+#: luckyLUKS/setupUI.py:479 luckyLUKS/setupUI.py:510
 msgid "Create"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:474
+#: luckyLUKS/setupUI.py:484
 msgid "Please choose a container file"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:482
+#: luckyLUKS/setupUI.py:492
 msgid "Please choose a folder as mountpoint"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:491 luckyLUKS/setupUI.py:506
+#: luckyLUKS/setupUI.py:501 luckyLUKS/setupUI.py:516
 msgid "new_container.bin"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:495
+#: luckyLUKS/setupUI.py:505
 msgid "Please create a container file"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:503
+#: luckyLUKS/setupUI.py:513
 msgid ""
 "File already exists:\n"
 "{filename}\n"
@@ -420,7 +420,7 @@ msgid ""
 "as a new file!</b>"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:561
+#: luckyLUKS/setupUI.py:571
 msgid ""
 "Enter the path of the <b>new container file</b> in the textbox\n"
 "or click the button next the box for a graphical create file dialog.\n"
@@ -434,7 +434,7 @@ msgid ""
 "(1 hour for a 10GB container on an external drive is not unusual)"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:570
+#: luckyLUKS/setupUI.py:580
 msgid ""
 "The advanced settings are relevant, if you want to access the encrypted\n"
 "data from both Linux and MS Windows (otherwise just use the defaults)\n"
@@ -454,7 +454,7 @@ msgid ""
 "take care when using unlocked ntfs devices in a multiuser environment!"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:589
+#: luckyLUKS/setupUI.py:599
 msgid ""
 "Select the encrypted <b>container file</b> by clicking the button next to"
 "\n"
@@ -465,7 +465,7 @@ msgid ""
 "-> you cannot give two unlocked containers the same name"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:595
+#: luckyLUKS/setupUI.py:605
 msgid ""
 "The <b>mount point</b> is the folder on your computer, where you can\n"
 "access the files inside the container after unlocking.\n"
@@ -549,7 +549,7 @@ msgid ""
 "{error}"
 msgstr ""
 
-#: luckyLUKS/utils.py:200 luckyLUKS/utils.py:221 luckyLUKS/worker.py:129
+#: luckyLUKS/utils.py:200 luckyLUKS/utils.py:221 luckyLUKS/worker.py:130
 msgid ""
 "Error in communication:\n"
 "{error}"
@@ -565,25 +565,25 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: luckyLUKS/worker.py:82
+#: luckyLUKS/worker.py:83
 msgid "Please call with sudo."
 msgstr ""
 
-#: luckyLUKS/worker.py:85
+#: luckyLUKS/worker.py:86
 msgid ""
 "Missing information of the calling user in sudo environment.\n"
 "Please make sure sudo is configured correctly."
 msgstr ""
 
-#: luckyLUKS/worker.py:121
+#: luckyLUKS/worker.py:122
 msgid "Helper process received unknown command"
 msgstr ""
 
-#: luckyLUKS/worker.py:211 luckyLUKS/worker.py:418
+#: luckyLUKS/worker.py:212 luckyLUKS/worker.py:420
 msgid "Device Name is empty"
 msgstr ""
 
-#: luckyLUKS/worker.py:214 luckyLUKS/worker.py:424
+#: luckyLUKS/worker.py:215 luckyLUKS/worker.py:426
 msgid ""
 "Device Name is contains characters,\n"
 "not supported by your version of device mapper.\n"
@@ -591,14 +591,14 @@ msgid ""
 "Please restrict the name to 0-9, A-Z, a-z and #+-.:=@_"
 msgstr ""
 
-#: luckyLUKS/worker.py:221
+#: luckyLUKS/worker.py:222
 msgid ""
 "Container file\n"
 "{file_path}\n"
 "is not owned by user {username}"
 msgstr ""
 
-#: luckyLUKS/worker.py:230
+#: luckyLUKS/worker.py:231
 msgid ""
 "Could not unlock container:\n"
 "{file_path}\n"
@@ -607,27 +607,27 @@ msgid ""
 "Please change the name to unlock this container"
 msgstr ""
 
-#: luckyLUKS/worker.py:248
+#: luckyLUKS/worker.py:249
 msgid ""
 "Device Name too long:\n"
 "Only up to 16 characters possible, even less for unicode\n"
 "(roughly 8 non-ascii characters possible)"
 msgstr ""
 
-#: luckyLUKS/worker.py:251 luckyLUKS/worker.py:421
+#: luckyLUKS/worker.py:252 luckyLUKS/worker.py:423
 msgid ""
 "Illegal Device Name!\n"
 "Names starting with `-` or using `/` are not possible"
 msgstr ""
 
-#: luckyLUKS/worker.py:263
+#: luckyLUKS/worker.py:264
 msgid ""
 "Cannot use the container\n"
 "{file_path}\n"
 "The container is already in use ({existing_device})."
 msgstr ""
 
-#: luckyLUKS/worker.py:271
+#: luckyLUKS/worker.py:272
 msgid ""
 "Mount point not accessible\n"
 "or path does not exist:\n"
@@ -635,84 +635,84 @@ msgid ""
 "{mount_dir}"
 msgstr ""
 
-#: luckyLUKS/worker.py:274
+#: luckyLUKS/worker.py:275
 msgid ""
 "Already mounted at mount point:\n"
 "\n"
 "{mount_dir}"
 msgstr ""
 
-#: luckyLUKS/worker.py:277
+#: luckyLUKS/worker.py:278
 msgid ""
 "Designated mount directory\n"
 "{mount_dir}\n"
 "is not owned by user {username}"
 msgstr ""
 
-#: luckyLUKS/worker.py:281
+#: luckyLUKS/worker.py:282
 msgid ""
 "Designated mount directory\n"
 "{mount_dir}\n"
 "is not empty"
 msgstr ""
 
-#: luckyLUKS/worker.py:317
+#: luckyLUKS/worker.py:318
 msgid ""
 "Container file is not a LUKS encrypted device:\n"
 "{file_path}\n"
 "\n"
 msgstr ""
 
-#: luckyLUKS/worker.py:318 luckyLUKS/worker.py:455
+#: luckyLUKS/worker.py:319 luckyLUKS/worker.py:457
 msgid ""
 "If you want to use TrueCrypt containers\n"
 "make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n"
 "and `tcplay` is installed (eg for Debian/Ubuntu `apt-get install tcplay`)"
 msgstr ""
 
-#: luckyLUKS/worker.py:366
+#: luckyLUKS/worker.py:367
 msgid "Unable to close container, device is busy"
 msgstr ""
 
-#: luckyLUKS/worker.py:408
+#: luckyLUKS/worker.py:410
 msgid "Container Filename not supplied"
 msgstr ""
 
-#: luckyLUKS/worker.py:411
+#: luckyLUKS/worker.py:413
 msgid ""
 "Container File already exits:\n"
 "\n"
 "{file_path}"
 msgstr ""
 
-#: luckyLUKS/worker.py:414
+#: luckyLUKS/worker.py:416
 msgid ""
 "Folder for Container File does not exist:\n"
 "{folder_path}"
 msgstr ""
 
-#: luckyLUKS/worker.py:434
+#: luckyLUKS/worker.py:436
 msgid ""
 "Device Name too long:\n"
 "Only up to 16 characters possible, even less for unicode \n"
 "(roughly 8 non-ascii characters possible)"
 msgstr ""
 
-#: luckyLUKS/worker.py:437
+#: luckyLUKS/worker.py:439
 msgid ""
 "Device Name already in use:\n"
 "\n"
 "{device_name}"
 msgstr ""
 
-#: luckyLUKS/worker.py:441
+#: luckyLUKS/worker.py:443
 msgid ""
 "Container size too small\n"
 "to create encrypted filesystem\n"
 "Please choose at least 5MB"
 msgstr ""
 
-#: luckyLUKS/worker.py:447
+#: luckyLUKS/worker.py:449
 msgid ""
 "Not enough free disc space for container:\n"
 "\n"
@@ -720,19 +720,19 @@ msgid ""
 "{space_available} MB available"
 msgstr ""
 
-#: luckyLUKS/worker.py:453
+#: luckyLUKS/worker.py:455
 msgid "Unknown filesystem type: {filesystem_type}"
 msgstr ""
 
-#: luckyLUKS/worker.py:520
+#: luckyLUKS/worker.py:525
 msgid "Unknown encryption format: {enc_fmt}"
 msgstr ""
 
-#: luckyLUKS/worker.py:579
+#: luckyLUKS/worker.py:584
 msgid "Cannot change sudo rights, invalid username"
 msgstr ""
 
-#: luckyLUKS/worker.py:583
+#: luckyLUKS/worker.py:588
 msgid ""
 "I`m afraid I can`t do that.\n"
 "\n"

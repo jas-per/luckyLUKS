@@ -26,19 +26,19 @@ For Ubuntu and derivates just use this ppa::
 
 For other debian based distributions download this debian package and install manually:
 
-`python-luckyluks_0.9.9-1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v0.9.9/python-luckyluks_0.9.9-1_all.deb>`_
+`python-luckyluks_1.0.0-1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v1.0.0/python-luckyluks_1.0.0-1_all.deb>`_
 
-On other distriubution you can use the following zip-packaged python file:
+On other distriubutions you can use the following zip-packaged python file:
 
-`luckyLUKS-0.9.9 <https://github.com/jas-per/luckyLUKS/releases/download/v0.9.9/luckyLUKS-0.9.9>`_
+`luckyLUKS-1.0.0 <https://github.com/jas-per/luckyLUKS/releases/download/v1.0.0/luckyLUKS-1.0.0>`_
 
 This file contains all resources and can be executed directly by the python intepreter. Place in :code:`/usr/bin` and change ownership to root::
 
-    > sudo mv luckyLUKS-0.9.9 /usr/bin/
-    > sudo chown root:root /usr/bin/luckyLUKS-0.9.9
-    > sudo chmod 755 /usr/bin/luckyLUKS-0.9.9
+    > sudo mv luckyLUKS-1.0.0 /usr/bin/
+    > sudo chown root:root /usr/bin/luckyLUKS-1.0.0
+    > sudo chmod 755 /usr/bin/luckyLUKS-1.0.0
 
-Then start with :code:`luckyLUKS-0.9.9` on the command line and create a desktop shortcut manually.
+Then start with :code:`luckyLUKS-1.0.0` on the command line and create a desktop shortcut manually.
 
 Dependencies
 ------------
