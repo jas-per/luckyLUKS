@@ -504,16 +504,20 @@ class WorkerHelper():
                 with open(os.devnull) as DEVNULL:
                     cmd = ['tcplay', '-c', '-d', reserved_loopback_device, '--insecure-erase']  # secure erase already done with dd
                     p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
-                    # tcplay needs the password twice & confirm -> using sleep instead of parsing output (crypt-init takes ages with tcplay anyway)
+                    # tcplay needs the password twice & confirm -> using sleep instead of parsing output
+                    # ugly, but crypt-init takes ages with tcplay anyway
                     sleep(1)
                     p.stdin.write(resp['msg'] + '\n')
+                    p.stdin.flush()
                     sleep(1)
                     p.stdin.write(resp['msg'] + '\n')
+                    p.stdin.flush()
                     sleep(1)
-                    p.stdin.write('y\n')
-                    __, err = p.communicate()
+                    p.stdin.write('y\n')  # .. until tcplay gets localized :)
+                    p.stdin.flush()
+                    p.wait()
                 if p.returncode != 0:
-                    raise WorkerException(str(err))
+                    raise WorkerException(p.stderr.read())
 
                 open_command = ['cryptsetup', 'open', '--type', 'tcrypt', reserved_loopback_device, device_name]
 
