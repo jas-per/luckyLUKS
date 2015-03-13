@@ -1,3 +1,16 @@
+luckyluks (1.0.1) unstable; urgency=low
+
+  * bugfixes sudo setup & losetup
+    (closes https://github.com/jas-per/luckyLUKS/issues/4)
+
+  * use nosuid/nodev for mount
+    (thanks to https://github.com/mhogomchungu)
+
+  * modified access rights checks
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Fri, 13 Mar 2015 19:16:52 +0100
+
+
 luckyluks (1.0.0) unstable; urgency=low
 
   * don't require tcplay to just open TrueCrypt containers

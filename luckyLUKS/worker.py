@@ -29,6 +29,7 @@ import stat
 import warnings
 import threading
 import signal
+import random
 from time import sleep
 try:
     import queue
@@ -215,13 +216,10 @@ class WorkerHelper():
             raise WorkerException(_('Device Name is contains characters,\n'
                                     'not supported by your version of device mapper.\n\n'
                                     'Please restrict the name to 0-9, A-Z, a-z and #+-.:=@_'))
-        if not os.path.exists(container_path):
-            raise WorkerException(_('Container file not accessible\nor path does not exist:\n\n{file_path}').format(file_path=container_path))
         # check access rights to container file
-        if os.stat(container_path).st_uid != uid:
-            raise WorkerException(_('Container file\n{file_path}\nis not owned by user {username}').format(
-                file_path=container_path,
-                username=pwd.getpwuid(uid)[0]))
+        if not os.path.exists(container_path) or os.stat(container_path).st_uid != uid:
+            sleep(random.random())  # 0-1s to prevent misuse of exists()
+            raise WorkerException(_('Container file not accessible\nor path does not exist:\n\n{file_path}').format(file_path=container_path))
 
         is_unlocked = self.is_LUKS_active(device_name)
 
@@ -268,16 +266,13 @@ class WorkerHelper():
             # validate mount_point if given
             if not mount_point is None:
 
-                if not os.path.exists(mount_point):
+                if not os.path.exists(mount_point) or os.stat(mount_point).st_uid != uid:
+                    sleep(random.random())  # 0-1s to prevent misuse of exists()
                     raise WorkerException(_('Mount point not accessible\nor path does not exist:\n\n{mount_dir}').format(mount_dir=mount_point))
 
                 if os.path.ismount(mount_point):
                     raise WorkerException(_('Already mounted at mount point:\n\n{mount_dir}').format(mount_dir=mount_point))
 
-                if os.stat(mount_point).st_uid != uid:
-                    raise WorkerException(_('Designated mount directory\n{mount_dir}\nis not owned by user {username}').format(
-                        mount_dir=mount_point,
-                        username=pwd.getpwuid(uid)[0]))
                 if os.listdir(mount_point):
                     raise WorkerException(_('Designated mount directory\n{mount_dir}\nis not empty').format(mount_dir=mount_point))
 
@@ -303,7 +298,7 @@ class WorkerHelper():
             # workaround udisks-daemon crash (udisksd from udisks2 is okay): although cryptsetup is able to handle
             # loopback device creation/teardown itself using this crashes udisks-daemon  -> manual loopback device handling here
             try:
-                loop_dev = subprocess.check_output(['losetup', '-f', '--show', container_path]).strip()
+                loop_dev = subprocess.check_output(['losetup', '-f', '--show', container_path], stderr=subprocess.PIPE, universal_newlines=True).strip()
             except subprocess.CalledProcessError as cpe:
                 raise WorkerException(cpe.output)  # most likely no more loopdevices available
             crypt_initialized = False
@@ -339,7 +334,7 @@ class WorkerHelper():
 
             if mount_point is not None:  # only mount if optional parameter mountpoint is set
                 try:
-                    subprocess.check_output(['mount', self.get_device_mapper_name(device_name), mount_point], stderr=subprocess.STDOUT, universal_newlines=True)
+                    subprocess.check_output(['mount', '-o', 'nosuid,nodev', self.get_device_mapper_name(device_name), mount_point], stderr=subprocess.STDOUT, universal_newlines=True)
                 except subprocess.CalledProcessError as cpe:
                     raise WorkerException(cpe.output)
             # signal udev to process event queue (required for older udisks)
@@ -409,12 +404,6 @@ class WorkerHelper():
         if os.path.basename(container_path).strip() == '':
             raise WorkerException(_('Container Filename not supplied'))
 
-        if os.path.exists(container_path):
-            raise WorkerException(_('Container File already exits:\n\n{file_path}').format(file_path=container_path))
-
-        if not os.path.exists(os.path.dirname(container_path)):
-            raise WorkerException(_('Folder for Container File does not exist:\n{folder_path}').format(folder_path=os.path.dirname(container_path)))
-
         # validate device name
         if device_name is '':
             raise WorkerException(_('Device Name is empty'))
@@ -476,7 +465,7 @@ class WorkerHelper():
 
         # setup loopback device with created container
         try:
-            reserved_loopback_device = subprocess.check_output(['losetup', '-f', '--show', container_path], stderr=subprocess.STDOUT, universal_newlines=True).strip()
+            reserved_loopback_device = subprocess.check_output(['losetup', '-f', '--show', container_path], stderr=subprocess.PIPE, universal_newlines=True).strip()
         except subprocess.CalledProcessError as cpe:
             raise WorkerException(cpe.output)
         crypt_initialized = False
@@ -557,7 +546,7 @@ class WorkerHelper():
                 tmp_mount = os.path.join('/tmp/', str(uuid4()))
                 os.mkdir(tmp_mount)
                 try:
-                    subprocess.check_output(['mount', device_mapper_name, tmp_mount], stderr=subprocess.STDOUT, universal_newlines=True)
+                    subprocess.check_output(['mount', '-o', 'nosuid,nodev', device_mapper_name, tmp_mount], stderr=subprocess.STDOUT, universal_newlines=True)
                 except subprocess.CalledProcessError as cpe:
                     raise WorkerException(cpe.output)
                 os.chown(tmp_mount, int(os.getenv("SUDO_UID")), int(os.getenv("SUDO_GID")))
@@ -592,6 +581,9 @@ class WorkerHelper():
                                     'Execute the following commands in your shell:\n\n'
                                     'chmod 755 {program}\n'
                                     'sudo chown root:root {program}\n\n').format(program=program_path))
+
+        if not os.path.exists('/etc/sudoers.d'):
+            os.makedirs('/etc/sudoers.d')
 
         sudoers_file_path = '/etc/sudoers.d/lucky-luks'
         sudoers_file = open(sudoers_file_path, 'a')

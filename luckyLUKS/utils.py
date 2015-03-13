@@ -83,7 +83,6 @@ class WorkerMonitor(QThread):
         # using poll to wait for feedback from sudo
         self.pipe_events = select.poll()
         self._connect_to_sudo()
-        sudo_prompt = '[sudo] password for ' + os.getenv('USER')
         dlg_message = _('luckyLUKS needs administrative privileges.\nPlease enter your password:')
         incorrent_pw_entered = False
 
@@ -101,7 +100,7 @@ class WorkerMonitor(QThread):
                         fcntl.fcntl(self.worker.stdout.fileno(), fcntl.F_SETFL, fl & (~os.O_NONBLOCK))
                         break
 
-                    elif sudo_prompt in msg:
+                    elif 'SUDO_PASSWD_PROMPT' in msg:
                         self.worker.stdin.write(SudoDialog(parent=self.parent,
                                                            message=_('<b>Sorry, incorrect password.</b>\n') + dlg_message if incorrent_pw_entered else dlg_message,
                                                            toggle_function=lambda val: setattr(self, 'modify_sudoers', val)
@@ -167,7 +166,7 @@ class WorkerMonitor(QThread):
         original_language = os.getenv("LANGUAGE", "")
         env_lang_cleared = os.environ.copy()
         env_lang_cleared['LANGUAGE'] = 'C'
-        cmd = ['sudo', '-S', 'LANGUAGE=' + original_language, sys.argv[0], '--ishelperprocess']
+        cmd = ['sudo', '-S', '-p', 'SUDO_PASSWD_PROMPT', 'LANGUAGE=' + original_language, sys.argv[0], '--ishelperprocess']
         self.worker = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, universal_newlines=True, env=env_lang_cleared)
         # switch pipe to non-blocking IO
         fd = self.worker.stdout.fileno()
