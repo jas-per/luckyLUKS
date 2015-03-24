@@ -6,12 +6,13 @@ luckyLUKS was brought to life to offer an equivalent to the Windows TrueCrypt ap
 
 - No need to deal with partition table wizardry when creating an encrypted container, you basically create a file on a harddrive, it doesn't matter if its an internal one or an external usbstick etc..
 - Backup is straightforward as well, just copy the file somewhere else - done! No need to backup your precious data unencrypted
+- Share confidential information by copying the container file. Similar to gpg encrypted archives but easier to handle (unlock - view or modify data - lock again)
 - You can easily add some encrypted private data to an unencrypted external harddrive you want to share with friends or take with you while travelling
 - Lots of users are already quite familiar with all this, because their first touch with data encryption has been TrueCrypt which uses the encrypted container approach
 
 luckyLUKS follows a keep-it-simple philosophy that aims to keep users from shooting themselves in the foot and might be a bit too simple for power users - please use `ZuluCrypt <https://code.google.com/p/zulucrypt/>`_ and/or `cryptsetup <https://code.google.com/p/cryptsetup/>`_/`tcplay <https://github.com/bwalex/tc-play>`_ on the command line if you need special options when creating new containers. On the other hand, to unlock existing containers luckyLUKS offers all you need and the possibility to create a shortcut to a container in your start menu or on the desktop. From the shortcut its just one click and you can enter your password to unlock the container. For technical details please see the FAQ at the end of this page. For a first impression:
 
-.. image:: screencast.gif
+.. image:: https://github.com/jas-per/luckyLUKS/blob/gh-pages/screencast.gif
     :align: center
     :alt: screencast of luckyLUKS
 
