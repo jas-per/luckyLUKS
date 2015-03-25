@@ -163,8 +163,7 @@ class WorkerHelper():
         # http://bugs.python.org/issue16903 (backward compat python3: solved in 3.2.4 but debian wheezy and ubuntu precise come with 3.2.3)
         # up to 3.2.3: communicate with universal_newlines=True accepts bytes and doesn't accept strings
         # since 3.2.4: accepts strings and doesn't accept bytes
-        from pkg_resources import parse_version
-        self.is_popen_communicate_broken = parse_version('3') < parse_version(sys.version) < parse_version('3.2.4')
+        self.is_popen_communicate_broken = 0x03000000 < sys.hexversion < 0x03020400
 
     def communicate(self, request):
         """ Helper to get an synchronous response from UI (obtain Passphrase or signal create progress)
@@ -226,7 +225,7 @@ class WorkerHelper():
         if is_unlocked:
             # make sure container file currently in use for device name is the same as the supplied container path
             if container_path != self.get_container(device_name):
-                raise WorkerException(_('Could not unlock container:\n{file_path}\n'
+                raise WorkerException(_('Could not use container:\n{file_path}\n'
                                         '<b>{device_name}</b> is already unlocked\n'
                                         'using a different container\n'
                                         'Please change the name to unlock this container').

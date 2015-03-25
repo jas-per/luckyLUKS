@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-luckyLUKS is a GTK-GUI for creating and (un-)locking LUKS volumes from container files.
+luckyLUKS is a GUI for creating and (un-)locking LUKS volumes from container files.
 For more information visit: http://github.com/jas-per/luckyLUKS
 
 Copyright (c) 2014, Jasper van Hoorn (muzius@gmail.com)
@@ -18,12 +18,14 @@ GNU General Public License for more details. <http://www.gnu.org/licenses/>
 
 import locale
 import gettext
-import pkg_resources
+import os.path
+import inspect
 from luckyLUKS import main
 
-locale.setlocale(locale.LC_ALL, '')
-locale_dir = pkg_resources.resource_filename('luckyLUKS', 'locale')
 
+locale.setlocale(locale.LC_ALL, '')
+
+locale_dir = os.path.join(os.path.dirname(inspect.getsourcefile(main)), 'locale')
 translation = gettext.translation('luckyLUKS', locale_dir, fallback=True)
 
 main.luckyLUKS(translation)
