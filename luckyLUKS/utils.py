@@ -49,13 +49,11 @@ class WorkerMonitor(QThread):
     """
 
     def __init__(self, parent):
-        """ Daemon thread - because of blocking readline()
-            :param parent: The parent widget to be passed to modal dialogs
+        """ :param parent: The parent widget to be passed to modal dialogs
             :type parent: :class:`PyQt4.QtGui.QWidget`
             :raises: SudoException
         """
         super(WorkerMonitor, self).__init__()
-        self.daemon = True  # forced kill needed
         self.parent = parent
         self.success_callback, self.error_callback = None, None
         self.modify_sudoers = False
@@ -136,7 +134,7 @@ class WorkerMonitor(QThread):
                             elif p.returncode == 1:
                                 incorrent_pw_entered = True
                             else:
-                                raise SudoException(p.stdout.read())  # worker prints exceptions to stdout to keep them seperated from su: Authentication failure
+                                raise SudoException(p.stdout.read())  # worker prints exceptions to stdout to keep them separated from su: Authentication failure
 
                 elif event & select.POLLERR or event & select.POLLHUP:
                     raise SudoException(msg)
@@ -162,10 +160,8 @@ class WorkerMonitor(QThread):
             self.worker.wait()
         # since output from sudo gets parsed, it needs to be run without localization
         # saving original language settings to pass to the worker process
-        # TODO: this way, sanitizing env is handled by sudo - strip/recreate env here instead of copy?
         original_language = os.getenv("LANGUAGE", "")
-        env_lang_cleared = os.environ.copy()
-        env_lang_cleared['LANGUAGE'] = 'C'
+        env_lang_cleared = {'LANGUAGE': 'C'}
         cmd = ['sudo', '-S', '-p', 'SUDO_PASSWD_PROMPT', 'LANGUAGE=' + original_language, sys.argv[0], '--ishelperprocess']
         self.worker = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, universal_newlines=True, env=env_lang_cleared)
         # switch pipe to non-blocking IO
@@ -194,7 +190,14 @@ class WorkerMonitor(QThread):
                 # reset callbacks
                 self.success_callback, self.error_callback = None, None
 
-            except (IOError, ValueError, AssertionError) as communication_error:
+            except ValueError:
+                # worker didn't return json -> probably crashed, show everything printed to stdout 
+                buf += self.worker.stdout.read()
+                QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
+                                                                response=_('Error in communication:\n{error}').format(error=_(buf))))
+                return
+            
+            except (IOError, AssertionError) as communication_error:
                 QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
                                                                 response=_('Error in communication:\n{error}').format(error=format_exception(communication_error))))
                 return
@@ -241,8 +244,12 @@ class WorkerEvent(QEvent):
 
 def is_installed(executable):
     """ Checks if executable is present
-        Because the executables will be run by the priviledged worker process,
+        Because the executables will be run by the privileged worker process,
         the usual root path gets added to the users environment path.
+        Note: an executable at a custom user path will only be used by the worker process,
+        if it is also present in the root path -> therefore this check might not be 100% accurate,
+        but almost always sufficient. Checking the real root path would require calling
+        the worker process, this way in rare cases the worker might throw an error on startup
         :param executable: executable to search for
         :type executable: str
         :returns: True if executable found
