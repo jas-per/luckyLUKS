@@ -19,14 +19,14 @@ GNU General Public License for more details. <http://www.gnu.org/licenses/>
 try:
     from PyQt5.QtCore import pyqtSignal, Qt
     from PyQt5.QtWidgets import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
-        QWidget, QDialogButtonBox, QLabel, QLayout, QStyle, QStyleOption
+        QWidget, QDialogButtonBox, QLabel, QLayout, QStyle, QStyleOption, QSizePolicy
     from PyQt5.QtGui import QPainter
 except ImportError:  # py2 or py3 without pyqt5
     from PyQt4.QtCore import pyqtSignal, Qt
     from PyQt4.QtGui import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
-        QWidget, QDialogButtonBox, QLabel, QLayout, QPainter, QStyle, QStyleOption
+        QWidget, QDialogButtonBox, QLabel, QLayout, QPainter, QStyle, QStyleOption, QSizePolicy
 
-from luckyLUKS import PROJECT_URL
+from luckyLUKS import VERSION_STRING, PROJECT_URL
 
 
 class HelpDialog(QDialog):
@@ -75,8 +75,10 @@ class HelpDialog(QDialog):
         expander.addWidgets([advanced_text])
         # footer
         layout.addStretch()
-        footer = QLabel(_('For more information, visit\n'
-                          '<a href="{project_url}">{project_url}</a>').format(project_url=PROJECT_URL))
+        footer = QLabel(_('luckyLUKS version {version}\n'
+                          'For more information, visit\n'
+                          '<a href="{project_url}">{project_url}</a>').format(version=VERSION_STRING,
+                                                                              project_url=PROJECT_URL))
         footer.setContentsMargins(0, 10, 0, 10)
         layout.addWidget(footer)
         # button
@@ -126,6 +128,8 @@ def show_message(parent, message, title, message_type):
     """
     if message != '':
         mb = QMessageBox(message_type, title, message, QMessageBox.Ok, parent)
+        # make QMessageBox better adaptable to long messages (eg stacktraces)
+        mb.findChildren(QLabel)[1].setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         mb.exec_()
 
 

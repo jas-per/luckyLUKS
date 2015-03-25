@@ -191,12 +191,12 @@ class WorkerMonitor(QThread):
                 self.success_callback, self.error_callback = None, None
 
             except ValueError:
-                # worker didn't return json -> probably crashed, show everything printed to stdout 
+                # worker didn't return json -> probably crashed, show everything printed to stdout
                 buf += self.worker.stdout.read()
                 QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
                                                                 response=_('Error in communication:\n{error}').format(error=_(buf))))
                 return
-            
+
             except (IOError, AssertionError) as communication_error:
                 QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
                                                                 response=_('Error in communication:\n{error}').format(error=format_exception(communication_error))))

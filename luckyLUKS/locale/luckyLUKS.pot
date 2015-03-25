@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: luckyLUKS 1.0.0\n"
+"Project-Id-Version: luckyLUKS 1.0.2\n"
 "Report-Msgid-Bugs-To: Jasper van Hoorn (muzius@gmail.com)\n"
-"POT-Creation-Date: 2015-03-13 19:07+0100\n"
+"POT-Creation-Date: 2015-03-25 19:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
@@ -113,7 +113,7 @@ msgid ""
 "Please call as normal user."
 msgstr ""
 
-#: luckyLUKS/mainUI.py:79 luckyLUKS/worker.py:222
+#: luckyLUKS/mainUI.py:79 luckyLUKS/worker.py:221
 msgid ""
 "Container file not accessible\n"
 "or path does not exist:\n"
@@ -322,8 +322,8 @@ msgid ""
 "Click on unlock to use the new container"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:301 luckyLUKS/setupUI.py:437 luckyLUKS/utils.py:77
-#: luckyLUKS/utils.py:132
+#: luckyLUKS/setupUI.py:301 luckyLUKS/setupUI.py:437 luckyLUKS/utils.py:75
+#: luckyLUKS/utils.py:130
 msgid "Success"
 msgstr ""
 
@@ -509,7 +509,7 @@ msgid ""
 "Enter container passphrase:"
 msgstr ""
 
-#: luckyLUKS/utils.py:71
+#: luckyLUKS/utils.py:69
 msgid ""
 "Permanent `sudo` authorization for\n"
 "{program}\n"
@@ -517,24 +517,24 @@ msgid ""
 "/etc/sudoers.d/lucky-luks\n"
 msgstr ""
 
-#: luckyLUKS/utils.py:86
+#: luckyLUKS/utils.py:84
 msgid ""
 "luckyLUKS needs administrative privileges.\n"
 "Please enter your password:"
 msgstr ""
 
-#: luckyLUKS/utils.py:105 luckyLUKS/utils.py:124
+#: luckyLUKS/utils.py:103 luckyLUKS/utils.py:122
 msgid "<b>Sorry, incorrect password.</b>\n"
 msgstr ""
 
-#: luckyLUKS/utils.py:116
+#: luckyLUKS/utils.py:114
 msgid ""
 "You are not allowed to execute this script with `sudo`.\n"
 "If you want to modify your `sudo` configuration,\n"
 "please enter the <b>root/administrator</b> password.\n"
 msgstr ""
 
-#: luckyLUKS/utils.py:129
+#: luckyLUKS/utils.py:127
 msgid ""
 "`sudo` configuration successfully modified, now\n"
 "you can use luckyLUKS with your user password.\n"
@@ -543,13 +543,14 @@ msgid ""
 "just tick the checkbox in the following dialog.\n"
 msgstr ""
 
-#: luckyLUKS/utils.py:149
+#: luckyLUKS/utils.py:147
 msgid ""
 "Communication with sudo process failed\n"
 "{error}"
 msgstr ""
 
-#: luckyLUKS/utils.py:199 luckyLUKS/utils.py:220 luckyLUKS/worker.py:131
+#: luckyLUKS/utils.py:197 luckyLUKS/utils.py:202 luckyLUKS/utils.py:223
+#: luckyLUKS/worker.py:131
 msgid ""
 "Error in communication:\n"
 "{error}"
@@ -557,11 +558,12 @@ msgstr ""
 
 #: luckyLUKS/utilsUI.py:78
 msgid ""
+"luckyLUKS version {version}\n"
 "For more information, visit\n"
 "<a href=\"{project_url}\">{project_url}</a>"
 msgstr ""
 
-#: luckyLUKS/utilsUI.py:111
+#: luckyLUKS/utilsUI.py:113
 msgid "Error"
 msgstr ""
 
@@ -579,11 +581,11 @@ msgstr ""
 msgid "Helper process received unknown command"
 msgstr ""
 
-#: luckyLUKS/worker.py:213 luckyLUKS/worker.py:409
+#: luckyLUKS/worker.py:212 luckyLUKS/worker.py:408
 msgid "Device Name is empty"
 msgstr ""
 
-#: luckyLUKS/worker.py:216 luckyLUKS/worker.py:415
+#: luckyLUKS/worker.py:215 luckyLUKS/worker.py:414
 msgid ""
 "Device Name is contains characters,\n"
 "not supported by your version of device mapper.\n"
@@ -591,36 +593,36 @@ msgid ""
 "Please restrict the name to 0-9, A-Z, a-z and #+-.:=@_"
 msgstr ""
 
-#: luckyLUKS/worker.py:229
+#: luckyLUKS/worker.py:228
 msgid ""
-"Could not unlock container:\n"
+"Could not use container:\n"
 "{file_path}\n"
 "<b>{device_name}</b> is already unlocked\n"
 "using a different container\n"
 "Please change the name to unlock this container"
 msgstr ""
 
-#: luckyLUKS/worker.py:247
+#: luckyLUKS/worker.py:246
 msgid ""
 "Device Name too long:\n"
 "Only up to 16 characters possible, even less for unicode\n"
 "(roughly 8 non-ascii characters possible)"
 msgstr ""
 
-#: luckyLUKS/worker.py:250 luckyLUKS/worker.py:412
+#: luckyLUKS/worker.py:249 luckyLUKS/worker.py:411
 msgid ""
 "Illegal Device Name!\n"
 "Names starting with `-` or using `/` are not possible"
 msgstr ""
 
-#: luckyLUKS/worker.py:262
+#: luckyLUKS/worker.py:261
 msgid ""
 "Cannot use the container\n"
 "{file_path}\n"
 "The container is already in use ({existing_device})."
 msgstr ""
 
-#: luckyLUKS/worker.py:271
+#: luckyLUKS/worker.py:270
 msgid ""
 "Mount point not accessible\n"
 "or path does not exist:\n"
@@ -628,64 +630,64 @@ msgid ""
 "{mount_dir}"
 msgstr ""
 
-#: luckyLUKS/worker.py:274
+#: luckyLUKS/worker.py:273
 msgid ""
 "Already mounted at mount point:\n"
 "\n"
 "{mount_dir}"
 msgstr ""
 
-#: luckyLUKS/worker.py:277
+#: luckyLUKS/worker.py:276
 msgid ""
 "Designated mount directory\n"
 "{mount_dir}\n"
 "is not empty"
 msgstr ""
 
-#: luckyLUKS/worker.py:313
+#: luckyLUKS/worker.py:312
 msgid ""
 "Container file is not a LUKS encrypted device:\n"
 "{file_path}\n"
 "\n"
 msgstr ""
 
-#: luckyLUKS/worker.py:314 luckyLUKS/worker.py:446
+#: luckyLUKS/worker.py:313 luckyLUKS/worker.py:445
 msgid ""
 "If you want to use TrueCrypt containers\n"
 "make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n"
 "and `tcplay` is installed (eg for Debian/Ubuntu `apt-get install tcplay`)"
 msgstr ""
 
-#: luckyLUKS/worker.py:362
+#: luckyLUKS/worker.py:361
 msgid "Unable to close container, device is busy"
 msgstr ""
 
-#: luckyLUKS/worker.py:405
+#: luckyLUKS/worker.py:404
 msgid "Container Filename not supplied"
 msgstr ""
 
-#: luckyLUKS/worker.py:425
+#: luckyLUKS/worker.py:424
 msgid ""
 "Device Name too long:\n"
 "Only up to 16 characters possible, even less for unicode \n"
 "(roughly 8 non-ascii characters possible)"
 msgstr ""
 
-#: luckyLUKS/worker.py:428
+#: luckyLUKS/worker.py:427
 msgid ""
 "Device Name already in use:\n"
 "\n"
 "{device_name}"
 msgstr ""
 
-#: luckyLUKS/worker.py:432
+#: luckyLUKS/worker.py:431
 msgid ""
 "Container size too small\n"
 "to create encrypted filesystem\n"
 "Please choose at least 5MB"
 msgstr ""
 
-#: luckyLUKS/worker.py:438
+#: luckyLUKS/worker.py:437
 msgid ""
 "Not enough free disc space for container:\n"
 "\n"
@@ -693,19 +695,19 @@ msgid ""
 "{space_available} MB available"
 msgstr ""
 
-#: luckyLUKS/worker.py:444
+#: luckyLUKS/worker.py:443
 msgid "Unknown filesystem type: {filesystem_type}"
 msgstr ""
 
-#: luckyLUKS/worker.py:514
+#: luckyLUKS/worker.py:513
 msgid "Unknown encryption format: {enc_fmt}"
 msgstr ""
 
-#: luckyLUKS/worker.py:573
+#: luckyLUKS/worker.py:572
 msgid "Cannot change sudo rights, invalid username"
 msgstr ""
 
-#: luckyLUKS/worker.py:577
+#: luckyLUKS/worker.py:576
 msgid ""
 "I`m afraid I can`t do that.\n"
 "\n"
