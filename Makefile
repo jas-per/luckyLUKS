@@ -28,8 +28,8 @@ dist_deb: dist
 	sed -e "s/dh_desktop//g" -i dist_deb/${NAME}-${VERSION}/debian/rules
 	echo 'override_dh_install:' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tdh_install --sourcedir=./' >> dist_deb/${NAME}-${VERSION}/debian/rules
-	echo '\tsed -i '\''1c#!/usr/bin/env python3'\'' debian/python3-${LOWER_NAME}/usr/bin/${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/rules
-	echo 'override_dh_pysupport:' >> dist_deb/${NAME}-${VERSION}/debian/rules
+	echo '\tsed -i '\''1c#!/usr/bin/python3'\'' debian/python3-${LOWER_NAME}/usr/bin/${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/rules
+	echo 'version=3\nhttps://github.com/jas-per/luckyLUKS/releases /jas-per/luckyLUKS/archive/v(.+)\.tar\.gz' >> dist_deb/${NAME}-${VERSION}/debian/watch
 	cd dist_deb/${NAME}-${VERSION} && debuild -S -sa
  
 dist_zip:

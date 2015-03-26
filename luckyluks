@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 """
 luckyLUKS is a GUI for creating and (un-)locking LUKS volumes from container files.
 For more information visit: http://github.com/jas-per/luckyLUKS
