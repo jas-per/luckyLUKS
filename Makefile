@@ -8,7 +8,7 @@ VENV=/tmp/venv
 
 .PHONY: dist_zip dist_deb
 
-# requires: python-babel, help2man, pandoc
+# requires: python-setuptools, python-stdeb, python-babel, help2man, pandoc
 dist: clean compile_locales manpage readme
 	${PYTHON} setup.py sdist
 
@@ -26,6 +26,7 @@ dist_deb: dist
 	echo 'luckyluks usr/bin' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install
 	cp dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.install
 	sed -e "s/dh_desktop//g" -i dist_deb/${NAME}-${VERSION}/debian/rules
+	sed -e "s/dh binary-indep/dh binary-indep --with python2,python3/g" -i dist_deb/${NAME}-${VERSION}/debian/rules
 	echo 'override_dh_install:' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tdh_install --sourcedir=./' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tsed -i '\''1c#!/usr/bin/python3'\'' debian/python3-${LOWER_NAME}/usr/bin/${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/rules

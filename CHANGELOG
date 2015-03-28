@@ -1,12 +1,17 @@
+luckyluks (1.0.3) unstable; urgency=low
+
+  * improved debian packaging
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Fri, 27 Mar 2015 13:49:53 +0100
+
+
 luckyluks (1.0.2) unstable; urgency=low
 
   * removed dependency on pkg_resources
 
   * improved error passing from worker to UI
 
-  * improved debian packaging
-
- -- Jasper van Hoorn <muzius@gmail.com>  Thu, 27 Mar 2015 23:11:28 +0100
+ -- Jasper van Hoorn <muzius@gmail.com>  Thu, 26 Mar 2015 23:11:28 +0100
 
 
 luckyluks (1.0.1) unstable; urgency=low
