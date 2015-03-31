@@ -25,7 +25,7 @@ from luckyLUKS import main
 This is the entry point, when run from the zip-file package.
 To access resources inside the zip file, pkgutil.get_data() has to be used.
 Because of this, gettext will be initialized here,
-#to search for a .mo file for the users locale inside the zip
+to search for a .mo file for the users locale inside the zip
 """
 if __name__ == '__main__':
 
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     l10n_resource = None
 
     # try to find the corresponding gettext file (*.mo) for the users locale in the zip file
-    if loc != 'C':
+    if loc is not None and loc != 'C':
         try:
             l10n_resource = pkgutil.get_data('luckyLUKS', 'locale/{0}/LC_MESSAGES/luckyLUKS.mo'.format(loc))
         except IOError:

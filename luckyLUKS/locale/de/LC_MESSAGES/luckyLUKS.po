@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: luckyLUKS 0.9.1\n"
 "Report-Msgid-Bugs-To: Jasper van Hoorn (muzius@gmail.com)\n"
-"POT-Creation-Date: 2015-03-25 19:13+0100\n"
-"PO-Revision-Date: 2015-03-25 19:14+0100\n"
+"POT-Creation-Date: 2015-03-31 19:16+0200\n"
+"PO-Revision-Date: 2015-03-31 19:17+0100\n"
 "Last-Translator: Jasper van Hoorn <muzius@gmail.com>\n"
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -116,12 +116,12 @@ msgid "show program's version number and exit"
 msgstr "Versionsinformation anzeigen und beenden"
 
 #. L10n: program name - translatable for startmenu titlebar etc
-#: luckyLUKS/mainUI.py:66 luckyLUKS/setupUI.py:50 luckyLUKS/setupUI.py:401
+#: luckyLUKS/mainUI.py:67 luckyLUKS/setupUI.py:50 luckyLUKS/setupUI.py:401
 #: luckyLUKS/unlockUI.py:129
 msgid "luckyLUKS"
 msgstr "luckyLUKS"
 
-#: luckyLUKS/mainUI.py:70
+#: luckyLUKS/mainUI.py:71
 msgid ""
 "{program_name} executable not found!\n"
 "Please install, eg for Debian/Ubuntu\n"
@@ -131,7 +131,7 @@ msgstr ""
 "Bitte installieren, z.B. unter Debian/Ubuntu\n"
 "`apt-get install {program_name}`"
 
-#: luckyLUKS/mainUI.py:77
+#: luckyLUKS/mainUI.py:78
 msgid ""
 "Graphical programs should not be run as root!\n"
 "Please call as normal user."
@@ -140,7 +140,7 @@ msgstr ""
 "als Administrator gestarten werden!\n"
 "Bitte als normaler Nutzer ausführen."
 
-#: luckyLUKS/mainUI.py:79 luckyLUKS/worker.py:221
+#: luckyLUKS/mainUI.py:80 luckyLUKS/worker.py:221
 msgid ""
 "Container file not accessible\n"
 "or path does not exist:\n"
@@ -151,7 +151,7 @@ msgstr ""
 "\n"
 "{file_path}"
 
-#: luckyLUKS/mainUI.py:83
+#: luckyLUKS/mainUI.py:84
 msgid ""
 "Invalid arguments:\n"
 "Please call without any arguments\n"
@@ -187,68 +187,72 @@ msgstr ""
 "Weitere Informationen auf der Homepage\n"
 "<a href=\"{project_url}\">{project_url}</a>"
 
-#: luckyLUKS/mainUI.py:136
+#: luckyLUKS/mainUI.py:137
 msgid "Handle encrypted container"
 msgstr "Verschlüsselten Container verwalten"
 
-#: luckyLUKS/mainUI.py:138
+#: luckyLUKS/mainUI.py:139
 msgid "Name:"
 msgstr "Name:"
 
-#: luckyLUKS/mainUI.py:141
+#: luckyLUKS/mainUI.py:142
 msgid "File:"
 msgstr "Datei:"
 
-#: luckyLUKS/mainUI.py:145
+#: luckyLUKS/mainUI.py:146
 msgid "Mount:"
 msgstr "Pfad:"
 
-#: luckyLUKS/mainUI.py:148
+#: luckyLUKS/mainUI.py:149
 msgid "Status:"
 msgstr "Status:"
 
-#: luckyLUKS/mainUI.py:167 luckyLUKS/mainUI.py:223
+#: luckyLUKS/mainUI.py:169 luckyLUKS/mainUI.py:218
 msgid "Hide"
 msgstr "Minimieren"
 
-#: luckyLUKS/mainUI.py:170 luckyLUKS/mainUI.py:209 luckyLUKS/setupUI.py:466
+#: luckyLUKS/mainUI.py:172 luckyLUKS/mainUI.py:240 luckyLUKS/setupUI.py:466
 #: luckyLUKS/unlockUI.py:203
 msgid "Quit"
 msgstr "Beenden"
 
-#: luckyLUKS/mainUI.py:185
+#: luckyLUKS/mainUI.py:187
 msgid "Container is {unlocked_green_bold}"
 msgstr "Container ist {unlocked_green_bold}"
 
-#: luckyLUKS/mainUI.py:186
+#: luckyLUKS/mainUI.py:188
 msgid "unlocked"
 msgstr "geöffnet"
 
-#: luckyLUKS/mainUI.py:187
+#: luckyLUKS/mainUI.py:189
 msgid "Close Container"
 msgstr "Container Schliessen"
 
-#: luckyLUKS/mainUI.py:188
+#: luckyLUKS/mainUI.py:191
 msgid "{device_name} is unlocked"
 msgstr "{device_name} ist geöffnet"
 
-#: luckyLUKS/mainUI.py:190
+#: luckyLUKS/mainUI.py:193
 msgid "Container is {closed_red_bold}"
 msgstr "Container ist {closed_red_bold}"
 
-#: luckyLUKS/mainUI.py:191
+#: luckyLUKS/mainUI.py:194
 msgid "closed"
 msgstr "verschlossen"
 
-#: luckyLUKS/mainUI.py:192 luckyLUKS/setupUI.py:113
+#: luckyLUKS/mainUI.py:195 luckyLUKS/setupUI.py:113
 msgid "Unlock Container"
 msgstr "Container Öffnen"
 
-#: luckyLUKS/mainUI.py:193
+#: luckyLUKS/mainUI.py:197
 msgid "{device_name} is closed"
 msgstr "{device_name} ist verschlossen"
 
-#: luckyLUKS/mainUI.py:204
+#: luckyLUKS/mainUI.py:215 luckyLUKS/mainUI.py:226
+msgid "Show"
+msgstr "Anzeigen"
+
+#: luckyLUKS/mainUI.py:235
 msgid ""
 "<b>{device_name}</b> >> {container_path}\n"
 "is currently <b>unlocked</b>,\n"
@@ -259,15 +263,11 @@ msgstr ""
 "Container jetzt schliessen\n"
 "und das Programm beenden?"
 
-#: luckyLUKS/mainUI.py:220 luckyLUKS/mainUI.py:230
-msgid "Show"
-msgstr "Anzeigen"
-
-#: luckyLUKS/mainUI.py:257
+#: luckyLUKS/mainUI.py:266
 msgid "Closing Container .."
 msgstr "Schliesse Container .."
 
-#: luckyLUKS/mainUI.py:287 luckyLUKS/unlockUI.py:223
+#: luckyLUKS/mainUI.py:296 luckyLUKS/unlockUI.py:223
 msgid "Initializing .."
 msgstr "Initialisiere .."
 
@@ -688,7 +688,7 @@ msgstr ""
 "Fehler in der Kommunikation mit `sudo`\n"
 "{error}"
 
-#: luckyLUKS/utils.py:197 luckyLUKS/utils.py:202 luckyLUKS/utils.py:223
+#: luckyLUKS/utils.py:198 luckyLUKS/utils.py:203 luckyLUKS/utils.py:224
 #: luckyLUKS/worker.py:131
 msgid ""
 "Error in communication:\n"

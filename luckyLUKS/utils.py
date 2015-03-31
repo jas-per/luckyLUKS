@@ -159,10 +159,11 @@ class WorkerMonitor(QThread):
             self.pipe_events.unregister(self.worker.stdout.fileno())
             self.worker.wait()
         # since output from sudo gets parsed, it needs to be run without localization
-        # saving original language settings to pass to the worker process
+        # saving original language settings / LC-environment to pass to the worker process
         original_language = os.getenv("LANGUAGE", "")
-        env_lang_cleared = {'LANGUAGE': 'C'}
-        cmd = ['sudo', '-S', '-p', 'SUDO_PASSWD_PROMPT', 'LANGUAGE=' + original_language, sys.argv[0], '--ishelperprocess']
+        env_lang_cleared = {prop: os.environ[prop] for prop in os.environ if prop[0:3] == 'LC_' or prop == 'LANG'}
+        env_lang_cleared['LANGUAGE'] = 'C'
+        cmd = ['sudo', '-S', '-p', 'SUDO_PASSWD_PROMPT', 'LANGUAGE=' + original_language, os.path.abspath(sys.argv[0]), '--ishelperprocess']
         self.worker = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, universal_newlines=True, env=env_lang_cleared)
         # switch pipe to non-blocking IO
         fd = self.worker.stdout.fileno()
