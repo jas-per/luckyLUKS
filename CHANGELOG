@@ -1,3 +1,17 @@
+luckyluks (1.0.5) unstable; urgency=low
+
+  * fix locale transfer to worker process
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Tue, 31 Mar 2015 19:18:46 +0100
+
+
+luckyluks (1.0.4) unstable; urgency=low
+
+  * degrade gracefully if no system tray available
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Mon, 30 Mar 2015 18:26:39 +0100
+
+
 luckyluks (1.0.3) unstable; urgency=low
 
   * improved debian packaging

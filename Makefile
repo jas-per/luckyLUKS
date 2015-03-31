@@ -37,7 +37,7 @@ dist_zip:
 	mkdir -p dist_zip
 	rm -f dist_zip/${NAME}-${VERSION}
 	zip -r ${NAME}-${VERSION} ${NAME}/ __main__.py -i \*.py \*.mo
-	echo '#!/usr/bin/env ${PYTHON}' | cat - ${NAME}-${VERSION} > temp && mv temp ${NAME}-${VERSION}
+	echo '#!/usr/bin/${PYTHON}' | cat - ${NAME}-${VERSION} > temp && mv temp ${NAME}-${VERSION}
 	chmod +x ${NAME}-${VERSION}
 	mv ${NAME}-${VERSION} dist_zip/
 

@@ -61,6 +61,7 @@ class MainWindow(QMainWindow):
         self.is_waiting_for_worker = False
         self.is_unlocked = False
         self.is_initialized = False
+        self.has_tray = QSystemTrayIcon.isSystemTrayAvailable()
 
         # L10n: program name - translatable for startmenu titlebar etc
         self.setWindowTitle(_('luckyLUKS'))
@@ -161,21 +162,22 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
 
         # tray popup menu
-        tray_popup = QMenu(self)
-        tray_popup.addAction(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)), self.luks_device_name).setEnabled(False)
-        tray_popup.addSeparator()
-        self.tray_toggle_action = QAction(QApplication.style().standardIcon(QStyle. SP_DesktopIcon), _('Hide'), self)
-        self.tray_toggle_action.triggered.connect(self.toggle_main_window)
-        tray_popup.addAction(self.tray_toggle_action)
-        quit_action = QAction(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), _('Quit'), self)
-        quit_action.triggered.connect(self.tray_quit)
-        tray_popup.addAction(quit_action)
-        # systray
-        self.tray = QSystemTrayIcon(self)
-        self.tray.setIcon(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)))
-        self.tray.setContextMenu(tray_popup)
-        self.tray.activated.connect(self.toggle_main_window)
-        self.tray.show()
+        if self.has_tray:
+            tray_popup = QMenu(self)
+            tray_popup.addAction(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)), self.luks_device_name).setEnabled(False)
+            tray_popup.addSeparator()
+            self.tray_toggle_action = QAction(QApplication.style().standardIcon(QStyle. SP_DesktopIcon), _('Hide'), self)
+            self.tray_toggle_action.triggered.connect(self.toggle_main_window)
+            tray_popup.addAction(self.tray_toggle_action)
+            quit_action = QAction(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), _('Quit'), self)
+            quit_action.triggered.connect(self.tray_quit)
+            tray_popup.addAction(quit_action)
+            # systray
+            self.tray = QSystemTrayIcon(self)
+            self.tray.setIcon(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)))
+            self.tray.setContextMenu(tray_popup)
+            self.tray.activated.connect(self.toggle_main_window)
+            self.tray.show()
 
         self.init_status()
 
@@ -185,12 +187,14 @@ class MainWindow(QMainWindow):
             self.label_status.setText(_('Container is {unlocked_green_bold}').format(
                 unlocked_green_bold='<font color="#006400"><b>' + _('unlocked') + '</b></font>'))
             self.button_toggle_status.setText(_('Close Container'))
-            self.tray.setToolTip(_('{device_name} is unlocked').format(device_name=self.luks_device_name))
+            if self.has_tray:
+                self.tray.setToolTip(_('{device_name} is unlocked').format(device_name=self.luks_device_name))
         else:
             self.label_status.setText(_('Container is {closed_red_bold}').format(
                 closed_red_bold='<font color="#b22222"><b>' + _('closed') + '</b></font>'))
             self.button_toggle_status.setText(_('Unlock Container'))
-            self.tray.setToolTip(_('{device_name} is closed').format(device_name=self.luks_device_name))
+            if self.has_tray:
+                self.tray.setToolTip(_('{device_name} is closed').format(device_name=self.luks_device_name))
 
         self.show()
         self.setFixedSize(self.sizeHint())
@@ -201,16 +205,7 @@ class MainWindow(QMainWindow):
             QApplication.instance().quit()
         elif not self.is_waiting_for_worker:
             self.show()
-            message = _('<b>{device_name}</b> >> {container_path}\n'
-                        'is currently <b>unlocked</b>,\n'
-                        'Close Container now and quit?').format(device_name=self.luks_device_name,
-                                                                container_path=self.encrypted_container)
-            mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-            mb.button(QMessageBox.Ok).setText(_('Quit'))
-            if mb.exec_() == QMessageBox.Ok:
-                self.do_close_container(shutdown=True)
-            else:
-                self.show()
+            self.confirm_close()
 
     def toggle_main_window(self, tray_icon_clicked):
         """ Triggered by clicking on the systray icon: show/hide main window """
@@ -226,11 +221,25 @@ class MainWindow(QMainWindow):
         """ Triggered by closing the window: If the container is unlocked, the program won't quit but remain in the systray. """
         if not self.is_waiting_for_worker:
             if self.is_unlocked:
-                self.hide()
-                self.tray_toggle_action.setText(_('Show'))
+                if self.has_tray:
+                    self.hide()
+                    self.tray_toggle_action.setText(_('Show'))
+                else:
+                    self.confirm_close()
                 event.ignore()
             else:
                 event.accept()
+
+    def confirm_close(self):
+        """ Inform about opened container and ask for confirmation to close & quit """
+        message = _('<b>{device_name}</b> >> {container_path}\n'
+                    'is currently <b>unlocked</b>,\n'
+                    'Close Container now and quit?').format(device_name=self.luks_device_name,
+                                                            container_path=self.encrypted_container)
+        mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
+        mb.button(QMessageBox.Ok).setText(_('Quit'))
+        if mb.exec_() == QMessageBox.Ok:
+            self.do_close_container(shutdown=True)
 
     def customEvent(self, event):
         """ Receives response from worker and calls supplied callback function """
