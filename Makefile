@@ -24,13 +24,16 @@ dist_deb: dist
 	echo 'luckyluks.1.gz' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.manpages
 	echo 'luckyluks.1.gz' >> dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.manpages
 	echo 'luckyluks usr/bin' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install
-	cp dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.install
+	echo 'luckyluks usr/bin' >> dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.install
+	mkdir dist_deb/${NAME}-${VERSION}/debian/upstream/
+	cp signing-key.asc dist_deb/${NAME}-${VERSION}/debian/upstream/
+	echo 'version=3\nopts=filenamemangle=s/.+\/v?(\d?\S*)\.tar\.gz/luckyluks_$$1.tar.gz/,pgpsigurlmangle=s/archive\/v?(\d\S*)\.tar\.gz/releases\/download\/v$$1\/v$$1.tar.gz.asc/ https://github.com/jas-per/luckyLUKS/releases .*/v(\d?\S*)\.tar\.gz' >> dist_deb/${NAME}-${VERSION}/debian/watch
 	sed -e "s/dh_desktop//g" -i dist_deb/${NAME}-${VERSION}/debian/rules
 	sed -e "s/dh binary-indep/dh binary-indep --with python2,python3/g" -i dist_deb/${NAME}-${VERSION}/debian/rules
 	echo 'override_dh_install:' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tdh_install --sourcedir=./' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tsed -i '\''1c#!/usr/bin/python3'\'' debian/python3-${LOWER_NAME}/usr/bin/${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/rules
-	echo 'version=3\nhttps://github.com/jas-per/luckyLUKS/releases /jas-per/luckyLUKS/archive/v(.+)\.tar\.gz' >> dist_deb/${NAME}-${VERSION}/debian/watch
+	sed -e "s/Standards-Version: 3.9.1/Standards-Version: 3.9.6/g" -i dist_deb/${NAME}-${VERSION}/debian/control
 	cd dist_deb/${NAME}-${VERSION} && debuild -S -sa
  
 dist_zip:

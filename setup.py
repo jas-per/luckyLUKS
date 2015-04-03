@@ -8,17 +8,16 @@ encrypted volumes from container files. Unlocked containers leave
 an icon in the systray as a reminder to close them eventually ;)
 Supports cryptsetup/LUKS and Truecrypt container files.
 
-An encrypted container is basically a large file that encapsulates
-an encrypted partition, which simplifies handling and backup of the
-encrypted data - just copy the container file.
+The container is basically a large file that encapsulates an
+encrypted partition. This simplifies handling and backup of
+encrypted data for casual users.
 luckyLUKS follows a keep-it-simple philosophy for creating and using
 encrypted containers, that aims to keep users from shooting themselves
-in the foot. For quick access the GUI offers to add a shortcut
-for unlocking a specific container to the start menu or on the desktop.
+in the foot. For quick access the GUI offers to add a shortcut for
+unlocking a specific container to the start menu or on the desktop.
 
 For more information and a complete FAQ see
-https://github.com/jas-per/luckyLUKS
-"""
+https://github.com/jas-per/luckyLUKS"""
 
 
 setup(name='luckyLUKS',
@@ -27,7 +26,7 @@ setup(name='luckyLUKS',
       author_email='muzius@gmail.com',
       url='https://github.com/jas-per/luckyLUKS',
       download_url='https://github.com/jas-per/luckyLUKS',
-      description='GUI for LUKS or TrueCrypt volumes from container files',
+      description='GUI for encrypted LUKS or TrueCrypt containers',
       long_description=long_desc,
       platforms=['Linux'],
       packages=['luckyLUKS'],
