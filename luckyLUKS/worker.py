@@ -348,7 +348,10 @@ class WorkerHelper():
                             p = subprocess.Popen(open_command, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
                             __, errors = p.communicate()
                             if p.returncode != 0:
-                                raise WorkerException(errors)
+                                if p.returncode == 2:
+                                    raise WorkerException(_('Open container failed.\nPlease check key file'))  # error message from cryptsetup is a bit ambiguous
+                                else:
+                                    raise WorkerException(errors)
                         else:
                             # open TrueCrypt container with keyfile and without password
                             import select
@@ -369,7 +372,10 @@ class WorkerHelper():
                                 p = subprocess.Popen(open_command, stdin=sys.stdin, stderr=subprocess.PIPE, stdout=sys.stdout, universal_newlines=True)
                                 p.wait()
                                 if p.returncode != 0:
-                                    sys.stdout.write('PTY_ERROR' + p.stderr.read())
+                                    if p.returncode == 2:
+                                        sys.stdout.write('PTY_ERROR' + _('Open container failed.\nPlease check key file'))  # error message from cryptsetup is a bit ambiguous
+                                    else:
+                                        sys.stdout.write('PTY_ERROR' + p.stderr.read())
                                 sys.stdout.close()
                                 sys.exit(p.returncode)
 

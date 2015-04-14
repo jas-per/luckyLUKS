@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: luckyLUKS 1.1.0\n"
 "Report-Msgid-Bugs-To: Jasper van Hoorn (muzius@gmail.com)\n"
-"POT-Creation-Date: 2015-04-14 16:21+0200\n"
+"POT-Creation-Date: 2015-04-14 16:58+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
@@ -610,11 +610,11 @@ msgstr ""
 msgid "Helper process received unknown command"
 msgstr ""
 
-#: luckyLUKS/worker.py:217 luckyLUKS/worker.py:476
+#: luckyLUKS/worker.py:217 luckyLUKS/worker.py:482
 msgid "Device Name is empty"
 msgstr ""
 
-#: luckyLUKS/worker.py:220 luckyLUKS/worker.py:482
+#: luckyLUKS/worker.py:220 luckyLUKS/worker.py:488
 msgid ""
 "Device Name is contains characters,\n"
 "not supported by your version of device mapper.\n"
@@ -638,7 +638,7 @@ msgid ""
 "(roughly 8 non-ascii characters possible)"
 msgstr ""
 
-#: luckyLUKS/worker.py:254 luckyLUKS/worker.py:479
+#: luckyLUKS/worker.py:254 luckyLUKS/worker.py:485
 msgid ""
 "Illegal Device Name!\n"
 "Names starting with `-` or using `/` are not possible"
@@ -651,7 +651,7 @@ msgid ""
 "The container is already in use ({existing_device})."
 msgstr ""
 
-#: luckyLUKS/worker.py:273 luckyLUKS/worker.py:514
+#: luckyLUKS/worker.py:273 luckyLUKS/worker.py:520
 msgid ""
 "Key file not accessible\n"
 "or path does not exist:\n"
@@ -688,43 +688,49 @@ msgid ""
 "\n"
 msgstr ""
 
-#: luckyLUKS/worker.py:328 luckyLUKS/worker.py:520
+#: luckyLUKS/worker.py:328 luckyLUKS/worker.py:526
 msgid ""
 "If you want to use TrueCrypt containers\n"
 "make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n"
 "and `tcplay` is installed (eg for Debian/Ubuntu `apt-get install tcplay`)"
 msgstr ""
 
-#: luckyLUKS/worker.py:427
+#: luckyLUKS/worker.py:352 luckyLUKS/worker.py:376
+msgid ""
+"Open container failed.\n"
+"Please check key file"
+msgstr ""
+
+#: luckyLUKS/worker.py:433
 msgid "Unable to close container, device is busy"
 msgstr ""
 
-#: luckyLUKS/worker.py:472
+#: luckyLUKS/worker.py:478
 msgid "Container Filename not supplied"
 msgstr ""
 
-#: luckyLUKS/worker.py:492
+#: luckyLUKS/worker.py:498
 msgid ""
 "Device Name too long:\n"
 "Only up to 16 characters possible, even less for unicode \n"
 "(roughly 8 non-ascii characters possible)"
 msgstr ""
 
-#: luckyLUKS/worker.py:495
+#: luckyLUKS/worker.py:501
 msgid ""
 "Device Name already in use:\n"
 "\n"
 "{device_name}"
 msgstr ""
 
-#: luckyLUKS/worker.py:499
+#: luckyLUKS/worker.py:505
 msgid ""
 "Container size too small\n"
 "to create encrypted filesystem\n"
 "Please choose at least 5MB"
 msgstr ""
 
-#: luckyLUKS/worker.py:505
+#: luckyLUKS/worker.py:511
 msgid ""
 "Not enough free disc space for container:\n"
 "\n"
@@ -732,19 +738,19 @@ msgid ""
 "{space_available} MB available"
 msgstr ""
 
-#: luckyLUKS/worker.py:518
+#: luckyLUKS/worker.py:524
 msgid "Unknown filesystem type: {filesystem_type}"
 msgstr ""
 
-#: luckyLUKS/worker.py:591
+#: luckyLUKS/worker.py:597
 msgid "Unknown encryption format: {enc_fmt}"
 msgstr ""
 
-#: luckyLUKS/worker.py:644
+#: luckyLUKS/worker.py:650
 msgid "Cannot change sudo rights, invalid username"
 msgstr ""
 
-#: luckyLUKS/worker.py:648
+#: luckyLUKS/worker.py:654
 msgid ""
 "I`m afraid I can`t do that.\n"
 "\n"
