@@ -297,7 +297,7 @@ class SetupDialog(QDialog):
             except UserInputError:  # user cancelled dlg
                 self.worker.execute({'type': 'abort', 'msg': ''}, None, None)  # notify worker process
                 self.display_create_failed(_('Initialize container aborted'))
-        else:# using keyfile
+        else:  # using keyfile
             self.worker.execute(command={'type': 'response', 'msg': ''},
                                 success_callback=self.on_creating_filesystem,
                                 error_callback=self.display_create_failed)
@@ -522,7 +522,7 @@ class SetupDialog(QDialog):
         """ Triggered by clicking the select button next to mount point """
         self.unlock_mountpoint.setText(QFileDialog.getExistingDirectory(self, _('Please choose a folder as mountpoint'), os.getenv("HOME")))
         self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
-        
+
     def on_select_keyfile_clicked(self, tab):
         """ Triggered by clicking the select button next to key file (both unlock and create tab) """
         file_path = QFileDialog.getOpenFileName(self, _('Please choose a key file'), os.getenv("HOME"))

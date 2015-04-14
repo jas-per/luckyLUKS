@@ -187,7 +187,7 @@ class WorkerHelper():
         # quit if abort or unexpected msg from ui
         if response['type'] != 'response':
             raise UserAbort()
-        
+
         return response['msg'].encode('utf-8') if self.is_popen_communicate_broken else response['msg']
 
     def check_status(self, device_name, container_path, key_file=None, mount_point=None):
@@ -271,7 +271,7 @@ class WorkerHelper():
             if not key_file is None and (not os.path.exists(key_file) or os.stat(key_file).st_uid != int(os.getenv("SUDO_UID"))):
                 sleep(random.random())  # 0-1s to prevent misuse of exists()
                 raise WorkerException(_('Key file not accessible\nor path does not exist:\n\n{file_path}').format(file_path=key_file))
-            
+
             # validate mount_point if given
             if not mount_point is None:
 
@@ -308,7 +308,7 @@ class WorkerHelper():
         is_unlocked = self.check_status(device_name, container_path, key_file, mount_point)
         if not is_unlocked:  # just return if unlocked -> does not mount an already unlocked container
             if pw_callback is None:
-                pw_callback=lambda: self.communicate('getPassword')
+                pw_callback = lambda: self.communicate('getPassword')
             # workaround udisks-daemon crash (udisksd from udisks2 is okay): although cryptsetup is able to handle
             # loopback device creation/teardown itself using this crashes udisks-daemon  -> manual loopback device handling here
             try:
@@ -363,7 +363,7 @@ class WorkerHelper():
                                 child_pid, fd = pty.fork()
                             except OSError as ose:
                                 raise WorkerException(ose)
-                            
+
                             if child_pid == 0:
                                 # forked child process
                                 p = subprocess.Popen(open_command, stdin=sys.stdin, stderr=subprocess.PIPE, stdout=sys.stdout, universal_newlines=True)
@@ -372,13 +372,13 @@ class WorkerHelper():
                                     sys.stdout.write('PTY_ERROR' + p.stderr.read())
                                 sys.stdout.close()
                                 sys.exit(p.returncode)
-                                    
+
                             else:
                                 child_out = ''
                                 while True:
                                     attr = termios.tcgetattr(fd)
                                     if not bool(attr[3] & termios.ECHO):  # detect disabled echo for password prompt
-                                        os.write(fd,'\n'.encode('utf-8'))
+                                        os.write(fd, '\n'.encode('utf-8'))
                                         sleep(1)
                                     else:
                                         r, __, __ = select.select([fd], [], [], 0.1)
@@ -386,12 +386,12 @@ class WorkerHelper():
                                             try:
                                                 tmp = os.read(fd, 1024)
                                                 child_out += tmp
-                                            except TypeError: # PY3
+                                            except TypeError:  # PY3
                                                 child_out += tmp.decode('utf-8')
-                                            except OSError: # EOF
+                                            except OSError:  # EOF
                                                 break
                                 if 'PTY_ERROR' in child_out:
-                                    raise WorkerException(child_out.rsplit('PTY_ERROR',1)[1].strip())
+                                    raise WorkerException(child_out.rsplit('PTY_ERROR', 1)[1].strip())
                 crypt_initialized = True
             finally:
                 if not crypt_initialized:
@@ -512,7 +512,7 @@ class WorkerHelper():
             if not os.path.exists(key_file) or os.stat(key_file).st_uid != int(os.getenv("SUDO_UID")):
                 sleep(random.random())  # 0-1s to prevent misuse of exists()
                 raise WorkerException(_('Key file not accessible\nor path does not exist:\n\n{file_path}').format(file_path=key_file))
-        
+
         # validate encryption_format and filesystem
         if filesystem_type not in ['ext4', 'ext2', 'ntfs']:
             raise WorkerException(_('Unknown filesystem type: {filesystem_type}').format(filesystem_type=str(filesystem_type)))
@@ -583,7 +583,7 @@ class WorkerHelper():
                     p.stdin.write('y\n')  # TODO: .. until tcplay gets localized :)
                     p.stdin.flush()
                     p.wait()
-                    
+
                 if p.returncode != 0:
                     raise WorkerException(p.stderr.read())
 
@@ -596,12 +596,12 @@ class WorkerHelper():
         # STEP3: ############################################
         # open encrypted container and format with filesystem
         #
-        pw_callback = lambda:resp
+        pw_callback = lambda: resp
         self.unlock_container(device_name=device_name,
                               container_path=container_path,
                               key_file=key_file,
                               pw_callback=pw_callback)
-        resp = None # get rid of pw
+        resp = None  # get rid of pw
 
         # fs-root of created ext-filesystem should belong to the user
         device_mapper_name = self.get_device_mapper_name(device_name)

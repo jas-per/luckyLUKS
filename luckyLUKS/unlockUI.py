@@ -237,7 +237,7 @@ class UnlockContainerDialog(PasswordDialog):
             # disable input until worker initialized
             self.pw_box.setEnabled(False)
             self.buttons.setEnabled(False)
-            
+
         self.waiting_for_response = True
         # call worker
         self.worker.execute(command={'type': 'request',

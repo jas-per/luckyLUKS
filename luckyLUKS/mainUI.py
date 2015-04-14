@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
             :type mount_point: str/unicode or None
         """
         super(MainWindow, self).__init__()
-        
+
         self.luks_device_name = device_name
         self.encrypted_container = container_path
         self.key_file = key_file
