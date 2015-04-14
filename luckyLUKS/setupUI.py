@@ -79,7 +79,7 @@ class SetupDialog(QDialog):
         button_choose_file = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '', self)
         button_choose_file.setToolTip(_('choose file'))
         unlock_grid.addWidget(button_choose_file, 1, 2)
-        button_choose_file.clicked.connect(self.on_select_file_clicked)
+        button_choose_file.clicked.connect(self.on_select_container_clicked)
 
         label = QLabel(_('device name'))
         label.setIndent(5)
@@ -90,23 +90,33 @@ class SetupDialog(QDialog):
         a_settings = QExpander(_('Advanced'), self, False)
         unlock_grid.addWidget(a_settings, 3, 0, 1, 3)
 
-        label = QLabel(_('mount point'))
+        label = QLabel(_('key file'))
         label.setIndent(5)
         unlock_grid.addWidget(label, 4, 0)
-        self.unlock_mountpoint = QLineEdit()
-        unlock_grid.addWidget(self.unlock_mountpoint, 4, 1)
-        button_choose_mountpoint = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
-        button_choose_mountpoint.setToolTip(_('choose folder'))
-        unlock_grid.addWidget(button_choose_mountpoint, 4, 2)
-        button_choose_mountpoint.clicked.connect(self.on_select_mountpoint_clicked)
-
+        self.unlock_keyfile = QLineEdit()
+        unlock_grid.addWidget(self.unlock_keyfile, 4, 1)
+        button_choose_uKeyfile = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
+        button_choose_uKeyfile.setToolTip(_('choose keyfile'))
+        unlock_grid.addWidget(button_choose_uKeyfile, 4, 2)
+        button_choose_uKeyfile.clicked.connect(lambda: self.on_select_keyfile_clicked('Unlock'))
         a_settings.addWidgets([unlock_grid.itemAtPosition(4, column).widget() for column in range(0, 3)])
 
-        unlock_grid.setRowStretch(5, 1)
-        unlock_grid.setRowMinimumHeight(5, 10)
+        label = QLabel(_('mount point'))
+        label.setIndent(5)
+        unlock_grid.addWidget(label, 5, 0)
+        self.unlock_mountpoint = QLineEdit()
+        unlock_grid.addWidget(self.unlock_mountpoint, 5, 1)
+        button_choose_mountpoint = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
+        button_choose_mountpoint.setToolTip(_('choose folder'))
+        unlock_grid.addWidget(button_choose_mountpoint, 5, 2)
+        button_choose_mountpoint.clicked.connect(self.on_select_mountpoint_clicked)
+        a_settings.addWidgets([unlock_grid.itemAtPosition(5, column).widget() for column in range(0, 3)])
+
+        unlock_grid.setRowStretch(6, 1)
+        unlock_grid.setRowMinimumHeight(6, 10)
         button_help_unlock = QPushButton(style.standardIcon(QStyle.SP_DialogHelpButton), _('Help'))
         button_help_unlock.clicked.connect(self.show_help_unlock)
-        unlock_grid.addWidget(button_help_unlock, 6, 2)
+        unlock_grid.addWidget(button_help_unlock, 7, 2)
 
         unlock_tab = QWidget()
         unlock_tab.setLayout(unlock_grid)
@@ -127,7 +137,7 @@ class SetupDialog(QDialog):
         button_choose_file = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
         button_choose_file.setToolTip(_('set file'))
         create_grid.addWidget(button_choose_file, 1, 2)
-        button_choose_file.clicked.connect(self.on_save_file_clicked)
+        button_choose_file.clicked.connect(self.on_save_container_clicked)
 
         label = QLabel(_('device name'))
         label.setIndent(5)
@@ -151,35 +161,46 @@ class SetupDialog(QDialog):
         a_settings = QExpander(_('Advanced'), self, False)
         create_grid.addWidget(a_settings, 4, 0, 1, 3)
 
-        label = QLabel(_('format'))
+        label = QLabel(_('key file'))
         label.setIndent(5)
         create_grid.addWidget(label, 5, 0)
+        self.create_keyfile = QLineEdit()
+        create_grid.addWidget(self.create_keyfile, 5, 1)
+        button_choose_cKeyfile = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
+        button_choose_cKeyfile.setToolTip(_('choose keyfile'))
+        create_grid.addWidget(button_choose_cKeyfile, 5, 2)
+        button_choose_cKeyfile.clicked.connect(lambda: self.on_select_keyfile_clicked('Create'))
+        a_settings.addWidgets([create_grid.itemAtPosition(5, column).widget() for column in range(0, 3)])
+
+        label = QLabel(_('format'))
+        label.setIndent(5)
+        create_grid.addWidget(label, 6, 0)
         self.create_encryption_format = QComboBox()
         self.create_encryption_format.addItem('LUKS')
         self.create_encryption_format.addItem('TrueCrypt')
         if not is_installed('tcplay'):
             self.create_encryption_format.setEnabled(False)
         self.create_encryption_format.setCurrentIndex(0)
-        create_grid.addWidget(self.create_encryption_format, 5, 1)
-        a_settings.addWidgets([create_grid.itemAtPosition(5, column).widget() for column in range(0, 2)])
+        create_grid.addWidget(self.create_encryption_format, 6, 1)
+        a_settings.addWidgets([create_grid.itemAtPosition(6, column).widget() for column in range(0, 2)])
 
         label = QLabel(_('filesystem'))
         label.setIndent(5)
-        create_grid.addWidget(label, 6, 0)
+        create_grid.addWidget(label, 7, 0)
         filesystems = ['ext4', 'ext2', 'ntfs']
         self.create_filesystem_type = QComboBox()
         for filesystem in filesystems:
             if is_installed('mkfs.' + filesystem):
                 self.create_filesystem_type.addItem(filesystem)
         self.create_filesystem_type.setCurrentIndex(0)
-        create_grid.addWidget(self.create_filesystem_type, 6, 1)
-        a_settings.addWidgets([create_grid.itemAtPosition(6, column).widget() for column in range(0, 2)])
+        create_grid.addWidget(self.create_filesystem_type, 7, 1)
+        a_settings.addWidgets([create_grid.itemAtPosition(7, column).widget() for column in range(0, 2)])
 
-        create_grid.setRowStretch(7, 1)
-        create_grid.setRowMinimumHeight(7, 10)
+        create_grid.setRowStretch(8, 1)
+        create_grid.setRowMinimumHeight(8, 10)
         button_help_create = QPushButton(style.standardIcon(QStyle.SP_DialogHelpButton), _('Help'))
         button_help_create.clicked.connect(self.show_help_create)
-        create_grid.addWidget(button_help_create, 8, 2)
+        create_grid.addWidget(button_help_create, 9, 2)
 
         create_tab = QWidget()
         create_tab.setLayout(create_grid)
@@ -246,6 +267,7 @@ class SetupDialog(QDialog):
                                      'device_name': self.encode_qt_output(self.create_device_name.text()),
                                      'container_path': location,
                                      'container_size': size,
+                                     'key_file': self.encode_qt_output(self.create_keyfile.text()) if self.create_keyfile.text() != '' else None,
                                      'filesystem_type': str(self.create_filesystem_type.currentText()),
                                      'encryption_format': str(self.create_encryption_format.currentText()),
                                      },
@@ -265,15 +287,20 @@ class SetupDialog(QDialog):
         self.create_progressbars[1].setRange(0, 0)
         self.create_status_grid.addWidget(self.create_progressbars[1], 4, 0, 1, 3)
 
-        try:
-            self.worker.execute(command={'type': 'response',
-                                         'msg': FormatContainerDialog(self).get_password()
-                                         },
+        if msg == 'getPassword':
+            try:
+                self.worker.execute(command={'type': 'response',
+                                             'msg': FormatContainerDialog(self).get_password()
+                                             },
+                                    success_callback=self.on_creating_filesystem,
+                                    error_callback=self.display_create_failed)
+            except UserInputError:  # user cancelled dlg
+                self.worker.execute({'type': 'abort', 'msg': ''}, None, None)  # notify worker process
+                self.display_create_failed(_('Initialize container aborted'))
+        else:# using keyfile
+            self.worker.execute(command={'type': 'response', 'msg': ''},
                                 success_callback=self.on_creating_filesystem,
                                 error_callback=self.display_create_failed)
-        except UserInputError:  # user cancelled dlg
-            self.worker.execute({'type': 'abort', 'msg': ''}, None, None)  # notify worker process
-            self.display_create_failed(_('Initialize container aborted'))
 
     def on_creating_filesystem(self, msg):
         """ Triggered after LUKS encryption got initialized.
@@ -297,6 +324,7 @@ class SetupDialog(QDialog):
         # copy values of newly created container to unlock dlg und reset create values
         self.unlock_container_file.setText(self.create_container_file.text())
         self.unlock_device_name.setText(self.create_device_name.text())
+        self.unlock_keyfile.setText(self.create_keyfile.text())
         show_info(self, _('<b>{device_name}\nsuccessfully created!</b>\nClick on unlock to use the new container')
                   .format(device_name=self.encode_qt_output(self.create_device_name.text())), _('Success'))
         # reset create ui and switch to unlock tab
@@ -304,6 +332,7 @@ class SetupDialog(QDialog):
         self.create_device_name.setText('')
         self.create_container_size.setValue(1)
         self.create_size_unit.setCurrentIndex(1)
+        self.create_keyfile.setText('')
         self.create_filesystem_type.setCurrentIndex(0)
         self.display_create_done()
         self.tab_pane.setCurrentIndex(0)
@@ -351,11 +380,11 @@ class SetupDialog(QDialog):
                 self.on_create_container()
 
             else:
-
                 UnlockContainerDialog(self,
                                       self.worker,
                                       self.get_luks_device_name(),
                                       self.get_encrypted_container(),
+                                      self.get_keyfile(),
                                       self.get_mount_point()
                                       ).communicate()  # blocks
 
@@ -396,6 +425,8 @@ class SetupDialog(QDialog):
         cmd += " -n '" + self.get_luks_device_name().replace("'", "'\\'''") + "'"
         if self.get_mount_point() is not None:
             cmd += " -m '" + self.get_mount_point().replace("'", "'\\'''") + "'"
+        if self.get_keyfile() is not None:
+            cmd += " -k '" + self.get_keyfile().replace("'", "'\\'''") + "'"
 
         # create .desktop-file
         filename = _('luckyLUKS') + '-' + ''.join(i for i in self.get_luks_device_name() if i not in ' \/:*?<>|')  # xdg-desktop-menu has problems with some special chars
@@ -479,7 +510,7 @@ class SetupDialog(QDialog):
             new_ok_label = _('Create')
         self.buttons.button(QDialogButtonBox.Ok).setText(new_ok_label)
 
-    def on_select_file_clicked(self):
+    def on_select_container_clicked(self):
         """ Triggered by clicking the select button next to container file (unlock) """
         file_path = QFileDialog.getOpenFileName(self, _('Please choose a container file'), os.getenv("HOME"))
         if isinstance(file_path, tuple):  # qt5 returns tuple path/selected filter
@@ -491,8 +522,19 @@ class SetupDialog(QDialog):
         """ Triggered by clicking the select button next to mount point """
         self.unlock_mountpoint.setText(QFileDialog.getExistingDirectory(self, _('Please choose a folder as mountpoint'), os.getenv("HOME")))
         self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
+        
+    def on_select_keyfile_clicked(self, tab):
+        """ Triggered by clicking the select button next to key file (both unlock and create tab) """
+        file_path = QFileDialog.getOpenFileName(self, _('Please choose a key file'), os.getenv("HOME"))
+        if isinstance(file_path, tuple):  # qt5 returns tuple path/selected filter
+            file_path = file_path[0]
+        if tab == 'Unlock':
+            self.unlock_keyfile.setText(file_path)
+        elif tab == 'Create':
+            self.create_keyfile.setText(file_path)
+        self.buttons.button(QDialogButtonBox.Ok).setText(_(tab))
 
-    def on_save_file_clicked(self):
+    def on_save_container_clicked(self):
         """ Triggered by clicking the select button next to container file (create)
             The dialog does not allow overwriting existing files - to get this behaviour
             while using native dialogs the QFileDialog has to be reopened on overwrite.
@@ -545,6 +587,14 @@ class SetupDialog(QDialog):
         """
         return self.encode_qt_output(self.unlock_device_name.text())
 
+    def get_keyfile(self):
+        """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
+            :returns: The mount point path
+            :rtype: str/unicode or None
+        """
+        kf = self.encode_qt_output(self.unlock_keyfile.text())
+        return kf if kf != '' else None
+
     def get_mount_point(self):
         """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
             :returns: The mount point path
@@ -565,6 +615,7 @@ class SetupDialog(QDialog):
         except AttributeError:  # py2: 'QString' object has no attribute strip
             return unicode(qstring_or_str.trimmed().toUtf8(), encoding="UTF-8")
 
+# TODO: restructure and add keyfile help
     def show_help_create(self):
         """ Triggered by clicking the help button (create tab) """
         header_text = _('<b>Create a new encrypted container</b>\n')

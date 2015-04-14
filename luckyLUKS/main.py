@@ -79,6 +79,8 @@ def luckyLUKS(translation, *args, **kwargs):
                         help=_('Choose a device name to identify the unlocked container'))
     parser.add_argument('-m', dest='mountpoint', type=commandline_unicode_arg, nargs='?', metavar=_('PATH'),
                         help=_('Where to mount the encrypted filesystem'))
+    parser.add_argument('-k', dest='keyfile', type=commandline_unicode_arg, nargs='?', metavar=_('PATH'),
+                        help=_('Path to an optional key file'))
     parser.add_argument('-v', '--version', action='version', version="luckyLUKS " + VERSION_STRING,
                         help=_("show program's version number and exit"))
     parser.add_argument('--ishelperprocess', action='store_true', help=argparse.SUPPRESS)
@@ -114,7 +116,7 @@ def startUI(parsed_args):
     application.installTranslator(qt_translator)
 
     # start application
-    main_win = MainWindow(parsed_args.name, parsed_args.container, parsed_args.mountpoint)
+    main_win = MainWindow(parsed_args.name, parsed_args.container, parsed_args.keyfile, parsed_args.mountpoint)
     # setup OK -> run event loop
     if main_win.is_initialized:
         sys.exit(application.exec_())

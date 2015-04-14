@@ -208,7 +208,7 @@ class UnlockContainerDialog(PasswordDialog):
 
     """ Modified PasswordDialog that communicates with the worker process to unlock an encrypted container """
 
-    def __init__(self, parent, worker, luks_device_name, encrypted_container, mount_point=None):
+    def __init__(self, parent, worker, luks_device_name, encrypted_container, key_file=None, mount_point=None):
         """ :param parent: The parent window/dialog used to enable modal behaviour
             :type parent: :class:`gtk.Widget`
             :param worker: Communication handler with the worker process
@@ -217,6 +217,8 @@ class UnlockContainerDialog(PasswordDialog):
             :type luks_device_name: str/unicode
             :param encrypted_container: The path of the container file
             :type encrypted_container: str/unicode
+            :param key_file: The path of an optional key file
+            :type key_file: str/unicode or None
             :param mount_point: The path of an optional mount point
             :type mount_point: str/unicode or None
         """
@@ -225,18 +227,25 @@ class UnlockContainerDialog(PasswordDialog):
         self.worker = worker
         self.error_message = ''
 
-        self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
-        # disable input until worker initialized
+        if key_file is not None:
+            self.header_text.setText(_('<b>Using keyfile</b>\n{keyfile}\nto open container.\n\nPlease wait ..').format(keyfile=key_file))
+            self.pw_box.hide()
+            self.buttons.hide()
+            self.header_text.setContentsMargins(10, 10, 10, 10)
+        else:
+            self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
+            # disable input until worker initialized
+            self.pw_box.setEnabled(False)
+            self.buttons.setEnabled(False)
+            
         self.waiting_for_response = True
-        self.pw_box.setEnabled(False)
-        self.buttons.setEnabled(False)
-
-        # init worker
+        # call worker
         self.worker.execute(command={'type': 'request',
                                      'msg': 'unlock',
                                      'device_name': luks_device_name,
                                      'container_path': encrypted_container,
-                                     'mount_point': mount_point
+                                     'mount_point': mount_point,
+                                     'key_file': key_file
                                      },
                             success_callback=self.on_worker_reply,
                             error_callback=self.on_error)

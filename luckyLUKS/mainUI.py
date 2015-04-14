@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
         leave an icon in the systray as a reminder to close them eventually.
     """
 
-    def __init__(self, device_name=None, container_path=None, mount_point=None):
+    def __init__(self, device_name=None, container_path=None, key_file=None, mount_point=None):
         """ Command line arguments checks are done here to be able to display a graphical dialog with error messages .
             If no arguments were supplied on the command line a setup dialog will be shown.
             All commands will be executed from a separate worker process with administrator privileges that gets initialized here.
@@ -48,13 +48,16 @@ class MainWindow(QMainWindow):
             :type device_name: str/unicode or None
             :param container_path: The path of the container file
             :type container_path: str/unicode or None
+            :param key_file: The path of an optional key file
+            :type key_file: str/unicode or None
             :param mount_point: The path of an optional mount point
             :type mount_point: str/unicode or None
         """
         super(MainWindow, self).__init__()
-
+        
         self.luks_device_name = device_name
         self.encrypted_container = container_path
+        self.key_file = key_file
         self.mount_point = mount_point
 
         self.worker = None
@@ -100,7 +103,6 @@ class MainWindow(QMainWindow):
             self.worker = utils.WorkerMonitor(self)
             # start communication thread
             self.worker.start()
-
         except utils.SudoException as se:
             show_alert(self, format_exception(se), critical=True)
             return
@@ -115,6 +117,7 @@ class MainWindow(QMainWindow):
                 self.luks_device_name = sd.get_luks_device_name()
                 self.encrypted_container = sd.get_encrypted_container()
                 self.mount_point = sd.get_mount_point()
+                self.key_file = sd.get_keyfile()
 
                 self.is_unlocked = True  # all checks in setup dialog -> skip initializing state
             else:
@@ -142,19 +145,23 @@ class MainWindow(QMainWindow):
         main_grid.addWidget(QLabel(_('File:')), 2, 0)
         main_grid.addWidget(QLabel(self.encrypted_container), 2, 1, alignment=Qt.AlignCenter)
 
-        if self.mount_point is not None:
-            main_grid.addWidget(QLabel(_('Mount:')), 3, 0)
-            main_grid.addWidget(QLabel(self.mount_point), 3, 1, alignment=Qt.AlignCenter)
+        if self.key_file is not None:
+            main_grid.addWidget(QLabel(_('Key:')), 3, 0)
+            main_grid.addWidget(QLabel(self.key_file), 3, 1, alignment=Qt.AlignCenter)
 
-        main_grid.addWidget(QLabel(_('Status:')), 4, 0)
+        if self.mount_point is not None:
+            main_grid.addWidget(QLabel(_('Mount:')), 4, 0)
+            main_grid.addWidget(QLabel(self.mount_point), 4, 1, alignment=Qt.AlignCenter)
+
+        main_grid.addWidget(QLabel(_('Status:')), 5, 0)
         self.label_status = QLabel('')
-        main_grid.addWidget(self.label_status, 4, 1, alignment=Qt.AlignCenter)
+        main_grid.addWidget(self.label_status, 5, 1, alignment=Qt.AlignCenter)
 
         self.button_toggle_status = QPushButton('')
         self.button_toggle_status.setMinimumHeight(34)
         self.button_toggle_status.clicked.connect(self.toggle_container_status)
-        main_grid.setRowMinimumHeight(5, 10)
-        main_grid.addWidget(self.button_toggle_status, 6, 1)
+        main_grid.setRowMinimumHeight(6, 10)
+        main_grid.addWidget(self.button_toggle_status, 7, 1)
 
         widget = QWidget()
         widget.setLayout(main_grid)
@@ -251,7 +258,7 @@ class MainWindow(QMainWindow):
             self.do_close_container()
         else:
             try:
-                UnlockContainerDialog(self, self.worker, self.luks_device_name, self.encrypted_container, self.mount_point).communicate()
+                UnlockContainerDialog(self, self.worker, self.luks_device_name, self.encrypted_container, self.key_file, self.mount_point).communicate()
                 self.is_unlocked = True
             except UserInputError as uie:
                 show_alert(self, format_exception(uie))
@@ -298,6 +305,7 @@ class MainWindow(QMainWindow):
                                          'msg': 'status',
                                          'device_name': self.luks_device_name,
                                          'container_path': self.encrypted_container,
+                                         'key_file': self.key_file,
                                          'mount_point': self.mount_point
                                          },
                                 success_callback=self.on_initialized,
