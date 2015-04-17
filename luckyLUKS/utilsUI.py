@@ -19,12 +19,12 @@ GNU General Public License for more details. <http://www.gnu.org/licenses/>
 try:
     from PyQt5.QtCore import pyqtSignal, Qt
     from PyQt5.QtWidgets import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
-        QWidget, QDialogButtonBox, QLabel, QLayout, QStyle, QStyleOption, QSizePolicy
+        QWidget, QDialogButtonBox, QLabel, QStyle, QStyleOption, QSizePolicy, QFrame
     from PyQt5.QtGui import QPainter
 except ImportError:  # py2 or py3 without pyqt5
     from PyQt4.QtCore import pyqtSignal, Qt
     from PyQt4.QtGui import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
-        QWidget, QDialogButtonBox, QLabel, QLayout, QPainter, QStyle, QStyleOption, QSizePolicy
+        QWidget, QDialogButtonBox, QLabel, QPainter, QStyle, QStyleOption, QSizePolicy, QFrame
 
 from luckyLUKS import VERSION_STRING, PROJECT_URL
 
@@ -38,7 +38,7 @@ class HelpDialog(QDialog):
         followed by a footer
     """
 
-    def __init__(self, parent, header_text, basic_text, advanced_text):
+    def __init__(self, parent, header_text, basic_text, advanced_topics):
         """ Create a new instance
             :param parent: The parent window/dialog used to enable modal behaviour
             :type parent: :class:`PyQt4.QtGui.QWidget`
@@ -46,18 +46,17 @@ class HelpDialog(QDialog):
             :type header_text: str/unicode
             :param basic_text: Displayed in the middle of the help dialog
             :type basic_text: str/unicode
-            :param advanced_text: Displayed below the basic text, initially hidden
-            :type advanced_text: str/unicode
+            :param advanced_topics: Displayed below the basic text, initially only the header is shown, the content gets hidden
+            :type advanced_topics: Array of dicts with str/unicode head and text properties
         """
         super(HelpDialog, self).__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
         self.setWindowTitle(_('Help'))
         layout = QVBoxLayout()
         layout.setContentsMargins(15, 5, 15, 5)
-        layout.setSizeConstraint(QLayout.SetFixedSize)
-        layout.setSpacing(10)
+        layout.setSpacing(5)
         # icon and header
         header = QHBoxLayout()
-        header.setSpacing(50)
+        header.setSpacing(100)
         header.setAlignment(Qt.AlignLeft)
         icon = QLabel()
         icon.setPixmap(QApplication.style().standardIcon(QStyle.SP_DialogHelpButton).pixmap(48))
@@ -66,15 +65,36 @@ class HelpDialog(QDialog):
         layout.addLayout(header)
         # main help text
         basic_text = QLabel(basic_text)
+        basic_text.setWordWrap(True)
+        basic_text.setAlignment(Qt.AlignJustify)
+        basic_text.setFixedWidth(470)  # Qt produces unreliable layout when using wordwrap and non-fixed width
+        basic_text.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         layout.addWidget(basic_text)
-        # expand advanced help
-        expander = QExpander(_('Advanced'), self, False)
-        layout.addWidget(expander)
-        advanced_text = QLabel(advanced_text)
-        layout.addWidget(advanced_text)
-        expander.addWidgets([advanced_text])
+        # advanced help
+        advanced = QLabel('<b>' + _('Advanced Topics:') + '</b>')
+        layout.addWidget(advanced)
+        self._advanced_topics = []
+
+        for topic in advanced_topics:
+            head = QExpander(topic['head'], self, False)
+            layout.addWidget(head)
+            text = QLabel(topic['text'])
+            text.setWordWrap(True)
+            text.setAlignment(Qt.AlignJustify)
+            text.setFixedWidth(470)
+            text.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            layout.addWidget(text)
+            head.addWidgets([text])
+            self._advanced_topics += [head]
+            head.clicked.connect(self._on_topic_clicked)
+
         # footer
         layout.addStretch()
+        hl = QFrame()
+        hl.setFrameShape(QFrame.HLine)
+        hl.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(hl)
+
         footer = QLabel(_('luckyLUKS version {version}\n'
                           'For more information, visit\n'
                           '<a href="{project_url}">{project_url}</a>').format(version=VERSION_STRING,
@@ -87,6 +107,13 @@ class HelpDialog(QDialog):
         layout.addWidget(ok_button)
 
         self.setLayout(layout)
+
+    def _on_topic_clicked(self, clicked_topic):
+        """An expandable topic was clicked. Closes previously opened topic if necessary"""
+        if clicked_topic.is_expanded:
+            for topic in self._advanced_topics:
+                if not topic == clicked_topic:
+                    topic.setExpanded(False)
 
 
 def show_info(parent, message, title=''):
@@ -137,6 +164,8 @@ class QExpander(QWidget):
 
     """A Qt implementation similar to GtkExpander."""
 
+    clicked = pyqtSignal(QWidget)
+
     def __init__(self, label, parent, expanded=False):
         """Create a new instance."""
         super(QExpander, self).__init__(parent)
@@ -153,6 +182,7 @@ class QExpander(QWidget):
         """The expander widget was clicked."""
         self._expanded = not self._expanded
         self.setExpanded(self._expanded)
+        self.clicked.emit(self)
 
     def addWidgets(self, widgets):
         """Add widgets to the expander.
@@ -160,7 +190,7 @@ class QExpander(QWidget):
         self._widgets += widgets
         self.setExpanded(self._expanded)
 
-    def expanded(self):
+    def is_expanded(self):
         """Return if widget is expanded."""
         return self._expanded
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: luckyLUKS 1.1.0\n"
 "Report-Msgid-Bugs-To: Jasper van Hoorn (muzius@gmail.com)\n"
-"POT-Creation-Date: 2015-04-14 16:58+0200\n"
+"POT-Creation-Date: 2015-04-17 01:52+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
@@ -228,7 +228,7 @@ msgstr ""
 msgid "Initializing .."
 msgstr ""
 
-#: luckyLUKS/setupUI.py:69 luckyLUKS/setupUI.py:649
+#: luckyLUKS/setupUI.py:69 luckyLUKS/setupUI.py:658
 msgid "<b>Unlock an encrypted container</b>\n"
 msgstr ""
 
@@ -248,11 +248,12 @@ msgstr ""
 msgid "device name"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:90 luckyLUKS/setupUI.py:161 luckyLUKS/utilsUI.py:71
+#: luckyLUKS/setupUI.py:90 luckyLUKS/setupUI.py:161
 msgid "Advanced"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:93 luckyLUKS/setupUI.py:164
+#: luckyLUKS/setupUI.py:93 luckyLUKS/setupUI.py:164 luckyLUKS/setupUI.py:631
+#: luckyLUKS/setupUI.py:666
 msgid "key file"
 msgstr ""
 
@@ -260,7 +261,7 @@ msgstr ""
 msgid "choose keyfile"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:104
+#: luckyLUKS/setupUI.py:104 luckyLUKS/setupUI.py:676
 msgid "mount point"
 msgstr ""
 
@@ -272,7 +273,7 @@ msgstr ""
 msgid "Help"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:127 luckyLUKS/setupUI.py:621
+#: luckyLUKS/setupUI.py:127 luckyLUKS/setupUI.py:620
 msgid "<b>Create a new encrypted container</b>\n"
 msgstr ""
 
@@ -292,7 +293,7 @@ msgstr ""
 msgid "format"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:187
+#: luckyLUKS/setupUI.py:187 luckyLUKS/setupUI.py:647
 msgid "filesystem"
 msgstr ""
 
@@ -440,57 +441,75 @@ msgid ""
 "as a new file!</b>"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:622
+#: luckyLUKS/setupUI.py:621
 msgid ""
-"Enter the path of the <b>new container file</b> in the textbox\n"
-"or click the button next the box for a graphical create file dialog.\n"
+"Enter the path of the <b>new container file</b> in the textbox or click "
+"the button next to the box for a graphical create file dialog.\n"
 "\n"
-"The <b>device name</b> will be used to identify the unlocked container.\n"
-"It can be any name up to 16 unicode characters, as long as it is unique.\n"
+"The <b>device name</b> will be used to identify the unlocked container. "
+"It can be any name up to 16 unicode characters, as long as it is unique."
+"\n"
 "\n"
 "The <b>size</b> of the container can be provided in GB or MB. The "
-"container\n"
-"will get initialized with random data, this can take quite a while\n"
-"(1 hour for a 10GB container on an external drive is not unusual)"
+"container will get initialized with random data, this can take quite a "
+"while - 1 hour for a 10GB container on an external drive is nothing "
+"unusual."
 msgstr ""
 
-#: luckyLUKS/setupUI.py:631
+#: luckyLUKS/setupUI.py:632 luckyLUKS/setupUI.py:667
 msgid ""
-"The advanced settings are relevant, if you want to access the encrypted\n"
-"data from both Linux and MS Windows (otherwise just use the defaults)\n"
-"\n"
-"The standard disk <b>encryption format</b> on Linux is called LUKS.\n"
-"With <a href=\"https://github.com/t-d-k/doxbox\">doxbox</a> you can use "
-"LUKS containers on Windows as well.\n"
-"The TrueCrypt format is quite popular on Windows, and can be used\n"
-"on Linux if `tcplay` is installed. Please note, that \"hidden\" TrueCrypt"
-"\n"
-"partitions are not supported by luckyLUKS!\n"
-"\n"
-"Choose the ntfs <b>filesystem</b> to be able to access your data from "
-"both\n"
-"Linux and Windows. Since access permissions cannot be mapped from\n"
-"ntfs to Linux, access to ntfs devices is usually not restricted ->\n"
-"take care when using unlocked ntfs devices in a multiuser environment!"
+"A key file can be used to allow access to an encrypted container instead "
+"of a password. Using a key file resembles unlocking a door with a key in "
+"the real world - anyone with access to the key file can open your "
+"encrypted container. Make sure to store it at a protected location. Its "
+"okay to store it on your computer if you are using an already encrypted "
+"harddrive or a digital keystore. Having the key file on a <a "
+"href=\"https://www.google.com/search?q=keychain+usb+drive&tbm=isch\">small"
+" USB drive</a> attached to your real chain of keys would be an option as "
+"well.\n"
+"Since you dont have to enter a password, using a key file can be a "
+"convenient way to access your encrypted container. Just make sure you "
+"dont lose the key (file) ;)"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:650
+#: luckyLUKS/setupUI.py:641
+msgid "encryption format"
+msgstr ""
+
+#: luckyLUKS/setupUI.py:642
+msgid ""
+"The standard disk encryption format on Linux is called LUKS. With <a "
+"href=\"https://github.com/t-d-k/doxbox\">doxbox</a> you can use LUKS "
+"containers on Windows as well. The TrueCrypt format is quite popular on "
+"Windows/Mac, and can be created on Linux if `tcplay` is installed. Please"
+" note, that \"hidden\" TrueCrypt partitions are not supported by "
+"luckyLUKS!"
+msgstr ""
+
+#: luckyLUKS/setupUI.py:648
+msgid ""
+"Choose the ntfs filesystem to be able to access your data from Linux, "
+"Windows and Mac OSX. Since access permissions cannot be mapped from ntfs "
+"to Linux, access to ntfs devices is usually not restricted -> take care "
+"when using unlocked ntfs devices in a multiuser environment!"
+msgstr ""
+
+#: luckyLUKS/setupUI.py:659
 msgid ""
 "Select the encrypted <b>container file</b> by clicking the button next to"
+" the textbox. Both LUKS and Truecrypt containers are supported!\n"
 "\n"
-"the textbox. Both LUKS and Truecrypt containers are supported!\n"
-"\n"
-"The <b>device name</b> will be used to identify the unlocked container.\n"
-"It can be any name up to 16 unicode characters, as long as it is unique.\n"
+"The <b>device name</b> will be used to identify the unlocked container. "
+"It can be any name up to 16 unicode characters, as long as it is unique "
 "-> you cannot give two unlocked containers the same name"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:656
+#: luckyLUKS/setupUI.py:677
 msgid ""
-"The <b>mount point</b> is the folder on your computer, where you can\n"
-"access the files inside the container after unlocking.\n"
-"If automatic mounting is configured on your system (eg with udisks),\n"
-"explicitly setting a mountpoint is not neccessary (but still possible)."
+"The mount point is the folder on your computer, where you can access the "
+"files inside the container after unlocking. If automatic mounting is "
+"configured on your system (eg with udisks), explicitly setting a "
+"mountpoint is not neccessary (but still possible)."
 msgstr ""
 
 #: luckyLUKS/unlockUI.py:134
@@ -585,14 +604,18 @@ msgid ""
 "{error}"
 msgstr ""
 
-#: luckyLUKS/utilsUI.py:78
+#: luckyLUKS/utilsUI.py:74
+msgid "Advanced Topics:"
+msgstr ""
+
+#: luckyLUKS/utilsUI.py:98
 msgid ""
 "luckyLUKS version {version}\n"
 "For more information, visit\n"
 "<a href=\"{project_url}\">{project_url}</a>"
 msgstr ""
 
-#: luckyLUKS/utilsUI.py:113
+#: luckyLUKS/utilsUI.py:140
 msgid "Error"
 msgstr ""
 

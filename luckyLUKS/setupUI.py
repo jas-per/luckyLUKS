@@ -615,47 +615,69 @@ class SetupDialog(QDialog):
         except AttributeError:  # py2: 'QString' object has no attribute strip
             return unicode(qstring_or_str.trimmed().toUtf8(), encoding="UTF-8")
 
-# TODO: restructure and add keyfile help
     def show_help_create(self):
         """ Triggered by clicking the help button (create tab) """
         header_text = _('<b>Create a new encrypted container</b>\n')
-        basic_help = _('Enter the path of the <b>new container file</b> in the textbox\n'
-                       'or click the button next the box for a graphical create file dialog.\n'
-                       '\n'
-                       'The <b>device name</b> will be used to identify the unlocked container.\n'
-                       'It can be any name up to 16 unicode characters, as long as it is unique.\n'
-                       '\n'
-                       'The <b>size</b> of the container can be provided in GB or MB. The container\n'
-                       'will get initialized with random data, this can take quite a while\n'
-                       '(1 hour for a 10GB container on an external drive is not unusual)')
-        advanced_help = _('The advanced settings are relevant, if you want to access the encrypted\n'
-                          'data from both Linux and MS Windows (otherwise just use the defaults)\n'
-                          '\n'
-                          'The standard disk <b>encryption format</b> on Linux is called LUKS.\n'
-                          'With <a href="https://github.com/t-d-k/doxbox">doxbox</a> you can use LUKS containers on Windows as well.\n'
-                          'The TrueCrypt format is quite popular on Windows, and can be used\n'
-                          'on Linux if `tcplay` is installed. Please note, that "hidden" TrueCrypt\n'
-                          'partitions are not supported by luckyLUKS!\n'
-                          '\n'
-                          'Choose the ntfs <b>filesystem</b> to be able to access your data from both\n'
-                          'Linux and Windows. Since access permissions cannot be mapped from\n'
-                          'ntfs to Linux, access to ntfs devices is usually not restricted ->\n'
-                          'take care when using unlocked ntfs devices in a multiuser environment!')
-        hd = HelpDialog(self, header_text, basic_help, advanced_help)
+        basic_help = _('Enter the path of the <b>new container file</b> in the textbox '
+                       'or click the button next to the box for a graphical create file dialog.'
+                       '\n\n'
+                       'The <b>device name</b> will be used to identify the unlocked container. '
+                       'It can be any name up to 16 unicode characters, as long as it is unique.'
+                       '\n\n'
+                       'The <b>size</b> of the container can be provided in GB or MB. The container '
+                       'will get initialized with random data, this can take quite a while - '
+                       '1 hour for a 10GB container on an external drive is nothing unusual.')
+        advanced_topics = [
+            {'head': _('key file'),
+             'text': _('A key file can be used to allow access to an encrypted container instead of a password. '
+                       'Using a key file resembles unlocking a door with a key in the real world - anyone with '
+                       'access to the key file can open your encrypted container. Make sure to store it at a '
+                       'protected location. Its okay to store it on your computer if you are using an already '
+                       'encrypted harddrive or a digital keystore. Having the key file on a '
+                       '<a href="https://www.google.com/search?q=keychain+usb+drive&tbm=isch">small USB drive</a> '
+                       'attached to your real chain of keys would be an option as well.\n'
+                       'Since you dont have to enter a password, using a key file can be a convenient way to '
+                       'access your encrypted container. Just make sure you dont lose the key (file) ;)')},
+            {'head': _('encryption format'),
+             'text': _('The standard disk encryption format on Linux is called LUKS. '
+                       'With <a href="https://github.com/t-d-k/doxbox">doxbox</a> you can use LUKS containers on Windows as well. '
+                       'The TrueCrypt format is quite popular on Windows/Mac, and can be created '
+                       'on Linux if `tcplay` is installed. Please note, that "hidden" TrueCrypt '
+                       'partitions are not supported by luckyLUKS!')},
+            {'head': _('filesystem'),
+             'text': _('Choose the ntfs filesystem to be able to access your data from Linux, '
+                       'Windows and Mac OSX. Since access permissions cannot be mapped from '
+                       'ntfs to Linux, access to ntfs devices is usually not restricted '
+                       '-> take care when using unlocked ntfs devices in a multiuser environment!')}
+        ]
+        hd = HelpDialog(self, header_text, basic_help, advanced_topics)
         hd.exec_()
 
     def show_help_unlock(self):
         """ Triggered by clicking the help button (unlock tab) """
         header_text = _('<b>Unlock an encrypted container</b>\n')
-        basic_help = _('Select the encrypted <b>container file</b> by clicking the button next to\n'
-                       'the textbox. Both LUKS and Truecrypt containers are supported!\n'
-                       '\n'
-                       'The <b>device name</b> will be used to identify the unlocked container.\n'
-                       'It can be any name up to 16 unicode characters, as long as it is unique.\n'
+        basic_help = _('Select the encrypted <b>container file</b> by clicking the button next to '
+                       'the textbox. Both LUKS and Truecrypt containers are supported!'
+                       '\n\n'
+                       'The <b>device name</b> will be used to identify the unlocked container. '
+                       'It can be any name up to 16 unicode characters, as long as it is unique '
                        '-> you cannot give two unlocked containers the same name')
-        advanced_help = _('The <b>mount point</b> is the folder on your computer, where you can\n'
-                          'access the files inside the container after unlocking.\n'
-                          'If automatic mounting is configured on your system (eg with udisks),\n'
-                          'explicitly setting a mountpoint is not neccessary (but still possible).')
-        hd = HelpDialog(self, header_text, basic_help, advanced_help)
+        advanced_topics = [
+            {'head': _('key file'),
+             'text': _('A key file can be used to allow access to an encrypted container instead of a password. '
+                       'Using a key file resembles unlocking a door with a key in the real world - anyone with '
+                       'access to the key file can open your encrypted container. Make sure to store it at a '
+                       'protected location. Its okay to store it on your computer if you are using an already '
+                       'encrypted harddrive or a digital keystore. Having the key file on a '
+                       '<a href="https://www.google.com/search?q=keychain+usb+drive&tbm=isch">small USB drive</a> '
+                       'attached to your real chain of keys would be an option as well.\n'
+                       'Since you dont have to enter a password, using a key file can be a convenient way to '
+                       'access your encrypted container. Just make sure you dont lose the key (file) ;)')},
+            {'head': _('mount point'),
+             'text': _('The mount point is the folder on your computer, where you can '
+                       'access the files inside the container after unlocking. '
+                       'If automatic mounting is configured on your system (eg with udisks), '
+                       'explicitly setting a mountpoint is not neccessary (but still possible).')}
+        ]
+        hd = HelpDialog(self, header_text, basic_help, advanced_topics)
         hd.exec_()
