@@ -56,7 +56,7 @@ class HelpDialog(QDialog):
         layout.setSpacing(5)
         # icon and header
         header = QHBoxLayout()
-        header.setSpacing(100)
+        header.setSpacing(80)
         header.setAlignment(Qt.AlignLeft)
         icon = QLabel()
         icon.setPixmap(QApplication.style().standardIcon(QStyle.SP_DialogHelpButton).pixmap(48))

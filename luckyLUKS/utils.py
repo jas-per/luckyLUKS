@@ -243,6 +243,44 @@ class WorkerEvent(QEvent):
         self.response = response
 
 
+class KeyfileCreator(QThread):
+
+    """ Create a 1KByte key file with random data
+        Worker thread to avoid blocking the ui loop
+    """
+
+    def __init__(self, parent, path):
+        """ :param parent: The parent widget to be passed to modal dialogs
+            :type parent: :class:`PyQt4.QtGui.QWidget`
+            :param path: The designated key file path
+            :type path: str/unicode
+        """
+        super(KeyfileCreator, self).__init__()
+        self.parent = parent
+        self.path = path
+
+    def run(self):
+        """ Spawns child process and passes a WorkerEvent to the main event loop when finished """
+        try:
+            output_file = str(self.path)
+        except UnicodeEncodeError:
+            output_file = self.path.encode('utf-8')  # assume uft8 encoding for shell - see worker
+        # oflag=excl -> fail if the output file already exists
+        cmd = ['dd', 'if=/dev/random', 'of=' + output_file, 'bs=1', 'count=1024', 'conv=excl']
+        with open(os.devnull) as DEVNULL:
+            p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+            __, errors = p.communicate()
+        if p.returncode != 0:
+            QApplication.postEvent(self.parent.parent(),
+                                   WorkerEvent(callback=lambda msg: self.parent.display_create_failed(msg, stop_timer=True),
+                                               response=_('Error while creating key file:\n{error}').format(error=format_exception(errors)))
+                                   )
+        else:
+            QApplication.postEvent(self.parent.parent(), WorkerEvent(callback=lambda msg: self.parent.on_keyfile_created(msg),
+                                                                     response=self.path))
+        return
+
+
 def is_installed(executable):
     """ Checks if executable is present
         Because the executables will be run by the privileged worker process,

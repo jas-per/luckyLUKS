@@ -50,7 +50,7 @@ class SetupDialog(QDialog):
         self.setWindowTitle(_('luckyLUKS'))
 
         self.worker = parent.worker
-        self.is_creating_countainer = False
+        self.is_busy = False
 
         # build ui
         self.layout = QVBoxLayout()
@@ -172,35 +172,40 @@ class SetupDialog(QDialog):
         button_choose_cKeyfile.clicked.connect(lambda: self.on_select_keyfile_clicked('Create'))
         a_settings.addWidgets([create_grid.itemAtPosition(5, column).widget() for column in range(0, 3)])
 
+        button_create_keyfile = QPushButton(_('Create key file'))
+        button_create_keyfile.clicked.connect(self.on_create_keyfile)
+        create_grid.addWidget(button_create_keyfile, 6, 1)
+        a_settings.addWidgets([button_create_keyfile])
+
         label = QLabel(_('format'))
         label.setIndent(5)
-        create_grid.addWidget(label, 6, 0)
+        create_grid.addWidget(label, 7, 0)
         self.create_encryption_format = QComboBox()
         self.create_encryption_format.addItem('LUKS')
         self.create_encryption_format.addItem('TrueCrypt')
         if not is_installed('tcplay'):
             self.create_encryption_format.setEnabled(False)
         self.create_encryption_format.setCurrentIndex(0)
-        create_grid.addWidget(self.create_encryption_format, 6, 1)
-        a_settings.addWidgets([create_grid.itemAtPosition(6, column).widget() for column in range(0, 2)])
+        create_grid.addWidget(self.create_encryption_format, 7, 1)
+        a_settings.addWidgets([create_grid.itemAtPosition(7, column).widget() for column in range(0, 2)])
 
         label = QLabel(_('filesystem'))
         label.setIndent(5)
-        create_grid.addWidget(label, 7, 0)
+        create_grid.addWidget(label, 8, 0)
         filesystems = ['ext4', 'ext2', 'ntfs']
         self.create_filesystem_type = QComboBox()
         for filesystem in filesystems:
             if is_installed('mkfs.' + filesystem):
                 self.create_filesystem_type.addItem(filesystem)
         self.create_filesystem_type.setCurrentIndex(0)
-        create_grid.addWidget(self.create_filesystem_type, 7, 1)
-        a_settings.addWidgets([create_grid.itemAtPosition(7, column).widget() for column in range(0, 2)])
+        create_grid.addWidget(self.create_filesystem_type, 8, 1)
+        a_settings.addWidgets([create_grid.itemAtPosition(8, column).widget() for column in range(0, 2)])
 
-        create_grid.setRowStretch(8, 1)
-        create_grid.setRowMinimumHeight(8, 10)
+        create_grid.setRowStretch(9, 1)
+        create_grid.setRowMinimumHeight(9, 10)
         button_help_create = QPushButton(style.standardIcon(QStyle.SP_DialogHelpButton), _('Help'))
         button_help_create.clicked.connect(self.show_help_create)
-        create_grid.addWidget(button_help_create, 9, 2)
+        create_grid.addWidget(button_help_create, 10, 2)
 
         create_tab = QWidget()
         create_tab.setLayout(create_grid)
@@ -220,27 +225,14 @@ class SetupDialog(QDialog):
     def on_create_container(self):
         """ Triggered by clicking create.
             Hides the unlock/create pane and switches to a status pane
-            where to progress creating the new container can be followed step by step.
+            where the progress in creating the new container can be followed step by step.
             This shows the header and the first step:
             Initializing the container file with random data
         """
-        self.is_creating_countainer = True
-        self.create_progressbars = []
-        self.create_timer = QTimer(self)
+        self.init_create_pane()
 
-        self.buttons.setEnabled(False)
-
-        if self.main_pane.count() > 1:  # remove previous create disply if any
-            self.main_pane.removeWidget(self.create_pane)
-
-        # built ui
-        self.create_pane = QWidget()
-        self.create_status_grid = QGridLayout()
-        self.create_pane.setLayout(self.create_status_grid)
-        self.create_status_grid.setVerticalSpacing(5)
-
-        header = QLabel(_('<b>Creating new container</b>\n'
-                          'patience .. this might take a while'))
+        header = QLabel(_('<b>Creating new container</b>\n') +
+                        _('patience .. this might take a while'))
         header.setContentsMargins(0, 10, 0, 10)
         self.create_status_grid.addWidget(header, 0, 0, 1, 3, Qt.AlignCenter)
 
@@ -351,7 +343,7 @@ class SetupDialog(QDialog):
 
     def display_create_done(self):
         """ Helper to hide the create process informations and show the unlock/create pane """
-        self.is_creating_countainer = False
+        self.is_busy = False
         self.main_pane.setCurrentIndex(0)
         self.buttons.setEnabled(True)
 
@@ -395,6 +387,73 @@ class SetupDialog(QDialog):
 
         except UserInputError as error:
             show_alert(self, format_exception(error))
+
+    def init_create_pane(self):
+        """ Helper that initializes the ui for the progress indicators shown while creating containers or keyfiles """
+        self.is_busy = True
+        self.create_progressbars = []
+        self.create_timer = QTimer(self)
+
+        self.buttons.setEnabled(False)
+
+        if self.main_pane.count() > 1:  # remove previous create display if any
+            self.main_pane.removeWidget(self.create_pane)
+
+        # built ui
+        self.create_pane = QWidget()
+        self.create_status_grid = QGridLayout()
+        self.create_pane.setLayout(self.create_status_grid)
+        self.create_status_grid.setVerticalSpacing(5)
+
+    def on_create_keyfile(self):
+        """ Triggered by clicking the `create key file` button below the key file text field (create)
+            Asks for key file location if not already provided, creates the progress ui and starts a create-thread
+        """
+        if self.create_keyfile.text() == '':
+            key_file = self.encode_qt_output(self.on_save_file(_('new_keyfile.bin')))
+        else:
+            key_file = self.encode_qt_output(self.create_keyfile.text())
+
+        self.init_create_pane()
+
+        header = QLabel(_('<b>Creating key file</b>'))
+        self.create_status_grid.addWidget(header, 1, 0, 1, 3, Qt.AlignCenter)
+        header.setContentsMargins(0, 30, 0, 10)
+
+        self.create_progressbars.append(QProgressBar())
+        self.create_progressbars[0].setRange(0, 100)
+        self.create_status_grid.addWidget(self.create_progressbars[0], 2, 0, 1, 3)
+        info = QLabel(_('This might take a while. Since computers are deterministic machines\n'
+                        'it is quite a challenge to generate real random data for the key.\n'
+                        '\n'
+                        'You can speed up the process by typing, moving the mouse\n'
+                        'and generally use the computer while the key gets generated.'))
+        info.setContentsMargins(0, 10, 0, 10)
+        self.create_status_grid.addWidget(info, 3, 0, 1, 3, Qt.AlignCenter)
+
+        self.create_status_grid.setRowStretch(4, 2)  # vertical align
+        # add to stack widget and switch display
+        self.main_pane.addWidget(self.create_pane)
+        self.main_pane.setCurrentIndex(1)
+
+        # start timer for progressbar updates during keyfile creation
+        self.create_timer.timeout.connect(lambda: self.display_progress_percent(key_file, 1024))
+        self.create_timer.start(500)
+
+        # run QThread with keyfile creation
+        from luckyLUKS.utils import KeyfileCreator
+
+        self.create_thread = KeyfileCreator(self, key_file)
+        self.create_thread.start()
+
+    def on_keyfile_created(self, key_file_path):
+        """ Triggered when key file creation was successful. Restores the normal setup ui """
+        self.set_progress_done(self.create_timer, progressbar=self.create_progressbars[0])
+        show_info(self, _('<b>{key_file}\nsuccessfully created!</b>\n'
+                          'You can use this key file now,\n'
+                          'to create a new container.').format(key_file=key_file_path), _('Success'))
+        self.display_create_done()
+        self.create_keyfile.setText(key_file_path)
 
     def show_create_startmenu_entry(self):
         """ Shown after successfull unlock with setup dialog -> ask for shortcut creation """
@@ -487,12 +546,12 @@ class SetupDialog(QDialog):
             event.ignore()
 
     def confirm_close(self):
-        """ Displays a confirmation dialog if currently creating container
+        """ Displays a confirmation dialog if currently busy creating container or keyfile
             :returns: The users decision or True if no create process running
             :rtype: bool
         """
-        if self.is_creating_countainer:
-            message = _('Currently creating new container!\nDo you really want to quit?')
+        if self.is_busy:
+            message = _('Currently processing your request!\nDo you really want to quit?')
             mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
             mb.button(QMessageBox.Ok).setText(_('Quit'))
             return mb.exec_() == QMessageBox.Ok
@@ -536,15 +595,25 @@ class SetupDialog(QDialog):
 
     def on_save_container_clicked(self):
         """ Triggered by clicking the select button next to container file (create)
+            Uses a file dialog to set the path of the container file to be created
+        """
+        self.create_container_file.setText(self.on_save_file(_('new_container.bin')))
+
+    def on_save_file(self, default_filename):
+        """ Opens a native file dialog and returns the chosen path of the file to be saved
             The dialog does not allow overwriting existing files - to get this behaviour
             while using native dialogs the QFileDialog has to be reopened on overwrite.
             A bit weird but enables visual consistency with the other file choose dialogs
+            :param default_filename: The default filename to be used in the Qt file dialog
+            :type default_filename: str/unicode
+            :returns: The designated key file path
+            :rtype: str/unicode
         """
-        def_path = os.path.join(os.getenv("HOME"), _('new_container.bin'))
+        def_path = os.path.join(os.getenv("HOME"), default_filename)
 
         while True:
             save_path = QFileDialog.getSaveFileName(self,
-                                                    _('Please create a container file'),
+                                                    _('Please create a new file'),
                                                     def_path,
                                                     options=QFileDialog.DontConfirmOverwrite)
 
@@ -553,18 +622,16 @@ class SetupDialog(QDialog):
 
             if os.path.exists(save_path):
                 show_alert(self, _('File already exists:\n{filename}\n\n'
-                                   '<b>Please create container\n'
-                                   'as a new file!</b>').format(filename=save_path))
-                def_path = os.path.join(os.path.basename(save_path), _('new_container.bin'))
+                                   '<b>Please create a new file!</b>').format(filename=save_path))
+                def_path = os.path.join(os.path.basename(save_path), default_filename)
             else:
-                self.create_container_file.setText(save_path)
-                break
+                return save_path
 
     def display_progress_percent(self, location, size):
         """ Update value on the container creation progress bar
             :param location: The path of the container file currently being created
             :type location: str
-            :param size: The final size the new container in KB
+            :param size: The final size the new container in bytes
             :type size: int
         """
         try:
@@ -637,7 +704,11 @@ class SetupDialog(QDialog):
                        '<a href="https://www.google.com/search?q=keychain+usb+drive&tbm=isch">small USB drive</a> '
                        'attached to your real chain of keys would be an option as well.\n'
                        'Since you dont have to enter a password, using a key file can be a convenient way to '
-                       'access your encrypted container. Just make sure you dont lose the key (file) ;)')},
+                       'access your encrypted container. Just make sure you dont lose the key (file) ;)') +
+                       _('\n\n'
+                         'Although basically any file could be used as a key file, a file with predictable content '
+                         'leads to similar problems as using weak passwords. Audio files or pictures are a good choice. '
+                         'If unsure use the `create key file` button to generate a small key file filled with random data.')},
             {'head': _('encryption format'),
              'text': _('The standard disk encryption format on Linux is called LUKS. '
                        'With <a href="https://github.com/t-d-k/doxbox">doxbox</a> you can use LUKS containers on Windows as well. '
