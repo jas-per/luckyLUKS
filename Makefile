@@ -24,7 +24,7 @@ dist_deb: dist
 	echo 'luckyluks.1.gz' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.manpages
 	echo 'luckyluks.1.gz' >> dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.manpages
 	echo 'luckyluks usr/bin' >> dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install
-	echo 'luckyluks usr/bin' >> dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.install
+	cp dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.install
 	mkdir dist_deb/${NAME}-${VERSION}/debian/upstream/
 	cp signing-key.asc dist_deb/${NAME}-${VERSION}/debian/upstream/
 	echo 'version=3\nopts=filenamemangle=s/.+\/v?(\d?\S*)\.tar\.gz/luckyluks_$$1.tar.gz/,pgpsigurlmangle=s/archive\/v?(\d\S*)\.tar\.gz/releases\/download\/v$$1\/v$$1.tar.gz.asc/ https://github.com/jas-per/luckyLUKS/releases .*/v(\d?\S*)\.tar\.gz' >> dist_deb/${NAME}-${VERSION}/debian/watch
@@ -33,7 +33,7 @@ dist_deb: dist
 	echo 'override_dh_install:' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tdh_install --sourcedir=./' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tsed -i '\''1c#!/usr/bin/python3'\'' debian/python3-${LOWER_NAME}/usr/bin/${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/rules
-	sed -e "s/Standards-Version: 3.9.1/Standards-Version: 3.9.6/g" -i dist_deb/${NAME}-${VERSION}/debian/control
+	sed -e "s,Standards-Version: 3.9.1,Standards-Version: 3.9.6\nVcs-Git: git://github.com/jas-per/luckyLUKS.git\nVcs-Browser: https://github.com/jas-per/luckyLUKS,g" -i dist_deb/${NAME}-${VERSION}/debian/control
 	cd dist_deb/${NAME}-${VERSION} && debuild -S -sa
  
 dist_zip:
@@ -83,7 +83,7 @@ check:
 	find . -name \*.py | grep -v "^test_" | xargs pylint --errors-only --additional-builtins=_,format_exception --reports=n
 	@echo '### pep8 check ###'
 	pep8  *.py ./luckyLUKS --ignore=E501
-#	autopep8 ./luckyLUKS --in-place --verbose --ignore=E501
+#	autopep8 ./luckyLUKS/*.py --in-place --verbose --ignore=E501
 
 #deploy:
 #	# make sdist
