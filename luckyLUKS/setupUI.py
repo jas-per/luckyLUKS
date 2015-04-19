@@ -250,6 +250,9 @@ class SetupDialog(QDialog):
         size = self.create_container_size.value()
         size = size * (1024 * 1024 * 1024 if self.create_size_unit.currentIndex() == 1 else 1024 * 1024)  # GB vs MB
         location = self.encode_qt_output(self.create_container_file.text())
+        if not os.path.dirname(location):
+            location = os.path.join(os.path.expanduser('~'), location)
+            self.create_container_file.setText(location)
         # start timer for progressbar updates during container creation
         self.create_timer.timeout.connect(lambda: self.display_progress_percent(location, size))
         self.create_timer.start(500)
@@ -325,6 +328,7 @@ class SetupDialog(QDialog):
         self.create_container_size.setValue(1)
         self.create_size_unit.setCurrentIndex(1)
         self.create_keyfile.setText('')
+        self.create_encryption_format.setCurrentIndex(0)
         self.create_filesystem_type.setCurrentIndex(0)
         self.display_create_done()
         self.tab_pane.setCurrentIndex(0)
@@ -413,6 +417,9 @@ class SetupDialog(QDialog):
             key_file = self.encode_qt_output(self.on_save_file(_('new_keyfile.bin')))
         else:
             key_file = self.encode_qt_output(self.create_keyfile.text())
+
+        if not os.path.dirname(key_file):
+            key_file = os.path.join(os.path.expanduser('~'), key_file)
 
         self.init_create_pane()
 

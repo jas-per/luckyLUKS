@@ -440,11 +440,8 @@ class WorkerHelper():
                 if cpe.returncode != errno.EIO or len(cpe.output.splitlines()) > 1:
                     raise WorkerException(cpe.output)
             # remove loopback device and signal udev to process event queue (required for older udisks)
-            try:
-                sleep(0.2)  # give udisks some time to process closing of container ..
-                subprocess.check_output(['losetup', '-d', associated_loop], stderr=subprocess.STDOUT, universal_newlines=True)
-            except subprocess.CalledProcessError as cpe:
-                raise WorkerException(cpe.output)
+            sleep(0.2)  # give udisks some time to process closing of container ..
+            self.detach_loopback_device(associated_loop)
             with open(os.devnull) as DEVNULL:
                 subprocess.call(['udevadm', 'trigger'], stdout=DEVNULL, stderr=subprocess.STDOUT)
 
@@ -505,6 +502,11 @@ class WorkerHelper():
             raise WorkerException(_('Container size too small\nto create encrypted filesystem\nPlease choose at least 5MB'))
 
         container_dir = os.path.dirname(container_path)
+
+        if not os.path.dirname(container_dir):
+            container_dir = os.path.expanduser('~' + os.getenv("SUDO_USER"))
+            container_path = os.path.join(container_dir, os.path.basename(container_path))
+
         free_space = os.statvfs(container_dir)
         free_space = free_space.f_bavail * free_space.f_bsize
         if container_size > free_space:
