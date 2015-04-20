@@ -1,3 +1,14 @@
+luckyluks (1.1.0) unstable; urgency=low
+
+  * keyfile support (open/create for LUKS and TrueCrypt containers)
+  
+  * generate safe keyfile from ui
+  
+  * improved help dialogs
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Sun, 19 Apr 2015 22:16:24 +0100
+ 
+ 
 luckyluks (1.0.5) unstable; urgency=low
 
   * fix locale transfer to worker process

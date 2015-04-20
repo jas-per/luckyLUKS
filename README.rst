@@ -10,7 +10,7 @@ luckyLUKS was brought to life to offer an equivalent to the Windows TrueCrypt ap
 - You can easily add some encrypted private data to an unencrypted external harddrive you want to share with friends or take with you while travelling
 - Lots of users are already quite familiar with all this, because their first touch with data encryption has been TrueCrypt which uses the encrypted container approach
 
-luckyLUKS follows a keep-it-simple philosophy that aims to keep users from shooting themselves in the foot and might be a bit too simple for power users - please use `ZuluCrypt <https://code.google.com/p/zulucrypt/>`_ and/or `cryptsetup <https://code.google.com/p/cryptsetup/>`_/`tcplay <https://github.com/bwalex/tc-play>`_ on the command line if you need special options when creating new containers. On the other hand, to unlock existing containers luckyLUKS offers all you need and the possibility to create a shortcut to a container in your start menu or on the desktop. From the shortcut its just one click and you can enter your password to unlock the container. For technical details please see the FAQ at the end of this page. For a first impression:
+luckyLUKS follows a keep-it-simple philosophy that aims to keep users from shooting themselves in the foot and might be a bit too simple for power users - please use `ZuluCrypt <https://mhogomchungu.github.io/zuluCrypt/>`_ and/or `cryptsetup <https://gitlab.com/cryptsetup/cryptsetup>`_/`tcplay <https://github.com/bwalex/tc-play>`_ on the command line if you need special options when creating new containers. On the other hand, to unlock existing containers luckyLUKS offers all you need and the possibility to create a shortcut to a container in your start menu or on the desktop. From the shortcut its just one click and you can enter your password to unlock the container. For technical details please see the FAQ at the end of this page. For a first impression:
 
 .. image:: https://github.com/jas-per/luckyLUKS/blob/gh-pages/screencast.gif
     :align: center
@@ -27,19 +27,19 @@ For Ubuntu and derivates just use this ppa::
 
 For other debian based distributions download this debian package and install manually:
 
-`python-luckyluks_1.0.5-1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v1.0.5/python-luckyluks_1.0.5-1_all.deb>`_
+`python-luckyluks_1.1.0-1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v1.1.0/python-luckyluks_1.1.0-1_all.deb>`_
 
 On other distriubutions you can use the following zip-packaged python file:
 
-`luckyLUKS-1.0.5 <https://github.com/jas-per/luckyLUKS/releases/download/v1.0.5/luckyLUKS-1.0.5>`_
+`luckyLUKS-1.1.0 <https://github.com/jas-per/luckyLUKS/releases/download/v1.1.0/luckyLUKS-1.1.0>`_
 
 This file contains all resources and can be executed directly by the python intepreter. Place in :code:`/usr/bin` and change ownership to root::
 
-    > sudo mv luckyLUKS-1.0.5 /usr/bin/
-    > sudo chown root:root /usr/bin/luckyLUKS-1.0.5
-    > sudo chmod 755 /usr/bin/luckyLUKS-1.0.5
+    > sudo mv luckyLUKS-1.1.0 /usr/bin/
+    > sudo chown root:root /usr/bin/luckyLUKS-1.1.0
+    > sudo chmod 755 /usr/bin/luckyLUKS-1.1.0
 
-Then start with :code:`luckyLUKS-1.0.5` on the command line or create a desktop shortcut manually.
+Then start with :code:`luckyLUKS-1.1.0` on the command line or create a desktop shortcut manually.
 
 Dependencies
 ------------
@@ -50,7 +50,7 @@ To run luckyLUKS, make sure you have the following installed:
 - :code:`cryptsetup`
 - :code:`sudo`
 - :code:`python-qt4`
-- :code:`tcplay` (if you want to use TrueCrypt containers)
+- :code:`tcplay` (if you want to create TrueCrypt containers)
 
 When using the ubuntu-ppa or debian package, these will get installed automatically, if you use the zip-package please install the dependencies manually with your distributions repository tools.
 
@@ -58,17 +58,39 @@ When using the ubuntu-ppa or debian package, these will get installed automatica
 FAQ
 ===
 
-luckyLUKS is basically a GUI wrapper for two command line tools: `cryptsetup` and `tcplay`. The cryptsetup project has an excellent `FAQ <https://code.google.com/p/cryptsetup/wiki/FrequentlyAskedQuestions>`_ that explains the underlying cryptography and security in great detail. If you want to know more e.g. about choosing a secure password or further protecting your computer, please read the cryptsetup FAQ first. The following information mainly refers to questions specific to encrypted containers and luckyLUKS as a graphical interface to cryptsetup and tcplay.
+luckyLUKS is basically a GUI wrapper for two command line tools: `cryptsetup` and `tcplay`. The cryptsetup project has an excellent `FAQ <https://gitlab.com/cryptsetup/cryptsetup/wikis/FrequentlyAskedQuestions>`_ that explains the underlying cryptography and security in great detail. If you want to know more e.g. about choosing a secure password or further protecting your computer, please read the cryptsetup FAQ first. The following information mainly refers to questions specific to encrypted containers and luckyLUKS as a graphical interface to cryptsetup and tcplay.
 
 Backup
 ------
 
-There is a whole chapter in the cryptsetup FAQ dealing with backup details. This is because cryptsetup is normally used for encrypted partitions, which complicates things a bit. Since luckyLUKS uses encrypted containers, backup is rather straightforward - just copy the whole container and you're done. By copying you technically create a clone of the encrypted LUKS container - see section 6.15 in the cryptsetup `FAQ <https://code.google.com/p/cryptsetup/wiki/FrequentlyAskedQuestions>`_ in case you would like to change your passphrase later on.
+There is a whole chapter in the cryptsetup FAQ dealing with backup details. This is because cryptsetup is normally used for encrypted partitions, which complicates things a bit. Since luckyLUKS uses encrypted containers, backup is rather straightforward - just copy the whole container and you're done. By copying you technically create a clone of the encrypted LUKS container - see section 6.15 in the cryptsetup `FAQ <https://gitlab.com/cryptsetup/cryptsetup/wikis/FrequentlyAskedQuestions#6-backup-and-data-recovery>`_ in case you would like to change your passphrase later on.
+
+Key files
+---------
+
+A key file can be used to allow access to an encrypted container instead of a password. Using a key file resembles unlocking a door with a key in the real world - anyone with access to the key file can open your encrypted container. Make sure to store it at a protected location. Its okay to store it on your computer if you are using a digital keystore or an already encrypted harddrive that you unlock on startup with a password. Having the key file on a `small USB drive <https://www.google.com/search?q=keychain+usb+drive&tbm=isch>`_ attached to your real chain of keys would be an option as well. Since you don't have to enter a password, using a key file can be a convenient way to access your encrypted container. Just make sure you don't lose the key (file) - backup to a safe location separate from the encrypted container. Printing the raw data (use a hex-editor/viewer) to paper is fine as a last resort as well.
+
+Although basically any file could be used as a key file, a file with predictable content leads to similar problems as using weak passwords. Audio files or pictures are a good choice. If unsure use the 'create key file' function in luckyLUKS to generate a small key file filled with random data.
+
+With LUKS it is also possible to use both, a passphrase and a keyfile. LUKS uses a concept called 'keyslots' that enables up to 8 keys to be used exchangeably to unlock a container. You could use a keyfile to unlock a container on an external drive when using your own computer with an already encrypted system, and a passphrase to open the same container on a different computer or in case you lost the keyfile. Because it might be a bit confusing for casual users, this option is not provided in the graphical interface of luckyLUKS. If you want to use it, you have to do the following once on the command line:
+
+- generate a new keyfile with luckyLUKS
+- open the container with luckyLUKS
+- check which loopback device is used: :code:`sudo losetup -a`
+- view the LUKS keyslots of this container: :code:`sudo cryptsetup luksDump /dev/loopX`
+- add the keyfile to the keyslots: :code:`sudo cryptsetup luksAddKey /dev/loopX /PATH/TO/KEYFILE`
+- view the LUKS keyslots again and you will see another keyslot in use: :code:`sudo cryptsetup luksDump /dev/loopX`
+
+After you did this once, you can use the GUI of luckyLUKS, to open the container with either passphrase or keyfile and generate shortcuts for the startup menu as needed.
+
+The TrueCrypt format offers another possibility when using keyfiles, where you have to provide both keyfile and password to unlock a container. While this provides a nice `two factor authentication <http://en.wikipedia.org/wiki/Two_factor_authentication>`_ it is also a more advanced approach that is beyond the scope of luckyLUKS - please use `ZuluCrypt <https://mhogomchungu.github.io/zuluCrypt/>`_ or the command line for this. And be aware that security through obscurity might not be the right approach for your privacy needs: a weak password combined with a keyfile is easily broken if the keyfile gets into the wrong hands.
+
+bla de bla
 
 Sudo Access
 -----------
 
-On Linux encrypted containers get mounted as loopback devices by using the device mapper infrastructure. Access to /dev/mapper is restricted to root for good reason: besides managing encrypted containers, the device mapper is also used by the Logical Volume Manager (LVM) and Software RAIDs for example. There have been `kernel patches <https://code.google.com/p/cryptsetup/issues/detail?id=208>`_ to allow device-mapper access without root privileges but unfortunately those have not been merged. The device mapper developers seem to prefer controlling loopback device mounts by integrating cryptsetup into udisks/dbus/udev/policykit/systemd. While this approach can enable fine grained access control in userspace, it also complicates things quite substantially - nowadays it might be possible to use encrypted containers this way, but decent documentation is hard to find. Probably because udisks is explicitly not meant to be used by applications according to their `developers <http://udisks.freedesktop.org/docs/latest/udisks.8.html>`_: "Hence, if an application does not want to tie itself to a specific version of the operating system, it should not use udisks."
+On Linux encrypted containers get mounted as loopback devices by using the device mapper infrastructure. Access to /dev/mapper is restricted to root for good reason: besides managing encrypted containers, the device mapper is also used by the Logical Volume Manager (LVM) and Software RAIDs for example. There have been `kernel patches <https://gitlab.com/cryptsetup/cryptsetup/issues/208>`_ to allow device-mapper access without root privileges but unfortunately those have not been merged. The device mapper developers seem to prefer controlling loopback device mounts by integrating cryptsetup into udisks/dbus/udev/policykit/systemd. While this approach can enable fine grained access control in userspace, it also complicates things quite substantially - nowadays it might be possible to use encrypted containers this way, but decent documentation is hard to find. Probably because udisks is explicitly not meant to be used by applications according to their `developers <http://udisks.freedesktop.org/docs/latest/udisks.8.html>`_: "Hence, if an application does not want to tie itself to a specific version of the operating system, it should not use udisks."
 
 So for now accessing the device mapper directly with administrative privileges is needed to use encrypted containers. Almost every Unix systems offers two ways to do this: setuid and sudo. With `setuid <http://en.wikipedia.org/wiki/Setuid>`_ an executable gains elevated privileges directly, while `sudo <http://en.wikipedia.org/wiki/Sudo>`_ is a program used to give elevated privileges to other executables, that can be configured to allow fine grained access control in userspace similar to the policykit framework mentioned above. With both setuid and sudo, it is the application developer's responsibility to take great care that the program running with elevated privileges cannot be used in any malicious way. Popular methods for privilege escalation in this context are buffer overruns, unsanitized environments, shell injection or toctou-attacks.
 
