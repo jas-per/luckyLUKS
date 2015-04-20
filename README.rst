@@ -85,8 +85,6 @@ After you did this once, you can use the GUI of luckyLUKS, to open the container
 
 The TrueCrypt format offers another possibility when using keyfiles, where you have to provide both keyfile and password to unlock a container. While this provides a nice `two factor authentication <http://en.wikipedia.org/wiki/Two_factor_authentication>`_ it is also a more advanced approach that is beyond the scope of luckyLUKS - please use `ZuluCrypt <https://mhogomchungu.github.io/zuluCrypt/>`_ or the command line for this. And be aware that security through obscurity might not be the right approach for your privacy needs: a weak password combined with a keyfile is easily broken if the keyfile gets into the wrong hands.
 
-bla de bla
-
 Sudo Access
 -----------
 
