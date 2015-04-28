@@ -24,7 +24,7 @@ import subprocess
 try:
     import pygtk
     pygtk.require('2.0')
-except ImportError:# py3
+except ImportError:  # py3
     import gi
     gi.require_version('Gtk', '3.0')
     from gi import pygtkcompat
@@ -55,9 +55,9 @@ class SetupDialog(gtk.Dialog):
         """ :param parent: The parent window/dialog used to enable modal behaviour
             :type parent: :class:`gtk.Widget`
         """
-        super(SetupDialog, self).__init__( _('luckyLUKS'), parent, gtk.DIALOG_DESTROY_WITH_PARENT,
-                                   (gtk.STOCK_QUIT, gtk.RESPONSE_CANCEL,
-                                    gtk.STOCK_OK, gtk.RESPONSE_OK))
+        super(SetupDialog, self).__init__(_('luckyLUKS'), parent, gtk.DIALOG_DESTROY_WITH_PARENT,
+             (gtk.STOCK_QUIT, gtk.RESPONSE_CANCEL,
+              gtk.STOCK_OK, gtk.RESPONSE_OK))
         self.set_resizable(False)
         self.set_border_width(10)
 
@@ -69,164 +69,164 @@ class SetupDialog(gtk.Dialog):
         self.get_content_area().add(self.main_pane)
 
         # Unlock Tab
-        unlock_grid = gtk.Table(8,3)
+        unlock_grid = gtk.Table(8, 3)
         unlock_grid.set_row_spacings(5)
         label = gtk.Label()
         label.set_markup(_('<b>Unlock an encrypted container</b>\n') +
                          _('Please select container file and name'))
-        unlock_grid.attach(label, 0,3,0,1, gtk.FILL, gtk.FILL, 10, 10)
+        unlock_grid.attach(label, 0, 3, 0, 1, gtk.FILL, gtk.FILL, 10, 10)
 
         label = gtk.Label(_('container file'))
         label.set_alignment(0, 0.5)
-        unlock_grid.attach(label, 0,1,1,2, gtk.FILL, gtk.FILL, 5, 5)
+        unlock_grid.attach(label, 0, 1, 1, 2, gtk.FILL, gtk.FILL, 5, 5)
         self.unlock_container_file = gtk.Entry()
         self.unlock_container_file.set_width_chars(30)
-        unlock_grid.attach(self.unlock_container_file, 1,2,1,2, gtk.FILL, gtk.FILL)
+        unlock_grid.attach(self.unlock_container_file, 1, 2, 1, 2, gtk.FILL, gtk.FILL)
         button_choose_file = gtk.Button()
         button_choose_file.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON))
         button_choose_file.set_tooltip_text(_('choose file'))
-        unlock_grid.attach(button_choose_file,2,3,1,2, gtk.FILL, gtk.FILL)
+        unlock_grid.attach(button_choose_file, 2, 3, 1, 2, gtk.FILL, gtk.FILL)
         button_choose_file.connect('clicked', self.on_select_container_clicked)
 
         label = gtk.Label(_('device name'))
         label.set_alignment(0, 0.5)
-        unlock_grid.attach(label, 0,1,2,3, gtk.FILL, gtk.FILL, 5, 5)
+        unlock_grid.attach(label, 0, 1, 2, 3, gtk.FILL, gtk.FILL, 5, 5)
         self.unlock_device_name = gtk.Entry()
-        unlock_grid.attach(self.unlock_device_name, 1,2,2,3, gtk.FILL, gtk.FILL)
+        unlock_grid.attach(self.unlock_device_name, 1, 2, 2, 3, gtk.FILL, gtk.FILL)
 
         # advanced settings
         a_settings_unlock = gtk.Expander()
         a_settings_unlock.set_label(_('Advanced'))
-        a_settings_unlock.connect('notify::expanded',self.on_expand_clicked)
-        unlock_grid.attach(a_settings_unlock, 0,3,3,4, gtk.FILL, gtk.FILL)
+        a_settings_unlock.connect('notify::expanded', self.on_expand_clicked)
+        unlock_grid.attach(a_settings_unlock, 0, 3, 3, 4, gtk.FILL, gtk.FILL)
 
         label = gtk.Label(_('key file'))
         label.set_alignment(0, 0.5)
-        unlock_grid.attach(label, 0,1,4,5, gtk.FILL, gtk.FILL, 5, 5)
+        unlock_grid.attach(label, 0, 1, 4, 5, gtk.FILL, gtk.FILL, 5, 5)
         self.unlock_keyfile = gtk.Entry()
-        unlock_grid.attach(self.unlock_keyfile, 1,2,4,5, gtk.FILL, gtk.FILL)
+        unlock_grid.attach(self.unlock_keyfile, 1, 2, 4, 5, gtk.FILL, gtk.FILL)
         button_choose_uKeyfile = gtk.Button()
         button_choose_uKeyfile.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON))
         button_choose_uKeyfile.set_tooltip_text(_('choose keyfile'))
-        unlock_grid.attach(button_choose_uKeyfile, 2,3,4,5, gtk.FILL, gtk.FILL)
+        unlock_grid.attach(button_choose_uKeyfile, 2, 3, 4, 5, gtk.FILL, gtk.FILL)
         button_choose_uKeyfile.connect('clicked', lambda widget: self.on_select_keyfile_clicked(widget, 'Unlock'))
         a_settings_unlock.widgets = [label, self.unlock_keyfile, button_choose_uKeyfile]
 
         label = gtk.Label(_('mount point'))
         label.set_alignment(0, 0.5)
-        unlock_grid.attach(label, 0,1,5,6, gtk.FILL, gtk.FILL, 5, 5)
+        unlock_grid.attach(label, 0, 1, 5, 6, gtk.FILL, gtk.FILL, 5, 5)
         self.unlock_mountpoint = gtk.Entry()
-        unlock_grid.attach(self.unlock_mountpoint, 1,2,5,6, gtk.FILL, gtk.FILL)
+        unlock_grid.attach(self.unlock_mountpoint, 1, 2, 5, 6, gtk.FILL, gtk.FILL)
         button_choose_mountpoint = gtk.Button()
         button_choose_mountpoint.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON))
         button_choose_mountpoint.set_tooltip_text(_('choose folder'))
-        unlock_grid.attach(button_choose_mountpoint, 2,3,5,6, gtk.FILL, gtk.FILL)
+        unlock_grid.attach(button_choose_mountpoint, 2, 3, 5, 6, gtk.FILL, gtk.FILL)
         button_choose_mountpoint.connect('clicked', self.on_select_mountpoint_clicked)
         a_settings_unlock.widgets += [label, self.unlock_mountpoint, button_choose_mountpoint]
 
         button_help_unlock = gtk.Button(_('Help'))
         button_help_unlock.set_image(gtk.image_new_from_stock(gtk.STOCK_HELP, gtk.ICON_SIZE_BUTTON))
         button_help_unlock.connect('clicked', self.show_help_unlock)
-        align = gtk.Alignment( 1, 1, 1, 0 )
+        align = gtk.Alignment(1, 1, 1, 0)
         align.add(button_help_unlock)
-        unlock_grid.attach(align, 2,3,6,7, gtk.EXPAND|gtk.FILL, gtk.EXPAND|gtk.FILL)
+        unlock_grid.attach(align, 2, 3, 6, 7, gtk.EXPAND | gtk.FILL, gtk.EXPAND | gtk.FILL)
 
         self.main_pane.append_page(unlock_grid, gtk.Label(_('Unlock Container')))
 
         # Create Tab
-        create_grid = gtk.Table(11,3)
+        create_grid = gtk.Table(11, 3)
         create_grid.set_row_spacings(5)
         label = gtk.Label()
         label.set_markup(_('<b>Create a new encrypted container</b>\n') +
                          _('Please choose container file, name and size'))
-        create_grid.attach(label, 0,3,0,1, gtk.FILL, gtk.FILL, 10, 10)
+        create_grid.attach(label, 0, 3, 0, 1, gtk.FILL, gtk.FILL, 10, 10)
 
         label = gtk.Label(_('container file'))
         label.set_alignment(0, 0.5)
-        create_grid.attach(label, 0,1,1,2, gtk.FILL, gtk.FILL, 5, 5)
+        create_grid.attach(label, 0, 1, 1, 2, gtk.FILL, gtk.FILL, 5, 5)
         self.create_container_file = gtk.Entry()
         self.create_container_file.set_width_chars(30)
-        create_grid.attach(self.create_container_file,1,2,1,2, gtk.FILL, gtk.FILL)
+        create_grid.attach(self.create_container_file, 1, 2, 1, 2, gtk.FILL, gtk.FILL)
         button_choose_file = gtk.Button()
         button_choose_file.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON))
         button_choose_file.set_tooltip_text(_('set file'))
-        create_grid.attach(button_choose_file,2,3,1,2, gtk.FILL, gtk.FILL)
+        create_grid.attach(button_choose_file, 2, 3, 1, 2, gtk.FILL, gtk.FILL)
         button_choose_file.connect('clicked', self.on_save_container_clicked)
 
         label = gtk.Label(_('device name'))
         label.set_alignment(0, 0.5)
-        create_grid.attach(label, 0,1,2,3, gtk.FILL, gtk.FILL, 5, 5)
+        create_grid.attach(label, 0, 1, 2, 3, gtk.FILL, gtk.FILL, 5, 5)
         self.create_device_name = gtk.Entry()
-        create_grid.attach(self.create_device_name, 1,2,2,3, gtk.FILL, gtk.FILL)
+        create_grid.attach(self.create_device_name, 1, 2, 2, 3, gtk.FILL, gtk.FILL)
 
         label = gtk.Label(_('container size'))
         label.set_alignment(0, 0.5)
-        create_grid.attach(label, 0,1,3,4, gtk.FILL, gtk.FILL, 5, 5)
+        create_grid.attach(label, 0, 1, 3, 4, gtk.FILL, gtk.FILL, 5, 5)
         size_range = gtk.Adjustment(1, 1, 1000000000, 1, 0, 0)
         self.create_container_size = gtk.SpinButton()
         self.create_container_size.set_adjustment(size_range)
         self.create_container_size.set_numeric(True)
-        self.create_container_size.set_value(1)#gets otherwise set to 0 sometimes!?
-        
-        create_grid.attach(self.create_container_size, 1,2,3,4, gtk.FILL, gtk.FILL)
+        self.create_container_size.set_value(1)  # gets otherwise set to 0 sometimes!?
+
+        create_grid.attach(self.create_container_size, 1, 2, 3, 4, gtk.FILL, gtk.FILL)
         self.create_size_unit = gtk.combo_box_new_text()
         self.create_size_unit.append_text('MB')
         self.create_size_unit.append_text('GB')
         self.create_size_unit.set_active(1)
-        create_grid.attach(self.create_size_unit,2,3,3,4, gtk.FILL, gtk.FILL)
+        create_grid.attach(self.create_size_unit, 2, 3, 3, 4, gtk.FILL, gtk.FILL)
 
         # advanced settings
         a_settings_create = gtk.Expander()
         a_settings_create.set_label(_('Advanced'))
         a_settings_create.connect('notify::expanded', self.on_expand_clicked)
-        create_grid.attach(a_settings_create, 0,3,4,5, gtk.FILL, gtk.FILL)
+        create_grid.attach(a_settings_create, 0, 3, 4, 5, gtk.FILL, gtk.FILL)
 
         label = gtk.Label(_('key file'))
         label.set_alignment(0, 0.5)
-        create_grid.attach(label, 0,1,5,6, gtk.FILL, gtk.FILL, 5, 5)
+        create_grid.attach(label, 0, 1, 5, 6, gtk.FILL, gtk.FILL, 5, 5)
         self.create_keyfile = gtk.Entry()
-        create_grid.attach(self.create_keyfile, 1,2,5,6, gtk.FILL, gtk.FILL)
+        create_grid.attach(self.create_keyfile, 1, 2, 5, 6, gtk.FILL, gtk.FILL)
         button_choose_cKeyfile = gtk.Button()
         button_choose_cKeyfile.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON))
         button_choose_cKeyfile.set_tooltip_text(_('choose keyfile'))
-        create_grid.attach(button_choose_cKeyfile, 2,3,5,6, gtk.FILL, gtk.FILL)
+        create_grid.attach(button_choose_cKeyfile, 2, 3, 5, 6, gtk.FILL, gtk.FILL)
         button_choose_cKeyfile.connect('clicked', lambda widget: self.on_select_keyfile_clicked(widget, 'Create'))
 
         button_create_keyfile = gtk.Button(_('Create key file'))
         button_create_keyfile.connect('clicked', self.on_create_keyfile)
-        create_grid.attach(button_create_keyfile, 1,2,6,7, gtk.FILL, gtk.FILL)
+        create_grid.attach(button_create_keyfile, 1, 2, 6, 7, gtk.FILL, gtk.FILL)
         a_settings_create.widgets = [label, self.create_keyfile, button_choose_cKeyfile, button_create_keyfile]
 
         label = gtk.Label(_('format'))
         label.set_alignment(0, 0.5)
-        create_grid.attach(label, 0,1,7,8, gtk.FILL, gtk.FILL, 5, 5)
+        create_grid.attach(label, 0, 1, 7, 8, gtk.FILL, gtk.FILL, 5, 5)
         self.create_encryption_format = gtk.combo_box_new_text()
         self.create_encryption_format.append_text('LUKS')
         self.create_encryption_format.append_text('TrueCrypt')
         if not is_installed('tcplay'):
             self.create_encryption_format.set_sensitive(False)
         self.create_encryption_format.set_active(0)
-        create_grid.attach(self.create_encryption_format, 1,2,7,8, gtk.FILL, gtk.FILL)
+        create_grid.attach(self.create_encryption_format, 1, 2, 7, 8, gtk.FILL, gtk.FILL)
         a_settings_create.widgets += [label, self.create_encryption_format]
 
         label = gtk.Label(_('filesystem'))
         label.set_alignment(0, 0.5)
-        create_grid.attach(label, 0,1,8,9, gtk.FILL, gtk.FILL, 5, 5)
+        create_grid.attach(label, 0, 1, 8, 9, gtk.FILL, gtk.FILL, 5, 5)
         filesystems = ['ext4', 'ext2', 'ntfs']
         self.create_filesystem_type = gtk.combo_box_new_text()
         for filesystem in filesystems:
             if is_installed('mkfs.' + filesystem):
                 self.create_filesystem_type.append_text(filesystem)
         self.create_filesystem_type.set_active(0)
-        create_grid.attach(self.create_filesystem_type, 1,2,8,9, gtk.FILL, gtk.FILL)
+        create_grid.attach(self.create_filesystem_type, 1, 2, 8, 9, gtk.FILL, gtk.FILL)
         a_settings_create.widgets += [label, self.create_filesystem_type]
 
         button_help_create = gtk.Button(_('Help'))
         button_help_create.set_image(gtk.image_new_from_stock(gtk.STOCK_HELP, gtk.ICON_SIZE_BUTTON))
         button_help_create.connect('clicked', self.show_help_create)
-        align = gtk.Alignment( 1, 1, 1, 0 )
+        align = gtk.Alignment(1, 1, 1, 0)
         align.add(button_help_create)
-        create_grid.attach(align, 2,3,9,10, gtk.EXPAND|gtk.FILL, gtk.EXPAND|gtk.FILL)
+        create_grid.attach(align, 2, 3, 9, 10, gtk.EXPAND | gtk.FILL, gtk.EXPAND | gtk.FILL)
 
         self.main_pane.append_page(create_grid, gtk.Label(_('Create New Container')))
 
@@ -249,26 +249,26 @@ class SetupDialog(gtk.Dialog):
         self.is_busy = True
         self.create_progressbars = []
 
-        self.create_status_grid = gtk.Table(7,3)
+        self.create_status_grid = gtk.Table(7, 3)
         self.create_status_grid.set_row_spacings(5)
         label = gtk.Label()
         label.set_markup(_('<b>Creating new container</b>\n') +
                          _('patience .. this might take a while'))
-        self.create_status_grid.attach(label, 0,3,0,1, gtk.FILL, gtk.FILL, 10, 10)
-                
-        label = gtk.Label()
-        label.set_markup('<b>' +_('Step') + ' 1/3</b>')
-        self.create_status_grid.attach(label, 0,1,1,2, gtk.FILL, gtk.FILL)
-        self.create_status_grid.attach(gtk.Label(_('Initializing Container File')), 1,2,1,2, gtk.EXPAND|gtk.FILL, gtk.FILL)
-        self.create_progressbars.append(gtk.ProgressBar())
-        self.create_status_grid.attach(self.create_progressbars[0], 0,3,2,3, gtk.FILL, gtk.FILL)
+        self.create_status_grid.attach(label, 0, 3, 0, 1, gtk.FILL, gtk.FILL, 10, 10)
 
-        # set the size of the progress pane to the current size of the main pane to be hidden (needed because auto-resizing gtk.dialog is used)     
+        label = gtk.Label()
+        label.set_markup('<b>' + _('Step') + ' 1/3</b>')
+        self.create_status_grid.attach(label, 0, 1, 1, 2, gtk.FILL, gtk.FILL)
+        self.create_status_grid.attach(gtk.Label(_('Initializing Container File')), 1, 2, 1, 2, gtk.EXPAND | gtk.FILL, gtk.FILL)
+        self.create_progressbars.append(gtk.ProgressBar())
+        self.create_status_grid.attach(self.create_progressbars[0], 0, 3, 2, 3, gtk.FILL, gtk.FILL)
+
+        # set the size of the progress pane to the current size of the main pane to be hidden (needed because auto-resizing gtk.dialog is used)
         self.create_status_grid.set_size_request(*self.main_pane.size_request())
-        self.main_pane.hide()          
+        self.main_pane.hide()
         self.get_content_area().add(self.create_status_grid)
         self.create_status_grid.show_all()
-        self.get_action_area().set_sensitive(False)#disable buttons
+        self.get_action_area().set_sensitive(False)  # disable buttons
 
         # calculate designated container size for worker and progress indicator
         size = self.create_container_size.get_value_as_int()
@@ -300,11 +300,11 @@ class SetupDialog(gtk.Dialog):
         self.set_progress_done(self.create_timer, self.create_progressbars[0])
 
         label = gtk.Label()
-        label.set_markup('<b>' +_('Step') + ' 2/3</b>')
-        self.create_status_grid.attach(label, 0,1,3,4, gtk.FILL, gtk.FILL)
-        self.create_status_grid.attach(gtk.Label(_('Initializing Encryption')), 1,2,3,4, gtk.EXPAND|gtk.FILL, gtk.FILL)
+        label.set_markup('<b>' + _('Step') + ' 2/3</b>')
+        self.create_status_grid.attach(label, 0, 1, 3, 4, gtk.FILL, gtk.FILL)
+        self.create_status_grid.attach(gtk.Label(_('Initializing Encryption')), 1, 2, 3, 4, gtk.EXPAND | gtk.FILL, gtk.FILL)
         self.create_progressbars.append(gtk.ProgressBar())
-        self.create_status_grid.attach(self.create_progressbars[1], 0,3,4,5, gtk.FILL, gtk.FILL)
+        self.create_status_grid.attach(self.create_progressbars[1], 0, 3, 4, 5, gtk.FILL, gtk.FILL)
         self.create_timer = gobject.timeout_add(200, self.display_progress_pulse, self.create_progressbars[1])
         self.create_status_grid.show_all()
 
@@ -330,11 +330,11 @@ class SetupDialog(gtk.Dialog):
         self.set_progress_done(self.create_timer, self.create_progressbars[1])
 
         label = gtk.Label()
-        label.set_markup('<b>' +_('Step') + ' 3/3</b>')
-        self.create_status_grid.attach(label, 0,1,5,6, gtk.FILL, gtk.FILL)
-        self.create_status_grid.attach(gtk.Label(_('Initializing Filesystem')), 1,2,5,6, gtk.EXPAND|gtk.FILL, gtk.FILL)
+        label.set_markup('<b>' + _('Step') + ' 3/3</b>')
+        self.create_status_grid.attach(label, 0, 1, 5, 6, gtk.FILL, gtk.FILL)
+        self.create_status_grid.attach(gtk.Label(_('Initializing Filesystem')), 1, 2, 5, 6, gtk.EXPAND | gtk.FILL, gtk.FILL)
         self.create_progressbars.append(gtk.ProgressBar())
-        self.create_status_grid.attach(self.create_progressbars[2], 0,3,6,7, gtk.FILL, gtk.FILL)
+        self.create_status_grid.attach(self.create_progressbars[2], 0, 3, 6, 7, gtk.FILL, gtk.FILL)
         self.create_timer = gobject.timeout_add(200, self.display_progress_pulse, self.create_progressbars[2])
         self.create_status_grid.show_all()
 
@@ -345,12 +345,12 @@ class SetupDialog(gtk.Dialog):
     def display_create_success(self, msg):
         """ Triggered after successful creation of a new container """
         self.set_progress_done(self.create_timer, self.create_progressbars[2])
-        #copy values of newly created container to unlock dlg und reset create values
+        # copy values of newly created container to unlock dlg und reset create values
         self.unlock_container_file.set_text(self.create_container_file.get_text())
         self.unlock_device_name.set_text(self.create_device_name.get_text())
         self.unlock_keyfile.set_text(self.create_keyfile.get_text())
         show_info(self, _('<b>{device_name}\nsuccessfully created!</b>\nClick on unlock to use the new container')
-                        .format(device_name = self.create_device_name.get_text()), _('Success'))
+                  .format(device_name=self.create_device_name.get_text()), _('Success'))
         # reset create ui and switch to unlock tab
         self.create_container_file.set_text('')
         self.create_device_name.set_text('')
@@ -360,11 +360,11 @@ class SetupDialog(gtk.Dialog):
         self.create_encryption_format.set_active(0)
         self.create_filesystem_type.set_active(0)
         self.display_create_done()
-        self.main_pane.set_current_page(0)   
-        self.get_widget_for_response(gtk.RESPONSE_OK).grab_focus() 
-        
+        self.main_pane.set_current_page(0)
+        self.get_widget_for_response(gtk.RESPONSE_OK).grab_focus()
+
     def display_create_failed(self, errormessage):
-        """ Triggered when an error happend during the create process 
+        """ Triggered when an error happend during the create process
             :param errormessage: errormessage to be shown
             :type errormessage: str
         """
@@ -374,7 +374,7 @@ class SetupDialog(gtk.Dialog):
 
     def display_create_done(self):
         """ Helper to hide the create process informations and show the unlock/create pane """
-        self.create_status_grid.hide()           
+        self.create_status_grid.hide()
         self.get_content_area().remove(self.create_status_grid)
         self.main_pane.show()
         self.get_action_area().set_sensitive(True)
@@ -391,7 +391,7 @@ class SetupDialog(gtk.Dialog):
             gobject.source_remove(timeout)
         if progressbar is not None:
             progressbar.set_fraction(1)
-            progressbar.set_show_text(True)        
+            progressbar.set_show_text(True)
             progressbar.set_text(_('Done'))
 
     def on_response_check(self, dialog, response):
@@ -402,23 +402,23 @@ class SetupDialog(gtk.Dialog):
         if response == gtk.RESPONSE_OK:
             try:
                 if self.main_pane.get_current_page() == 1:
-                    
+
                     self.on_create_container()
                     dialog.emit_stop_by_name('response')
-                    
+
                 else:
-     
+
                     UnlockContainerDialog(self,
                                           self.worker,
                                           self.get_luks_device_name(),
                                           self.get_encrypted_container(),
                                           self.get_keyfile(),
                                           self.get_mount_point()
-                                          ).communicate()#blocks
-                    #optionally create startmenu entry
+                                          ).communicate()  # blocks
+                    # optionally create startmenu entry
                     self.show_create_startmenu_entry()
-                    #all good, now switch to main window
-                    
+                    # all good, now switch to main window
+
             except UserInputError as error:
                 show_alert(self, format_exception(error))
                 dialog.emit_stop_by_name('response')
@@ -470,10 +470,10 @@ class SetupDialog(gtk.Dialog):
 
         # set the size of the progress pane to the current size of the main pane to be hidden (needed because auto-resizing gtk.dialog is used)
         self.create_status_grid.set_size_request(*self.main_pane.size_request())
-        self.main_pane.hide()            
+        self.main_pane.hide()
         self.get_content_area().add(self.create_status_grid)
         self.create_status_grid.show_all()
-        self.get_action_area().set_sensitive(False)#disable buttons
+        self.get_action_area().set_sensitive(False)  # disable buttons
 
         # start timer for progressbar updates during keyfile creation
         self.create_timer = gobject.timeout_add(500, self.display_progress_percent, key_file, 1024)
@@ -585,17 +585,17 @@ class SetupDialog(gtk.Dialog):
     def on_delete_event(self, widget, event):
         """ Event handler for delete: ask for confirmation while creating container """
         if self.is_busy:
-            md = gtk.MessageDialog(self, 
-              gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-              gtk.MESSAGE_WARNING,
-              gtk.BUTTONS_CANCEL
-            )
+            md = gtk.MessageDialog(self,
+                                   gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                                   gtk.MESSAGE_WARNING,
+                                   gtk.BUTTONS_CANCEL
+                                   )
             md.set_markup(_('Currently processing your request!\nDo you really want to quit?'))
             md.add_button(gtk.STOCK_QUIT, gtk.RESPONSE_OK)
             response = md.run()
             md.destroy()
             if response != gtk.RESPONSE_OK:
-                return True#block close!
+                return True  # block close!
         return False
 
     def on_switchpage_event(self, notebook, widget, page_num, data=None):
@@ -676,11 +676,11 @@ class SetupDialog(gtk.Dialog):
         ret = dialog.get_filename() if response == gtk.RESPONSE_OK else None
         dialog.destroy()
         return ret
-            
+
     def show_dont_overwrite(self, file_chooser, data=None):
         """ Triggered by selecting an already existing file in the container filechooser (create) """
         show_alert(file_chooser, _('File already exists:\n{filename}\n\n'
-                                   '<b>Please create a new file!</b>').format(filename = file_chooser.get_filename()))
+                                   '<b>Please create a new file!</b>').format(filename=file_chooser.get_filename()))
         return gtk.FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN
 
     def display_progress_percent(self, location, size):
@@ -691,20 +691,20 @@ class SetupDialog(gtk.Dialog):
             :type size: int
         """
         try:
-            new_value = float( os.path.getsize(location) / size)
+            new_value = float(os.path.getsize(location) / size)
         except Exception:
             new_value = 0
         self.create_progressbars[0].set_fraction(new_value)
-        self.create_progressbars[0].set_text('{0:.0f}%'.format(new_value*100))
-        return True#continue
+        self.create_progressbars[0].set_text('{0:.0f}%'.format(new_value * 100))
+        return True  # continue
 
     def display_progress_pulse(self, progressbar):
-        """ Pulse progress bar 
+        """ Pulse progress bar
             :param progressbar: progressbar widget to pulse
             :type progressbar: :class:`gtk.ProgressBar`
         """
         progressbar.pulse()
-        return True#continue
+        return True  # continue
 
     def get_encrypted_container(self):
         """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
@@ -757,10 +757,10 @@ class SetupDialog(gtk.Dialog):
                        'attached to your real chain of keys would be an option as well.\n'
                        'Since you dont have to enter a password, using a key file can be a convenient way to '
                        'access your encrypted container. Just make sure you dont lose the key (file) ;)') +
-                       _('\n\n'
-                         'Although basically any file could be used as a key file, a file with predictable content '
-                         'leads to similar problems as using weak passwords. Audio files or pictures are a good choice. '
-                         'If unsure use the `create key file` button to generate a small key file filled with random data.')},
+                     _('\n\n'
+                       'Although basically any file could be used as a key file, a file with predictable content '
+                       'leads to similar problems as using weak passwords. Audio files or pictures are a good choice. '
+                       'If unsure use the `create key file` button to generate a small key file filled with random data.')},
             {'head': _('encryption format'),
              'text': _('The standard disk encryption format on Linux is called LUKS. '
                        'With <a href="https://github.com/t-d-k/doxbox">doxbox</a> you can use LUKS containers on Windows as well. '
@@ -806,4 +806,3 @@ class SetupDialog(gtk.Dialog):
         hd = HelpDialog(self, header_text, basic_help, advanced_topics)
         hd.run()
         hd.destroy()
-        

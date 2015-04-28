@@ -21,7 +21,7 @@ import os.path
 try:
     import pygtk
     pygtk.require('2.0')
-except ImportError:# py3
+except ImportError:  # py3
     import gi
     gi.require_version('Gtk', '3.0')
     from gi import pygtkcompat
@@ -66,8 +66,8 @@ class MainWindow(gtk.Window):
         self.worker = None
         self.is_waiting_for_worker = False
         self.is_unlocked = False
-#         self.is_initialized = False # TODO: proper worker shutdown
-        self.has_tray = True # gtk.StatusIcon.is_embedded() has to be checked after init
+# self.is_initialized = False # TODO: proper worker shutdown
+        self.has_tray = True  # gtk.StatusIcon.is_embedded() has to be checked after init
 
         # L10n: program name - translatable for startmenu titlebar etc
         self.set_title(_('luckyLUKS'))
@@ -116,7 +116,7 @@ class MainWindow(gtk.Window):
 
             from luckyLUKS.setupUI import SetupDialog
             sd = SetupDialog(self)
- 
+
             response = sd.run()
             if response == gtk.RESPONSE_OK:
                 self.luks_device_name = sd.get_luks_device_name()
@@ -124,59 +124,59 @@ class MainWindow(gtk.Window):
                 self.mount_point = sd.get_mount_point()
                 self.key_file = sd.get_keyfile()
                 sd.destroy()
-                
+
                 self.is_unlocked = True  # all checks in setup dialog -> skip initializing state
             else:
-                sys.exit()#user closed dialog -> quit program
+                sys.exit()  # user closed dialog -> quit program
 
         # center window on desktop
         self.set_position(gtk.WIN_POS_CENTER_ALWAYS)
 
         # widget content
-        main_grid = gtk.Table(7,2)
+        main_grid = gtk.Table(7, 2)
         main_grid.set_row_spacings(5)
         self.set_border_width(10)
 
-        main_grid.attach(gtk.image_new_from_stock(gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_DIALOG), 0,1,0,1, gtk.FILL, gtk.FILL)
+        main_grid.attach(gtk.image_new_from_stock(gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_DIALOG), 0, 1, 0, 1, gtk.FILL, gtk.FILL)
         label = gtk.Label()
-        label.set_markup('<b>' + _('Handle encrypted container') + '</b>\n') 
-        main_grid.attach(label, 1,2,0,1, gtk.FILL, gtk.FILL, 10, 10)
+        label.set_markup('<b>' + _('Handle encrypted container') + '</b>\n')
+        main_grid.attach(label, 1, 2, 0, 1, gtk.FILL, gtk.FILL, 10, 10)
 
         label = gtk.Alignment()
         label.add(gtk.Label(_('Name:')))
-        main_grid.attach(label, 0,1,1,2, gtk.FILL, gtk.FILL)
+        main_grid.attach(label, 0, 1, 1, 2, gtk.FILL, gtk.FILL)
         label = gtk.Label()
         label.set_markup('<b>{dev_name}</b>'.format(dev_name=self.luks_device_name))
-        main_grid.attach(label, 1,2,1,2, gtk.FILL, gtk.FILL)
+        main_grid.attach(label, 1, 2, 1, 2, gtk.FILL, gtk.FILL)
 
         label = gtk.Alignment()
         label.add(gtk.Label(_('File:')))
-        main_grid.attach(label, 0,1,2,3, gtk.FILL, gtk.FILL)
-        main_grid.attach(gtk.Label(self.encrypted_container), 1,2,2,3, gtk.FILL, gtk.FILL)
+        main_grid.attach(label, 0, 1, 2, 3, gtk.FILL, gtk.FILL)
+        main_grid.attach(gtk.Label(self.encrypted_container), 1, 2, 2, 3, gtk.FILL, gtk.FILL)
 
         if self.key_file is not None:
             label = gtk.Alignment()
             label.add(gtk.Label(_('Key:')))
-            main_grid.attach(label, 0,1,3,4, gtk.FILL, gtk.FILL)
-            main_grid.attach(gtk.Label(self.key_file), 1,2,3,4, gtk.FILL, gtk.FILL)
+            main_grid.attach(label, 0, 1, 3, 4, gtk.FILL, gtk.FILL)
+            main_grid.attach(gtk.Label(self.key_file), 1, 2, 3, 4, gtk.FILL, gtk.FILL)
 
         if self.mount_point is not None:
             label = gtk.Alignment()
             label.add(gtk.Label(_('Mount:')))
-            main_grid.attach(label, 0,1,4,5, gtk.FILL, gtk.FILL)
-            main_grid.attach(gtk.Label(self.mount_point), 1,2,4,5, gtk.FILL, gtk.FILL)
+            main_grid.attach(label, 0, 1, 4, 5, gtk.FILL, gtk.FILL)
+            main_grid.attach(gtk.Label(self.mount_point), 1, 2, 4, 5, gtk.FILL, gtk.FILL)
 
         label = gtk.Alignment()
         label.add(gtk.Label(_('Status:')))
-        main_grid.attach(label, 0,1,5,6, gtk.FILL,gtk.FILL)
+        main_grid.attach(label, 0, 1, 5, 6, gtk.FILL, gtk.FILL)
         self.label_status = gtk.Label('')
-        main_grid.attach(self.label_status, 1,2,5,6, gtk.FILL,gtk.FILL)
-        main_grid.set_row_spacing(5,10)
+        main_grid.attach(self.label_status, 1, 2, 5, 6, gtk.FILL, gtk.FILL)
+        main_grid.set_row_spacing(5, 10)
 
         self.button_toggle_status = gtk.Button('')
-        self.button_toggle_status.set_size_request(-1,40)
+        self.button_toggle_status.set_size_request(-1, 40)
         self.button_toggle_status.connect('clicked', self.toggle_container_status)
-        main_grid.attach(self.button_toggle_status, 1,2,6,7, gtk.FILL, gtk.FILL)
+        main_grid.attach(self.button_toggle_status, 1, 2, 6, 7, gtk.FILL, gtk.FILL)
 
         self.add(main_grid)
 
@@ -193,18 +193,18 @@ class MainWindow(gtk.Window):
         menuitem_label.set_sensitive(False)
         self.menu.append(menuitem_label)
         self.menu.append(gtk.SeparatorMenuItem())
-        
+
         self.tray_toggle_action = gtk.ImageMenuItem()
         self.tray_toggle_action.set_image(gtk.image_new_from_stock(gtk.STOCK_FULLSCREEN, gtk.ICON_SIZE_MENU))
         self.tray_toggle_action.set_label(_('Hide'))
         self.tray_toggle_action.connect('activate', self.toggle_main_window)
         self.menu.append(self.tray_toggle_action)
-        
+
         menuitem_quit = gtk.ImageMenuItem(gtk.STOCK_QUIT)
         menuitem_quit.set_label(_('Quit'))
         menuitem_quit.connect('activate', self.tray_quit)
         self.menu.append(menuitem_quit)
-        
+
         self.tray.connect("popup_menu", self.tray_popup)
 
         self.init_status()
@@ -224,16 +224,16 @@ class MainWindow(gtk.Window):
 
         self.show_all()
 
-    def tray_popup(self, widget, button, time, data = None):
+    def tray_popup(self, widget, button, time, data=None):
         """ Triggered by right click on the systray icon: Helper to show a popup menu """
- 
+
         self.menu.show_all()
         try:
             self.menu.popup(None, None, gtk.status_icon_position_menu, button, time, self.tray)
         except TypeError:  # gtk3
-            self.menu.popup(None, None, lambda w,x: self.tray.position_menu(self.menu, self.tray), self.tray, 3, time)
+            self.menu.popup(None, None, lambda w, x: self.tray.position_menu(self.menu, self.tray), self.tray, 3, time)
 
-    def tray_quit(self, widget, data = None):
+    def tray_quit(self, widget, data=None):
         """ Triggered by clicking on `quit` in the systray popup: asks to close an unlocked container """
         if not self.is_unlocked:
             gtk.main_quit()
@@ -241,7 +241,7 @@ class MainWindow(gtk.Window):
             self.show_all()
             self.confirm_close()
 
-    def toggle_main_window(self, widget, data = None):
+    def toggle_main_window(self, widget, data=None):
         """ Triggered by clicking on the systray icon: show/hide main window """
         if self.get_visible():
             self.hide()
@@ -250,7 +250,7 @@ class MainWindow(gtk.Window):
             self.show_all()
             self.tray_toggle_action.set_label(_('Hide'))
 
-    def on_close_app(self, widget, data = None):
+    def on_close_app(self, widget, data=None):
         """ Triggered by closing the window: If the container is unlocked, the program won't quit but remain in the systray. """
         if not self.is_waiting_for_worker:
             if self.is_unlocked:
@@ -261,7 +261,7 @@ class MainWindow(gtk.Window):
                     self.confirm_close()
             else:
                 gtk.main_quit()
-        return True # block event
+        return True  # block event
 
     def confirm_close(self):
         """ Inform about opened container and ask for confirmation to close & quit """
@@ -269,11 +269,11 @@ class MainWindow(gtk.Window):
                     'is currently <b>unlocked</b>,\n'
                     'Close Container now and quit?').format(device_name=self.luks_device_name,
                                                             container_path=self.encrypted_container)
-        
-        md = gtk.MessageDialog(self, 
-              gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-              gtk.MESSAGE_QUESTION,
-              gtk.BUTTONS_CANCEL)
+
+        md = gtk.MessageDialog(self,
+                               gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                               gtk.MESSAGE_QUESTION,
+                               gtk.BUTTONS_CANCEL)
         md.add_button(gtk.STOCK_QUIT, gtk.RESPONSE_OK)
         md.set_markup(message)
         response = md.run()
@@ -281,7 +281,7 @@ class MainWindow(gtk.Window):
         if response == gtk.RESPONSE_OK:
             self.do_close_container(shutdown=True)
 
-    def toggle_container_status(self, widget, data = None):
+    def toggle_container_status(self, widget, data=None):
         """ Unlock or close container """
         if self.is_unlocked:
             self.do_close_container()

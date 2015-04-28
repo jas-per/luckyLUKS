@@ -34,6 +34,7 @@ def luckyLUKS(translation, *args, **kwargs):
         commandline_unicode_arg = lambda arg: arg.decode(sys.getfilesystemencoding())
         argparse._ = builtins._ = translation.ugettext
         # format exception message for gui
+
         def format_exception(exception):
             try:
                 return str(exception).decode('utf-8')
@@ -96,7 +97,7 @@ def startUI(parsed_args):
     try:
         import pygtk
         pygtk.require('2.0')
-    except ImportError:# py3
+    except ImportError:  # py3
         import gi
         gi.require_version('Gtk', '3.0')
         from gi import pygtkcompat
@@ -105,16 +106,16 @@ def startUI(parsed_args):
 
     import gtk
     import gobject
-    
+
     from luckyLUKS.mainUI import MainWindow
 
     # start application
-    gobject.threads_init()#needed for PyGObject up to 3.10.1
+    gobject.threads_init()  # needed for PyGObject up to 3.10.1
     # TODO: remove after testing
     settings = gtk.settings_get_default()
 #     settings.props.gtk_button_images = True
 #     settings.props.gtk_menu_images = True
-    MainWindow(parsed_args.name, parsed_args.container,  parsed_args.keyfile, parsed_args.mountpoint)
+    MainWindow(parsed_args.name, parsed_args.container, parsed_args.keyfile, parsed_args.mountpoint)
     sys.exit(gtk.main())
 
 

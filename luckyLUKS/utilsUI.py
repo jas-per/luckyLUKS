@@ -19,7 +19,7 @@ import sys
 try:
     import pygtk
     pygtk.require('2.0')
-except ImportError:# py3
+except ImportError:  # py3
     import gi
     gi.require_version('Gtk', '3.0')
     from gi import pygtkcompat
@@ -32,14 +32,14 @@ from luckyLUKS import VERSION_STRING, PROJECT_URL
 
 
 class HelpDialog(gtk.Dialog):
-    
+
     """ Displays a help dialog that consists of
         a help icon and a header/title
         a main text
         an iniatially hidden secondary help text that can be expanded
         followed by a footer
     """
- 
+
     def __init__(self, parent, header_text, basic_text, advanced_topics):
         """ Create a new instance
             :param parent: The parent window/dialog used to enable modal behaviour
@@ -51,10 +51,10 @@ class HelpDialog(gtk.Dialog):
             :param advanced_topics: Displayed below the basic text, initially only the header is shown, the content gets hidden
             :type advanced_topics: Array of dicts with str/unicode head and text properties
         """
-        super(HelpDialog, self).__init__( _('Help'), parent,
-                                        gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+        super(HelpDialog, self).__init__(_('Help'), parent,
+                                         gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                                         (gtk.STOCK_OK, gtk.RESPONSE_OK)
-                                    )
+                                         )
         self.set_resizable(False)
         self.set_border_width(10)
         self.get_content_area().set_spacing(10)
@@ -80,12 +80,12 @@ class HelpDialog(gtk.Dialog):
         advanced.add(advanced_label)
         self.get_content_area().add(advanced)
         self._advanced_topics = []
-        
+
         for topic in advanced_topics:
             expander = gtk.Expander()
             expander.set_label(topic['head'])
             child = gtk.Alignment()
-            child.set_padding(10,10,0,0)
+            child.set_padding(10, 10, 0, 0)
             text = gtk.Label()
             text.set_markup(topic['text'])
             text.set_line_wrap(True)
@@ -108,9 +108,9 @@ class HelpDialog(gtk.Dialog):
                                                                                       project_url=PROJECT_URL))
         footer.add(footer_label)
         self.get_content_area().add(footer)
-        
+
         self.show_all()
-        
+
     def _on_topic_clicked(self, topic_clicked, params):
         if topic_clicked.get_expanded():
             for topic in self._advanced_topics:
@@ -129,6 +129,7 @@ def show_info(parent, message, title=''):
     """
     show_message(parent, message, title, gtk.MESSAGE_INFO)
 
+
 def show_alert(parent, message, critical=False):
     """ Helper to show error message
         :param parent: The parent widget to be passed to the modal dialog
@@ -141,6 +142,7 @@ def show_alert(parent, message, critical=False):
     show_message(parent, message, _('Error'), gtk.MESSAGE_ERROR if critical else gtk.MESSAGE_WARNING)
     if critical:
         sys.exit()
+
 
 def show_message(parent, message, title, message_type):
     """ Generic helper to show message
@@ -155,9 +157,9 @@ def show_message(parent, message, title, message_type):
     """
     if message != '':
         md = gtk.MessageDialog(parent,
-          gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-          message_type, 
-          gtk.BUTTONS_OK)
+                               gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                               message_type,
+                               gtk.BUTTONS_OK)
         md.set_title(title)
         md.set_markup(message)
         md.get_widget_for_response(gtk.RESPONSE_OK).grab_focus()

@@ -21,7 +21,7 @@ from __future__ import unicode_literals
 try:
     import pygtk
     pygtk.require('2.0')
-except ImportError:# py3
+except ImportError:  # py3
     import gi
     gi.require_version('Gtk', '3.0')
     from gi import pygtkcompat
@@ -50,17 +50,17 @@ class PasswordDialog(gtk.Dialog):
             :param title: Displayed in the dialogs titlebar
             :type title: str or None
         """
-        super(PasswordDialog, self).__init__( title, parent,
-                                                gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                                                (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                                 gtk.STOCK_OK, gtk.RESPONSE_OK)
-                                            )
+        super(PasswordDialog, self).__init__(title, parent,
+                                             gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+             (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+              gtk.STOCK_OK, gtk.RESPONSE_OK)
+        )
         self.set_resizable(False)
         self.set_border_width(10)
         # default response will be triggered by pressing enter as well
-        self.set_default_response(gtk.RESPONSE_OK);
+        self.set_default_response(gtk.RESPONSE_OK)
         # connect buttons
-        self.connect('response', self.on_response_check) 
+        self.connect('response', self.on_response_check)
 
         # create icon and label
         self.header_text = gtk.Label()
@@ -72,15 +72,15 @@ class PasswordDialog(gtk.Dialog):
 
         # create the text input field
         self.pw_box = gtk.Entry()
-        #password will not be shown on screen
+        # password will not be shown on screen
         self.pw_box.set_visibility(False)
         # allow the user to press enter to do ok
         self.pw_box.set_activates_default(True)
         # add the entry field with top/bottom margins
-        align_box = gtk.Alignment(0,0.5,1,0.25)
+        align_box = gtk.Alignment(0, 0.5, 1, 0.25)
         align_box.add(self.pw_box)
         align_box.set_size_request(-1, 60)
-        self.get_content_area().add(align_box)        
+        self.get_content_area().add(align_box)
 
         self.pw_box.grab_focus()
         self.show_all()
@@ -128,8 +128,8 @@ class SudoDialog(PasswordDialog):
         self.toggle_function = toggle_function
         self.store_cb = gtk.CheckButton(_('Always allow luckyLUKS to be run\nwith administrative privileges'))
         self.store_cb.connect("toggled", self.on_cb_toggled)
-        self.toggle_function(False)# allowing permanent access has to be confirmed explicitly
-        align_box = gtk.Alignment(0,0,1,0.25)
+        self.toggle_function(False)  # allowing permanent access has to be confirmed explicitly
+        align_box = gtk.Alignment(0, 0, 1, 0.25)
         align_box.add(self.store_cb)
         align_box.set_size_request(-1, 50)
         self.get_content_area().add(align_box)
@@ -151,7 +151,7 @@ class FormatContainerDialog(PasswordDialog):
         super(FormatContainerDialog, self).__init__(parent,
                                                     message=_('Please choose a passphrase\nto encrypt the new container:\n'),
                                                     title=_('Enter new Passphrase'))
-        
+
         self.connect("delete_event", self.on_close_dialog)
         # display passphrase checkbox and set default to show input
         self.show_cb = gtk.CheckButton(_('Display passphrase'))
@@ -173,11 +173,11 @@ class FormatContainerDialog(PasswordDialog):
         # confirm cancel
         elif response != gtk.RESPONSE_OK:
             md = gtk.MessageDialog(self,
-              gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-              gtk.MESSAGE_WARNING,
-              gtk.BUTTONS_CANCEL,
-              _('Currently creating new container!\nDo you really want to quit?')
-              )
+                                   gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                                   gtk.MESSAGE_WARNING,
+                                   gtk.BUTTONS_CANCEL,
+                                   _('Currently creating new container!\nDo you really want to quit?')
+                                   )
             md.add_button(gtk.STOCK_QUIT, gtk.RESPONSE_OK)
             response = md.run()
             md.destroy()
@@ -257,14 +257,14 @@ class UnlockContainerDialog(PasswordDialog):
             self.pw_box.set_sensitive(True)
             self.get_action_area().set_sensitive(True)
             self.pw_box.grab_focus()
-            
+
     def on_response_check(self, dialog, response):
         """ Event handler for response:
             send password/-phrase to worker on OK,
             send abort message on close/cancel
             and block while waiting for worker
         """
-#       #  worker is waiting: send request on OK, send abort on cancel
+# worker is waiting: send request on OK, send abort on cancel
         if response == gtk.RESPONSE_OK and self.error_message == 'UNLOCK_SUCCESSFUL':
             return  # close dialog
         if not self.waiting_for_response:
@@ -278,11 +278,11 @@ class UnlockContainerDialog(PasswordDialog):
                     self.pw_box.set_sensitive(False)
                     self.get_action_area().set_sensitive(False)
                     self.header_text.set_markup(_('Checking passphrase ..'))
-                    self.worker.execute(command = {'type': 'response',
-                                                   'msg': self.pw_box.get_text()
-                                                   },
-                                        success_callback = self.on_worker_reply,
-                                        error_callback = self.on_error)
+                    self.worker.execute(command={'type': 'response',
+                                                 'msg': self.pw_box.get_text()
+                                                 },
+                                        success_callback=self.on_worker_reply,
+                                        error_callback=self.on_error)
                 dialog.emit_stop_by_name('response')
             # CANCEL/DELETE_EVENT -> abort worker
             else:
@@ -301,7 +301,7 @@ class UnlockContainerDialog(PasswordDialog):
                 raise UserInputError(self.error_message)  # is empty string in case of cancel/delete -> won't get displayed
         finally:
             self.destroy()
-            
+
     def on_close_dialog(self, widget, event):
         """ Event handler for delete: block while waiting for worker """
         if self.waiting_for_response:

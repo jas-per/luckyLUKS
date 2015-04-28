@@ -25,7 +25,7 @@ import threading
 try:
     import pygtk
     pygtk.require('2.0')
-except ImportError:# py3
+except ImportError:  # py3
     import gi
     gi.require_version('Gtk', '3.0')
     from gi import pygtkcompat
@@ -58,7 +58,7 @@ class WorkerMonitor(threading.Thread):
             :raises: SudoException
         """
         super(WorkerMonitor, self).__init__()
-        self.daemon = True#force kill needed 
+        self.daemon = True  # force kill needed
         self.parent = parent
         self.success_callback, self.error_callback = None, None
         self.modify_sudoers = False
@@ -242,7 +242,7 @@ class KeyfileCreator(threading.Thread):
             :type path: str/unicode
         """
         super(KeyfileCreator, self).__init__()
-        self.daemon = True#force kill needed 
+        self.daemon = True  # force kill needed
         self.parent = parent
         self.path = path
 
