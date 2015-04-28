@@ -22,20 +22,29 @@ import codecs
 import subprocess
 
 try:
-    from PyQt5.QtCore import QTimer, Qt
-    from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
-        QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar, QLayout
-except ImportError:  # py2 or py3 without pyqt5
-    from PyQt4.QtCore import QTimer, Qt
-    from PyQt4.QtGui import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
-        QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar, QLayout
+    import pygtk
+    pygtk.require('2.0')
+except ImportError:# py3
+    import gi
+    gi.require_version('Gtk', '3.0')
+    from gi import pygtkcompat
+    pygtkcompat.enable()
+    pygtkcompat.enable_gtk(version='3.0')
+
+import gtk
+import gobject
+
+try:  # fix for pygtkcompat
+    gtk.combo_box_new_text = gtk.ComboBoxText
+except AttributeError:
+    pass
 
 from luckyLUKS.unlockUI import FormatContainerDialog, UnlockContainerDialog, UserInputError
-from luckyLUKS.utilsUI import QExpander, HelpDialog, show_info, show_alert
+from luckyLUKS.utilsUI import HelpDialog, show_info, show_alert
 from luckyLUKS.utils import is_installed
 
 
-class SetupDialog(QDialog):
+class SetupDialog(gtk.Dialog):
 
     """ This dialog consists of two parts/tabs: The first one is supposed to help choosing
         container, device name and mount point to unlock an existing container.
@@ -44,183 +53,191 @@ class SetupDialog(QDialog):
 
     def __init__(self, parent):
         """ :param parent: The parent window/dialog used to enable modal behaviour
-            :type parent: :class:`PyQt4.QtGui.QWidget`
+            :type parent: :class:`gtk.Widget`
         """
-        super(SetupDialog, self).__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
-        self.setWindowTitle(_('luckyLUKS'))
+        super(SetupDialog, self).__init__( _('luckyLUKS'), parent, gtk.DIALOG_DESTROY_WITH_PARENT,
+                                   (gtk.STOCK_QUIT, gtk.RESPONSE_CANCEL,
+                                    gtk.STOCK_OK, gtk.RESPONSE_OK))
+        self.set_resizable(False)
+        self.set_border_width(10)
 
         self.worker = parent.worker
         self.is_busy = False
 
-        # build ui
-        self.layout = QVBoxLayout()
-        self.layout.setSizeConstraint(QLayout.SetFixedSize)
-        style = QApplication.style()
-        # set up stacked layout: initially only the main tab pane (unlock/create)
-        self.main_pane = QStackedWidget()
-        self.tab_pane = QTabWidget()
-        self.main_pane.addWidget(self.tab_pane)
-        self.layout.addWidget(self.main_pane)
-        self.create_pane = None  # init in on_create_container()
+        # build main pane with two tabs .. gets a bit verbose but using glade wouldn't make too much sense for a little interface like this either
+        self.main_pane = gtk.Notebook()
+        self.get_content_area().add(self.main_pane)
 
         # Unlock Tab
-        unlock_grid = QGridLayout()
-        unlock_grid.setColumnMinimumWidth(1, 220)
-        uheader = QLabel(_('<b>Unlock an encrypted container</b>\n') +
+        unlock_grid = gtk.Table(8,3)
+        unlock_grid.set_row_spacings(5)
+        label = gtk.Label()
+        label.set_markup(_('<b>Unlock an encrypted container</b>\n') +
                          _('Please select container file and name'))
-        uheader.setContentsMargins(0, 10, 0, 10)
-        unlock_grid.addWidget(uheader, 0, 0, 1, 3, Qt.AlignCenter)
+        unlock_grid.attach(label, 0,3,0,1, gtk.FILL, gtk.FILL, 10, 10)
 
-        label = QLabel(_('container file'))
-        label.setIndent(5)
-        unlock_grid.addWidget(label, 1, 0)
-        self.unlock_container_file = QLineEdit()
-        unlock_grid.addWidget(self.unlock_container_file, 1, 1)
-        button_choose_file = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '', self)
-        button_choose_file.setToolTip(_('choose file'))
-        unlock_grid.addWidget(button_choose_file, 1, 2)
-        button_choose_file.clicked.connect(self.on_select_container_clicked)
+        label = gtk.Label(_('container file'))
+        label.set_alignment(0, 0.5)
+        unlock_grid.attach(label, 0,1,1,2, gtk.FILL, gtk.FILL, 5, 5)
+        self.unlock_container_file = gtk.Entry()
+        self.unlock_container_file.set_width_chars(30)
+        unlock_grid.attach(self.unlock_container_file, 1,2,1,2, gtk.FILL, gtk.FILL)
+        button_choose_file = gtk.Button()
+        button_choose_file.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON))
+        button_choose_file.set_tooltip_text(_('choose file'))
+        unlock_grid.attach(button_choose_file,2,3,1,2, gtk.FILL, gtk.FILL)
+        button_choose_file.connect('clicked', self.on_select_container_clicked)
 
-        label = QLabel(_('device name'))
-        label.setIndent(5)
-        unlock_grid.addWidget(label, 2, 0)
-        self.unlock_device_name = QLineEdit()
-        unlock_grid.addWidget(self.unlock_device_name, 2, 1)
+        label = gtk.Label(_('device name'))
+        label.set_alignment(0, 0.5)
+        unlock_grid.attach(label, 0,1,2,3, gtk.FILL, gtk.FILL, 5, 5)
+        self.unlock_device_name = gtk.Entry()
+        unlock_grid.attach(self.unlock_device_name, 1,2,2,3, gtk.FILL, gtk.FILL)
+
         # advanced settings
-        a_settings = QExpander(_('Advanced'), self, False)
-        unlock_grid.addWidget(a_settings, 3, 0, 1, 3)
+        a_settings_unlock = gtk.Expander()
+        a_settings_unlock.set_label(_('Advanced'))
+        a_settings_unlock.connect('notify::expanded',self.on_expand_clicked)
+        unlock_grid.attach(a_settings_unlock, 0,3,3,4, gtk.FILL, gtk.FILL)
 
-        label = QLabel(_('key file'))
-        label.setIndent(5)
-        unlock_grid.addWidget(label, 4, 0)
-        self.unlock_keyfile = QLineEdit()
-        unlock_grid.addWidget(self.unlock_keyfile, 4, 1)
-        button_choose_uKeyfile = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
-        button_choose_uKeyfile.setToolTip(_('choose keyfile'))
-        unlock_grid.addWidget(button_choose_uKeyfile, 4, 2)
-        button_choose_uKeyfile.clicked.connect(lambda: self.on_select_keyfile_clicked('Unlock'))
-        a_settings.addWidgets([unlock_grid.itemAtPosition(4, column).widget() for column in range(0, 3)])
+        label = gtk.Label(_('key file'))
+        label.set_alignment(0, 0.5)
+        unlock_grid.attach(label, 0,1,4,5, gtk.FILL, gtk.FILL, 5, 5)
+        self.unlock_keyfile = gtk.Entry()
+        unlock_grid.attach(self.unlock_keyfile, 1,2,4,5, gtk.FILL, gtk.FILL)
+        button_choose_uKeyfile = gtk.Button()
+        button_choose_uKeyfile.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON))
+        button_choose_uKeyfile.set_tooltip_text(_('choose keyfile'))
+        unlock_grid.attach(button_choose_uKeyfile, 2,3,4,5, gtk.FILL, gtk.FILL)
+        button_choose_uKeyfile.connect('clicked', lambda widget: self.on_select_keyfile_clicked(widget, 'Unlock'))
+        a_settings_unlock.widgets = [label, self.unlock_keyfile, button_choose_uKeyfile]
 
-        label = QLabel(_('mount point'))
-        label.setIndent(5)
-        unlock_grid.addWidget(label, 5, 0)
-        self.unlock_mountpoint = QLineEdit()
-        unlock_grid.addWidget(self.unlock_mountpoint, 5, 1)
-        button_choose_mountpoint = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
-        button_choose_mountpoint.setToolTip(_('choose folder'))
-        unlock_grid.addWidget(button_choose_mountpoint, 5, 2)
-        button_choose_mountpoint.clicked.connect(self.on_select_mountpoint_clicked)
-        a_settings.addWidgets([unlock_grid.itemAtPosition(5, column).widget() for column in range(0, 3)])
+        label = gtk.Label(_('mount point'))
+        label.set_alignment(0, 0.5)
+        unlock_grid.attach(label, 0,1,5,6, gtk.FILL, gtk.FILL, 5, 5)
+        self.unlock_mountpoint = gtk.Entry()
+        unlock_grid.attach(self.unlock_mountpoint, 1,2,5,6, gtk.FILL, gtk.FILL)
+        button_choose_mountpoint = gtk.Button()
+        button_choose_mountpoint.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON))
+        button_choose_mountpoint.set_tooltip_text(_('choose folder'))
+        unlock_grid.attach(button_choose_mountpoint, 2,3,5,6, gtk.FILL, gtk.FILL)
+        button_choose_mountpoint.connect('clicked', self.on_select_mountpoint_clicked)
+        a_settings_unlock.widgets += [label, self.unlock_mountpoint, button_choose_mountpoint]
 
-        unlock_grid.setRowStretch(6, 1)
-        unlock_grid.setRowMinimumHeight(6, 10)
-        button_help_unlock = QPushButton(style.standardIcon(QStyle.SP_DialogHelpButton), _('Help'))
-        button_help_unlock.clicked.connect(self.show_help_unlock)
-        unlock_grid.addWidget(button_help_unlock, 7, 2)
+        button_help_unlock = gtk.Button(_('Help'))
+        button_help_unlock.set_image(gtk.image_new_from_stock(gtk.STOCK_HELP, gtk.ICON_SIZE_BUTTON))
+        button_help_unlock.connect('clicked', self.show_help_unlock)
+        align = gtk.Alignment( 1, 1, 1, 0 )
+        align.add(button_help_unlock)
+        unlock_grid.attach(align, 2,3,6,7, gtk.EXPAND|gtk.FILL, gtk.EXPAND|gtk.FILL)
 
-        unlock_tab = QWidget()
-        unlock_tab.setLayout(unlock_grid)
-        self.tab_pane.addTab(unlock_tab, _('Unlock Container'))
+        self.main_pane.append_page(unlock_grid, gtk.Label(_('Unlock Container')))
 
         # Create Tab
-        create_grid = QGridLayout()
-        cheader = QLabel(_('<b>Create a new encrypted container</b>\n') +
+        create_grid = gtk.Table(11,3)
+        create_grid.set_row_spacings(5)
+        label = gtk.Label()
+        label.set_markup(_('<b>Create a new encrypted container</b>\n') +
                          _('Please choose container file, name and size'))
-        cheader.setContentsMargins(0, 10, 0, 10)
-        create_grid.addWidget(cheader, 0, 0, 1, 3, Qt.AlignCenter)
+        create_grid.attach(label, 0,3,0,1, gtk.FILL, gtk.FILL, 10, 10)
 
-        label = QLabel(_('container file'))
-        label.setIndent(5)
-        create_grid.addWidget(label, 1, 0)
-        self.create_container_file = QLineEdit()
-        create_grid.addWidget(self.create_container_file, 1, 1)
-        button_choose_file = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
-        button_choose_file.setToolTip(_('set file'))
-        create_grid.addWidget(button_choose_file, 1, 2)
-        button_choose_file.clicked.connect(self.on_save_container_clicked)
+        label = gtk.Label(_('container file'))
+        label.set_alignment(0, 0.5)
+        create_grid.attach(label, 0,1,1,2, gtk.FILL, gtk.FILL, 5, 5)
+        self.create_container_file = gtk.Entry()
+        self.create_container_file.set_width_chars(30)
+        create_grid.attach(self.create_container_file,1,2,1,2, gtk.FILL, gtk.FILL)
+        button_choose_file = gtk.Button()
+        button_choose_file.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON))
+        button_choose_file.set_tooltip_text(_('set file'))
+        create_grid.attach(button_choose_file,2,3,1,2, gtk.FILL, gtk.FILL)
+        button_choose_file.connect('clicked', self.on_save_container_clicked)
 
-        label = QLabel(_('device name'))
-        label.setIndent(5)
-        create_grid.addWidget(label, 2, 0)
-        self.create_device_name = QLineEdit()
-        create_grid.addWidget(self.create_device_name, 2, 1)
+        label = gtk.Label(_('device name'))
+        label.set_alignment(0, 0.5)
+        create_grid.attach(label, 0,1,2,3, gtk.FILL, gtk.FILL, 5, 5)
+        self.create_device_name = gtk.Entry()
+        create_grid.attach(self.create_device_name, 1,2,2,3, gtk.FILL, gtk.FILL)
 
-        label = QLabel(_('container size'))
-        label.setIndent(5)
-        create_grid.addWidget(label, 3, 0)
-        self.create_container_size = QSpinBox()
-        self.create_container_size.setRange(1, 1000000000)
-        self.create_container_size.setValue(1)
-        create_grid.addWidget(self.create_container_size, 3, 1)
+        label = gtk.Label(_('container size'))
+        label.set_alignment(0, 0.5)
+        create_grid.attach(label, 0,1,3,4, gtk.FILL, gtk.FILL, 5, 5)
+        size_range = gtk.Adjustment(1, 1, 1000000000, 1, 0, 0)
+        self.create_container_size = gtk.SpinButton()
+        self.create_container_size.set_adjustment(size_range)
+        self.create_container_size.set_numeric(True)
+        self.create_container_size.set_value(1)#gets otherwise set to 0 sometimes!?
+        
+        create_grid.attach(self.create_container_size, 1,2,3,4, gtk.FILL, gtk.FILL)
+        self.create_size_unit = gtk.combo_box_new_text()
+        self.create_size_unit.append_text('MB')
+        self.create_size_unit.append_text('GB')
+        self.create_size_unit.set_active(1)
+        create_grid.attach(self.create_size_unit,2,3,3,4, gtk.FILL, gtk.FILL)
 
-        self.create_size_unit = QComboBox()
-        self.create_size_unit.addItems(['MB', 'GB'])
-        self.create_size_unit.setCurrentIndex(1)
-        create_grid.addWidget(self.create_size_unit, 3, 2)
         # advanced settings
-        a_settings = QExpander(_('Advanced'), self, False)
-        create_grid.addWidget(a_settings, 4, 0, 1, 3)
+        a_settings_create = gtk.Expander()
+        a_settings_create.set_label(_('Advanced'))
+        a_settings_create.connect('notify::expanded', self.on_expand_clicked)
+        create_grid.attach(a_settings_create, 0,3,4,5, gtk.FILL, gtk.FILL)
 
-        label = QLabel(_('key file'))
-        label.setIndent(5)
-        create_grid.addWidget(label, 5, 0)
-        self.create_keyfile = QLineEdit()
-        create_grid.addWidget(self.create_keyfile, 5, 1)
-        button_choose_cKeyfile = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
-        button_choose_cKeyfile.setToolTip(_('choose keyfile'))
-        create_grid.addWidget(button_choose_cKeyfile, 5, 2)
-        button_choose_cKeyfile.clicked.connect(lambda: self.on_select_keyfile_clicked('Create'))
-        a_settings.addWidgets([create_grid.itemAtPosition(5, column).widget() for column in range(0, 3)])
+        label = gtk.Label(_('key file'))
+        label.set_alignment(0, 0.5)
+        create_grid.attach(label, 0,1,5,6, gtk.FILL, gtk.FILL, 5, 5)
+        self.create_keyfile = gtk.Entry()
+        create_grid.attach(self.create_keyfile, 1,2,5,6, gtk.FILL, gtk.FILL)
+        button_choose_cKeyfile = gtk.Button()
+        button_choose_cKeyfile.set_image(gtk.image_new_from_stock(gtk.STOCK_OPEN, gtk.ICON_SIZE_BUTTON))
+        button_choose_cKeyfile.set_tooltip_text(_('choose keyfile'))
+        create_grid.attach(button_choose_cKeyfile, 2,3,5,6, gtk.FILL, gtk.FILL)
+        button_choose_cKeyfile.connect('clicked', lambda widget: self.on_select_keyfile_clicked(widget, 'Create'))
 
-        button_create_keyfile = QPushButton(_('Create key file'))
-        button_create_keyfile.clicked.connect(self.on_create_keyfile)
-        create_grid.addWidget(button_create_keyfile, 6, 1)
-        a_settings.addWidgets([button_create_keyfile])
+        button_create_keyfile = gtk.Button(_('Create key file'))
+        button_create_keyfile.connect('clicked', self.on_create_keyfile)
+        create_grid.attach(button_create_keyfile, 1,2,6,7, gtk.FILL, gtk.FILL)
+        a_settings_create.widgets = [label, self.create_keyfile, button_choose_cKeyfile, button_create_keyfile]
 
-        label = QLabel(_('format'))
-        label.setIndent(5)
-        create_grid.addWidget(label, 7, 0)
-        self.create_encryption_format = QComboBox()
-        self.create_encryption_format.addItem('LUKS')
-        self.create_encryption_format.addItem('TrueCrypt')
+        label = gtk.Label(_('format'))
+        label.set_alignment(0, 0.5)
+        create_grid.attach(label, 0,1,7,8, gtk.FILL, gtk.FILL, 5, 5)
+        self.create_encryption_format = gtk.combo_box_new_text()
+        self.create_encryption_format.append_text('LUKS')
+        self.create_encryption_format.append_text('TrueCrypt')
         if not is_installed('tcplay'):
-            self.create_encryption_format.setEnabled(False)
-        self.create_encryption_format.setCurrentIndex(0)
-        create_grid.addWidget(self.create_encryption_format, 7, 1)
-        a_settings.addWidgets([create_grid.itemAtPosition(7, column).widget() for column in range(0, 2)])
+            self.create_encryption_format.set_sensitive(False)
+        self.create_encryption_format.set_active(0)
+        create_grid.attach(self.create_encryption_format, 1,2,7,8, gtk.FILL, gtk.FILL)
+        a_settings_create.widgets += [label, self.create_encryption_format]
 
-        label = QLabel(_('filesystem'))
-        label.setIndent(5)
-        create_grid.addWidget(label, 8, 0)
+        label = gtk.Label(_('filesystem'))
+        label.set_alignment(0, 0.5)
+        create_grid.attach(label, 0,1,8,9, gtk.FILL, gtk.FILL, 5, 5)
         filesystems = ['ext4', 'ext2', 'ntfs']
-        self.create_filesystem_type = QComboBox()
+        self.create_filesystem_type = gtk.combo_box_new_text()
         for filesystem in filesystems:
             if is_installed('mkfs.' + filesystem):
-                self.create_filesystem_type.addItem(filesystem)
-        self.create_filesystem_type.setCurrentIndex(0)
-        create_grid.addWidget(self.create_filesystem_type, 8, 1)
-        a_settings.addWidgets([create_grid.itemAtPosition(8, column).widget() for column in range(0, 2)])
+                self.create_filesystem_type.append_text(filesystem)
+        self.create_filesystem_type.set_active(0)
+        create_grid.attach(self.create_filesystem_type, 1,2,8,9, gtk.FILL, gtk.FILL)
+        a_settings_create.widgets += [label, self.create_filesystem_type]
 
-        create_grid.setRowStretch(9, 1)
-        create_grid.setRowMinimumHeight(9, 10)
-        button_help_create = QPushButton(style.standardIcon(QStyle.SP_DialogHelpButton), _('Help'))
-        button_help_create.clicked.connect(self.show_help_create)
-        create_grid.addWidget(button_help_create, 10, 2)
+        button_help_create = gtk.Button(_('Help'))
+        button_help_create.set_image(gtk.image_new_from_stock(gtk.STOCK_HELP, gtk.ICON_SIZE_BUTTON))
+        button_help_create.connect('clicked', self.show_help_create)
+        align = gtk.Alignment( 1, 1, 1, 0 )
+        align.add(button_help_create)
+        create_grid.attach(align, 2,3,9,10, gtk.EXPAND|gtk.FILL, gtk.EXPAND|gtk.FILL)
 
-        create_tab = QWidget()
-        create_tab.setLayout(create_grid)
-        self.tab_pane.addTab(create_tab, _('Create New Container'))
-        self.tab_pane.currentChanged.connect(self.on_switchpage_event)
+        self.main_pane.append_page(create_grid, gtk.Label(_('Create New Container')))
 
-        # OK and Cancel buttons
-        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
-        self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
-        self.buttons.accepted.connect(self.on_accepted)
-        self.buttons.rejected.connect(self.reject)
-        self.layout.addWidget(self.buttons)
-
-        # ui built, add to widget
-        self.setLayout(self.layout)
+        # connect event handler
+        self.connect('response', self.on_response_check)
+        self.connect('delete_event', self.on_delete_event)
+        self.main_pane.connect('switch_page', self.on_switchpage_event)
+        self.show_all()
+        # initiallly hide advanced settings
+        for widget in a_settings_unlock.widgets + a_settings_create.widgets:
+            widget.hide()
 
     def on_create_container(self):
         """ Triggered by clicking create.
@@ -229,45 +246,51 @@ class SetupDialog(QDialog):
             This shows the header and the first step:
             Initializing the container file with random data
         """
-        self.init_create_pane()
+        self.is_busy = True
+        self.create_progressbars = []
 
-        header = QLabel(_('<b>Creating new container</b>\n') +
-                        _('patience .. this might take a while'))
-        header.setContentsMargins(0, 10, 0, 10)
-        self.create_status_grid.addWidget(header, 0, 0, 1, 3, Qt.AlignCenter)
+        self.create_status_grid = gtk.Table(7,3)
+        self.create_status_grid.set_row_spacings(5)
+        label = gtk.Label()
+        label.set_markup(_('<b>Creating new container</b>\n') +
+                         _('patience .. this might take a while'))
+        self.create_status_grid.attach(label, 0,3,0,1, gtk.FILL, gtk.FILL, 10, 10)
+                
+        label = gtk.Label()
+        label.set_markup('<b>' +_('Step') + ' 1/3</b>')
+        self.create_status_grid.attach(label, 0,1,1,2, gtk.FILL, gtk.FILL)
+        self.create_status_grid.attach(gtk.Label(_('Initializing Container File')), 1,2,1,2, gtk.EXPAND|gtk.FILL, gtk.FILL)
+        self.create_progressbars.append(gtk.ProgressBar())
+        self.create_status_grid.attach(self.create_progressbars[0], 0,3,2,3, gtk.FILL, gtk.FILL)
 
-        self.create_status_grid.addWidget(QLabel('<b>' + _('Step') + ' 1/3</b>'), 1, 0)
-        self.create_status_grid.addWidget(QLabel(_('Initializing Container File')), 1, 1)
-        self.create_progressbars.append(QProgressBar())
-        self.create_progressbars[0].setRange(0, 100)
-        self.create_status_grid.addWidget(self.create_progressbars[0], 2, 0, 1, 3)
-        self.create_status_grid.setRowStretch(7, 1)  # top align
-        # add to stack widget and switch display
-        self.main_pane.addWidget(self.create_pane)
-        self.main_pane.setCurrentIndex(1)
+        # set the size of the progress pane to the current size of the main pane to be hidden (needed because auto-resizing gtk.dialog is used)     
+        self.create_status_grid.set_size_request(*self.main_pane.size_request())
+        self.main_pane.hide()          
+        self.get_content_area().add(self.create_status_grid)
+        self.create_status_grid.show_all()
+        self.get_action_area().set_sensitive(False)#disable buttons
 
         # calculate designated container size for worker and progress indicator
-        size = self.create_container_size.value()
-        size = size * (1024 * 1024 * 1024 if self.create_size_unit.currentIndex() == 1 else 1024 * 1024)  # GB vs MB
-        location = self.encode_qt_output(self.create_container_file.text())
+        size = self.create_container_size.get_value_as_int()
+        size = size * (1024 * 1024 * 1024 if self.create_size_unit.get_active_text() == 'GB' else 1024 * 1024)  # GB vs MB
+        location = self.create_container_file.get_text()
         if not os.path.dirname(location):
             location = os.path.join(os.path.expanduser('~'), location)
-            self.create_container_file.setText(location)
+            self.create_container_file.set_text(location)
         # start timer for progressbar updates during container creation
-        self.create_timer.timeout.connect(lambda: self.display_progress_percent(location, size))
-        self.create_timer.start(500)
+        self.create_timer = gobject.timeout_add(1000, self.display_progress_percent, location, size)
 
         self.worker.execute(command={'type': 'request',
                                      'msg': 'create',
-                                     'device_name': self.encode_qt_output(self.create_device_name.text()),
+                                     'device_name': self.create_device_name.get_text(),
                                      'container_path': location,
                                      'container_size': size,
-                                     'key_file': self.encode_qt_output(self.create_keyfile.text()) if self.create_keyfile.text() != '' else None,
-                                     'filesystem_type': str(self.create_filesystem_type.currentText()),
-                                     'encryption_format': str(self.create_encryption_format.currentText()),
+                                     'key_file': self.create_keyfile.get_text() if self.create_keyfile.get_text() != '' else None,
+                                     'filesystem_type': self.create_filesystem_type.get_active_text(),
+                                     'encryption_format': self.create_encryption_format.get_active_text(),
                                      },
                             success_callback=self.on_luksFormat_prompt,
-                            error_callback=lambda msg: self.display_create_failed(msg, stop_timer=True))
+                            error_callback=self.display_create_failed)
 
     def on_luksFormat_prompt(self, msg):
         """ Triggered after the container file is created on disk
@@ -276,11 +299,14 @@ class SetupDialog(QDialog):
         """
         self.set_progress_done(self.create_timer, self.create_progressbars[0])
 
-        self.create_status_grid.addWidget(QLabel('<b>' + _('Step') + ' 2/3</b>'), 3, 0)
-        self.create_status_grid.addWidget(QLabel(_('Initializing Encryption')), 3, 1)
-        self.create_progressbars.append(QProgressBar())
-        self.create_progressbars[1].setRange(0, 0)
-        self.create_status_grid.addWidget(self.create_progressbars[1], 4, 0, 1, 3)
+        label = gtk.Label()
+        label.set_markup('<b>' +_('Step') + ' 2/3</b>')
+        self.create_status_grid.attach(label, 0,1,3,4, gtk.FILL, gtk.FILL)
+        self.create_status_grid.attach(gtk.Label(_('Initializing Encryption')), 1,2,3,4, gtk.EXPAND|gtk.FILL, gtk.FILL)
+        self.create_progressbars.append(gtk.ProgressBar())
+        self.create_status_grid.attach(self.create_progressbars[1], 0,3,4,5, gtk.FILL, gtk.FILL)
+        self.create_timer = gobject.timeout_add(200, self.display_progress_pulse, self.create_progressbars[1])
+        self.create_status_grid.show_all()
 
         if msg == 'getPassword':
             try:
@@ -301,13 +327,16 @@ class SetupDialog(QDialog):
         """ Triggered after LUKS encryption got initialized.
             Shows information about the last step
         """
-        self.set_progress_done(progressbar=self.create_progressbars[1])
+        self.set_progress_done(self.create_timer, self.create_progressbars[1])
 
-        self.create_status_grid.addWidget(QLabel('<b>' + _('Step') + ' 3/3</b>'), 5, 0)
-        self.create_status_grid.addWidget(QLabel(_('Initializing Filesystem')), 5, 1)
-        self.create_progressbars.append(QProgressBar())
-        self.create_progressbars[2].setRange(0, 0)
-        self.create_status_grid.addWidget(self.create_progressbars[2], 6, 0, 1, 3)
+        label = gtk.Label()
+        label.set_markup('<b>' +_('Step') + ' 3/3</b>')
+        self.create_status_grid.attach(label, 0,1,5,6, gtk.FILL, gtk.FILL)
+        self.create_status_grid.attach(gtk.Label(_('Initializing Filesystem')), 1,2,5,6, gtk.EXPAND|gtk.FILL, gtk.FILL)
+        self.create_progressbars.append(gtk.ProgressBar())
+        self.create_status_grid.attach(self.create_progressbars[2], 0,3,6,7, gtk.FILL, gtk.FILL)
+        self.create_timer = gobject.timeout_add(200, self.display_progress_pulse, self.create_progressbars[2])
+        self.create_status_grid.show_all()
 
         self.worker.execute(command={'type': 'response', 'msg': ''},
                             success_callback=self.display_create_success,
@@ -315,139 +344,141 @@ class SetupDialog(QDialog):
 
     def display_create_success(self, msg):
         """ Triggered after successful creation of a new container """
-        self.set_progress_done(progressbar=self.create_progressbars[2])
-        # copy values of newly created container to unlock dlg und reset create values
-        self.unlock_container_file.setText(self.create_container_file.text())
-        self.unlock_device_name.setText(self.create_device_name.text())
-        self.unlock_keyfile.setText(self.create_keyfile.text())
+        self.set_progress_done(self.create_timer, self.create_progressbars[2])
+        #copy values of newly created container to unlock dlg und reset create values
+        self.unlock_container_file.set_text(self.create_container_file.get_text())
+        self.unlock_device_name.set_text(self.create_device_name.get_text())
+        self.unlock_keyfile.set_text(self.create_keyfile.get_text())
         show_info(self, _('<b>{device_name}\nsuccessfully created!</b>\nClick on unlock to use the new container')
-                  .format(device_name=self.encode_qt_output(self.create_device_name.text())), _('Success'))
+                        .format(device_name = self.create_device_name.get_text()), _('Success'))
         # reset create ui and switch to unlock tab
-        self.create_container_file.setText('')
-        self.create_device_name.setText('')
-        self.create_container_size.setValue(1)
-        self.create_size_unit.setCurrentIndex(1)
-        self.create_keyfile.setText('')
-        self.create_encryption_format.setCurrentIndex(0)
-        self.create_filesystem_type.setCurrentIndex(0)
+        self.create_container_file.set_text('')
+        self.create_device_name.set_text('')
+        self.create_container_size.set_value(1)
+        self.create_size_unit.set_active(1)
+        self.create_keyfile.set_text('')
+        self.create_encryption_format.set_active(0)
+        self.create_filesystem_type.set_active(0)
         self.display_create_done()
-        self.tab_pane.setCurrentIndex(0)
-
-    def display_create_failed(self, errormessage, stop_timer=False):
-        """ Triggered when an error happend during the create process
+        self.main_pane.set_current_page(0)   
+        self.get_widget_for_response(gtk.RESPONSE_OK).grab_focus() 
+        
+    def display_create_failed(self, errormessage):
+        """ Triggered when an error happend during the create process 
             :param errormessage: errormessage to be shown
             :type errormessage: str
-            :param stop_timer: stop a progress indicator?
-            :type stop_timer: bool
         """
-        if stop_timer:
-            self.set_progress_done(self.create_timer)
+        self.set_progress_done(self.create_timer)
         show_alert(self, errormessage)
         self.display_create_done()
 
     def display_create_done(self):
         """ Helper to hide the create process informations and show the unlock/create pane """
+        self.create_status_grid.hide()           
+        self.get_content_area().remove(self.create_status_grid)
+        self.main_pane.show()
+        self.get_action_area().set_sensitive(True)
         self.is_busy = False
-        self.main_pane.setCurrentIndex(0)
-        self.buttons.setEnabled(True)
 
     def set_progress_done(self, timeout=None, progressbar=None):
         """ Helper to end stop the progress indicator
             :param timeout: Timer to stop
-            :type timeout: QTimer or None
+            :type timeout: TimerID or None
             :param progressbar: progressbar widget to set to 'Done'
-            :type progressbar: :class:`QProgressBar` or None
+            :type progressbar: :class:`gtk.ProgressBar` or None
         """
         if timeout is not None:
-            timeout.stop()
+            gobject.source_remove(timeout)
         if progressbar is not None:
-            if not progressbar.maximum():
-                progressbar.setRange(0, 100)
-            progressbar.setValue(100)
-            progressbar.setFormat(_('Done'))
+            progressbar.set_fraction(1)
+            progressbar.set_show_text(True)        
+            progressbar.set_text(_('Done'))
 
-    def on_accepted(self):
+    def on_response_check(self, dialog, response):
         """ Event handler for response:
             Start unlock or create action
+            Block while creating countainer (confirmation dialog will be shown)
         """
-        try:
-            if self.tab_pane.currentIndex() == 1:
+        if response == gtk.RESPONSE_OK:
+            try:
+                if self.main_pane.get_current_page() == 1:
+                    
+                    self.on_create_container()
+                    dialog.emit_stop_by_name('response')
+                    
+                else:
+     
+                    UnlockContainerDialog(self,
+                                          self.worker,
+                                          self.get_luks_device_name(),
+                                          self.get_encrypted_container(),
+                                          self.get_keyfile(),
+                                          self.get_mount_point()
+                                          ).communicate()#blocks
+                    #optionally create startmenu entry
+                    self.show_create_startmenu_entry()
+                    #all good, now switch to main window
+                    
+            except UserInputError as error:
+                show_alert(self, format_exception(error))
+                dialog.emit_stop_by_name('response')
 
-                self.on_create_container()
+        elif response == gtk.RESPONSE_DELETE_EVENT and self.is_busy:
+            dialog.emit_stop_by_name('response')
 
-            else:
-                UnlockContainerDialog(self,
-                                      self.worker,
-                                      self.get_luks_device_name(),
-                                      self.get_encrypted_container(),
-                                      self.get_keyfile(),
-                                      self.get_mount_point()
-                                      ).communicate()  # blocks
+    def on_expand_clicked(self, expander, param):
+        """ A gtk.Expander can only handle one child widget. This event handler shows/hides multiple widgets """
+        if expander.get_expanded():
+            for widget in expander.widgets:
+                widget.show()
+        else:
+            for widget in expander.widgets:
+                widget.hide()
 
-                # optionally create startmenu entry
-                self.show_create_startmenu_entry()
-                # all good, now switch to main window
-                self.accept()
-
-        except UserInputError as error:
-            show_alert(self, format_exception(error))
-
-    def init_create_pane(self):
-        """ Helper that initializes the ui for the progress indicators shown while creating containers or keyfiles """
-        self.is_busy = True
-        self.create_progressbars = []
-        self.create_timer = QTimer(self)
-
-        self.buttons.setEnabled(False)
-
-        if self.main_pane.count() > 1:  # remove previous create display if any
-            self.main_pane.removeWidget(self.create_pane)
-
-        # built ui
-        self.create_pane = QWidget()
-        self.create_status_grid = QGridLayout()
-        self.create_pane.setLayout(self.create_status_grid)
-        self.create_status_grid.setVerticalSpacing(5)
-
-    def on_create_keyfile(self):
+    def on_create_keyfile(self, widget):
         """ Triggered by clicking the `create key file` button below the key file text field (create)
             Asks for key file location if not already provided, creates the progress ui and starts a create-thread
         """
-        if self.create_keyfile.text() == '':
-            key_file = self.encode_qt_output(self.on_save_file(_('new_keyfile.bin')))
+        if self.create_keyfile.get_text() == '':
+            key_file = self.on_save_file(_('new_keyfile.bin'))
+            if key_file is None:
+                return  # user abort
         else:
-            key_file = self.encode_qt_output(self.create_keyfile.text())
+            key_file = self.create_keyfile.get_text()
 
         if not os.path.dirname(key_file):
             key_file = os.path.join(os.path.expanduser('~'), key_file)
 
-        self.init_create_pane()
+        self.is_busy = True
+        self.create_progressbars = []
 
-        header = QLabel(_('<b>Creating key file</b>'))
-        self.create_status_grid.addWidget(header, 1, 0, 1, 3, Qt.AlignCenter)
-        header.setContentsMargins(0, 30, 0, 10)
+        self.create_status_grid = gtk.VBox(spacing=5)
+        header = gtk.Label()
+        header.set_markup(_('<b>Creating key file</b>'))
+        self.create_status_grid.pack_start(header, False, False, 20)
 
-        self.create_progressbars.append(QProgressBar())
-        self.create_progressbars[0].setRange(0, 100)
-        self.create_status_grid.addWidget(self.create_progressbars[0], 2, 0, 1, 3)
-        info = QLabel(_('This might take a while. Since computers are deterministic machines\n'
-                        'it is quite a challenge to generate real random data for the key.\n'
-                        '\n'
-                        'You can speed up the process by typing, moving the mouse\n'
-                        'and generally use the computer while the key gets generated.'))
-        info.setContentsMargins(0, 10, 0, 10)
-        self.create_status_grid.addWidget(info, 3, 0, 1, 3, Qt.AlignCenter)
+        self.create_progressbars.append(gtk.ProgressBar())
+        self.create_status_grid.pack_start(self.create_progressbars[0], False, False, 0)
 
-        self.create_status_grid.setRowStretch(4, 2)  # vertical align
-        # add to stack widget and switch display
-        self.main_pane.addWidget(self.create_pane)
-        self.main_pane.setCurrentIndex(1)
+        info = gtk.Label()
+        info.set_markup(_('This might take a while. Since computers are deterministic machines\n'
+                          'it is quite a challenge to generate real random data for the key.\n'
+                          '\n'
+                          'You can speed up the process by typing, moving the mouse\n'
+                          'and generally use the computer while the key gets generated.'))
+        self.create_status_grid.pack_start(info, False, False, 10)
+
+        # set the size of the progress pane to the current size of the main pane to be hidden (needed because auto-resizing gtk.dialog is used)
+        self.create_status_grid.set_size_request(*self.main_pane.size_request())
+        self.main_pane.hide()            
+        self.get_content_area().add(self.create_status_grid)
+        self.create_status_grid.show_all()
+        self.get_action_area().set_sensitive(False)#disable buttons
 
         # start timer for progressbar updates during keyfile creation
-        self.create_timer.timeout.connect(lambda: self.display_progress_percent(key_file, 1024))
-        self.create_timer.start(500)
+        self.create_timer = gobject.timeout_add(500, self.display_progress_percent, key_file, 1024)
 
-        # run QThread with keyfile creation
+        # run thread with keyfile creation
         from luckyLUKS.utils import KeyfileCreator
 
         self.create_thread = KeyfileCreator(self, key_file)
@@ -460,7 +491,7 @@ class SetupDialog(QDialog):
                           'You can use this key file now,\n'
                           'to create a new container.').format(key_file=key_file_path), _('Success'))
         self.display_create_done()
-        self.create_keyfile.setText(key_file_path)
+        self.create_keyfile.set_text(key_file_path)
 
     def show_create_startmenu_entry(self):
         """ Shown after successfull unlock with setup dialog -> ask for shortcut creation """
@@ -472,10 +503,16 @@ class SetupDialog(QDialog):
                      '   to the unlock container dialog.\n').format(
             device_name=self.get_luks_device_name())
         )
-        mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-        mb.button(QMessageBox.Ok).setText(_('Create shortcut'))
-        mb.button(QMessageBox.Cancel).setText(_('No, thanks'))
-        if mb.exec_() == QMessageBox.Ok:
+        md = gtk.MessageDialog(self, gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL)
+        # icons have to be re-set manually otherwise theyd disappear when changing the label
+        md.get_widget_for_response(gtk.RESPONSE_OK).set_label(_('Create shortcut'))
+        md.get_widget_for_response(gtk.RESPONSE_OK).set_image(gtk.image_new_from_stock(gtk.STOCK_OK, gtk.ICON_SIZE_BUTTON))
+        md.get_widget_for_response(gtk.RESPONSE_CANCEL).set_label(_('No, thanks'))
+        md.get_widget_for_response(gtk.RESPONSE_CANCEL).set_image(gtk.image_new_from_stock(gtk.STOCK_CANCEL, gtk.ICON_SIZE_BUTTON))
+        md.set_markup(message)
+        response = md.run()
+        md.destroy()
+        if response == gtk.RESPONSE_OK:
             self.create_startmenu_entry()
 
     def create_startmenu_entry(self):
@@ -495,7 +532,10 @@ class SetupDialog(QDialog):
             cmd += " -k '" + self.get_keyfile().replace("'", "'\\'''") + "'"
 
         # create .desktop-file
-        filename = _('luckyLUKS') + '-' + ''.join(i for i in self.get_luks_device_name() if i not in ' \/:*?<>|')  # xdg-desktop-menu has problems with some special chars
+        try:
+            filename = _('luckyLUKS') + '-' + ''.join(i for i in self.get_luks_device_name() if i not in ' \/:*?<>|')  # xdg-desktop-menu has problems with some special chars
+        except UnicodeDecodeError:  # py2
+            filename = _('luckyLUKS') + '-' + ''.join(i for i in unicode(self.get_luks_device_name()) if i not in ' \/:*?<>|')
         if is_installed('xdg-desktop-menu'):  # create in tmp and add freedesktop menu entry
             # some desktop menus dont delete the .desktop files if a user removes items from the menu but keep track of those files instead
             # those items wont be readded later, the random part of the filename works around this behaviour
@@ -537,102 +577,111 @@ class SetupDialog(QDialog):
                 # move to homedir instead
                 from shutil import move
                 move(desktop_file_path, home_dir_path)
-                show_alert(self, format_exception(cpe.output))
+                show_alert(self, cpe.output)
                 show_info(self, _('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=home_dir_path))
         else:
             show_info(self, _('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=desktop_file_path))
 
-    def reject(self):
-        """ Event handler cancel: Ask for confirmation while creating container """
-        if self.confirm_close():
-            super(SetupDialog, self).reject()
-
-    def closeEvent(self, event):
-        """ Event handler close: ask for confirmation while creating container """
-        if not self.confirm_close():
-            event.ignore()
-
-    def confirm_close(self):
-        """ Displays a confirmation dialog if currently busy creating container or keyfile
-            :returns: The users decision or True if no create process running
-            :rtype: bool
-        """
+    def on_delete_event(self, widget, event):
+        """ Event handler for delete: ask for confirmation while creating container """
         if self.is_busy:
-            message = _('Currently processing your request!\nDo you really want to quit?')
-            mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-            mb.button(QMessageBox.Ok).setText(_('Quit'))
-            return mb.exec_() == QMessageBox.Ok
-        else:
-            return True
+            md = gtk.MessageDialog(self, 
+              gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+              gtk.MESSAGE_WARNING,
+              gtk.BUTTONS_CANCEL
+            )
+            md.set_markup(_('Currently processing your request!\nDo you really want to quit?'))
+            md.add_button(gtk.STOCK_QUIT, gtk.RESPONSE_OK)
+            response = md.run()
+            md.destroy()
+            if response != gtk.RESPONSE_OK:
+                return True#block close!
+        return False
 
-    def on_switchpage_event(self, index):
+    def on_switchpage_event(self, notebook, widget, page_num, data=None):
         """ Event handler for tab switch: change text on OK button (Unlock/Create) """
         new_ok_label = _('Unlock')
-        if index == 1:  # create
-            if self.create_filesystem_type.currentText() == '':
+        if page_num == 1:  # create
+            if self.create_filesystem_type.get_active_text() == '':
                 show_alert(self, _('No tools to format the filesystem found\n'
                                    'Please install, eg for Debian/Ubuntu\n'
                                    '`apt-get install e2fslibs ntfs-3g`'))
             new_ok_label = _('Create')
-        self.buttons.button(QDialogButtonBox.Ok).setText(new_ok_label)
+        # change label on stock button removes icon -> re-set
+        self.get_widget_for_response(gtk.RESPONSE_OK).set_label(new_ok_label)
+        self.get_widget_for_response(gtk.RESPONSE_OK).set_image(gtk.image_new_from_stock(gtk.STOCK_OK, gtk.ICON_SIZE_BUTTON))
 
-    def on_select_container_clicked(self):
+    def on_select_container_clicked(self, widget):
         """ Triggered by clicking the select button next to container file (unlock) """
-        file_path = QFileDialog.getOpenFileName(self, _('Please choose a container file'), os.getenv("HOME"))
-        if isinstance(file_path, tuple):  # qt5 returns tuple path/selected filter
-            file_path = file_path[0]
-        self.unlock_container_file.setText(file_path)
-        self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
+        dialog = gtk.FileChooserDialog(_('Please choose a container file'), self,
+                                       gtk.FILE_CHOOSER_ACTION_OPEN,
+                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                        gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        response = dialog.run()
+        if response == gtk.RESPONSE_OK:
+            self.unlock_container_file.set_text(dialog.get_filename())
+        dialog.destroy()
 
-    def on_select_mountpoint_clicked(self):
+    def on_select_mountpoint_clicked(self, widget):
         """ Triggered by clicking the select button next to mount point """
-        self.unlock_mountpoint.setText(QFileDialog.getExistingDirectory(self, _('Please choose a folder as mountpoint'), os.getenv("HOME")))
-        self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
+        dialog = gtk.FileChooserDialog(_('Please choose a folder as mountpoint'), self,
+                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                        gtk.STOCK_APPLY, gtk.RESPONSE_OK))
+        response = dialog.run()
+        if response == gtk.RESPONSE_OK:
+            self.unlock_mountpoint.set_text(dialog.get_filename())
+        dialog.destroy()
 
-    def on_select_keyfile_clicked(self, tab):
+    def on_select_keyfile_clicked(self, widget, tab):
         """ Triggered by clicking the select button next to key file (both unlock and create tab) """
-        file_path = QFileDialog.getOpenFileName(self, _('Please choose a key file'), os.getenv("HOME"))
-        if isinstance(file_path, tuple):  # qt5 returns tuple path/selected filter
-            file_path = file_path[0]
-        if tab == 'Unlock':
-            self.unlock_keyfile.setText(file_path)
-        elif tab == 'Create':
-            self.create_keyfile.setText(file_path)
-        self.buttons.button(QDialogButtonBox.Ok).setText(_(tab))
+        dialog = gtk.FileChooserDialog(_('Please choose a key file'), self,
+                                       gtk.FILE_CHOOSER_ACTION_OPEN,
+                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                        gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        response = dialog.run()
+        if response == gtk.RESPONSE_OK:
+            if tab == 'Unlock':
+                self.unlock_keyfile.set_text(dialog.get_filename())
+            elif tab == 'Create':
+                self.create_keyfile.set_text(dialog.get_filename())
+        dialog.destroy()
 
-    def on_save_container_clicked(self):
+    def on_save_container_clicked(self, widget):
         """ Triggered by clicking the select button next to container file (create)
             Uses a file dialog to set the path of the container file to be created
         """
-        self.create_container_file.setText(self.on_save_file(_('new_container.bin')))
+        new_val = self.on_save_file(_('new_container.bin'))
+        if new_val is not None:
+            self.create_container_file.set_text(new_val)
 
     def on_save_file(self, default_filename):
         """ Opens a native file dialog and returns the chosen path of the file to be saved
             The dialog does not allow overwriting existing files - to get this behaviour
             while using native dialogs the QFileDialog has to be reopened on overwrite.
             A bit weird but enables visual consistency with the other file choose dialogs
-            :param default_filename: The default filename to be used in the Qt file dialog
+            :param default_filename: The default filename to be used in the file dialog
             :type default_filename: str/unicode
             :returns: The designated key file path
             :rtype: str/unicode
         """
-        def_path = os.path.join(os.getenv("HOME"), default_filename)
-
-        while True:
-            save_path = QFileDialog.getSaveFileName(self,
-                                                    _('Please create a new file'),
-                                                    def_path,
-                                                    options=QFileDialog.DontConfirmOverwrite)
-
-            save_path = self.encode_qt_output(save_path[0]) if isinstance(save_path, tuple) else self.encode_qt_output(save_path)
-            self.buttons.button(QDialogButtonBox.Ok).setText(_('Create'))  # qt keeps changing this..
-
-            if os.path.exists(save_path):
-                show_alert(self, _('File already exists:\n{filename}\n\n'
-                                   '<b>Please create a new file!</b>').format(filename=save_path))
-                def_path = os.path.join(os.path.basename(save_path), default_filename)
-            else:
-                return save_path
+        dialog = gtk.FileChooserDialog(_('Please create a container file'), self,
+                                       gtk.FILE_CHOOSER_ACTION_SAVE,
+                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                        gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+        dialog.set_current_name(default_filename)
+        dialog.set_do_overwrite_confirmation(True)
+        dialog.connect('confirm-overwrite', self.show_dont_overwrite)
+        response = dialog.run()
+        ret = dialog.get_filename() if response == gtk.RESPONSE_OK else None
+        dialog.destroy()
+        return ret
+            
+    def show_dont_overwrite(self, file_chooser, data=None):
+        """ Triggered by selecting an already existing file in the container filechooser (create) """
+        show_alert(file_chooser, _('File already exists:\n{filename}\n\n'
+                                   '<b>Please create a new file!</b>').format(filename = file_chooser.get_filename()))
+        return gtk.FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN
 
     def display_progress_percent(self, location, size):
         """ Update value on the container creation progress bar
@@ -642,54 +691,50 @@ class SetupDialog(QDialog):
             :type size: int
         """
         try:
-            new_value = int(os.path.getsize(location) / size * 100)
+            new_value = float( os.path.getsize(location) / size)
         except Exception:
             new_value = 0
-        self.create_progressbars[0].setValue(new_value)
+        self.create_progressbars[0].set_fraction(new_value)
+        self.create_progressbars[0].set_text('{0:.0f}%'.format(new_value*100))
+        return True#continue
+
+    def display_progress_pulse(self, progressbar):
+        """ Pulse progress bar 
+            :param progressbar: progressbar widget to pulse
+            :type progressbar: :class:`gtk.ProgressBar`
+        """
+        progressbar.pulse()
+        return True#continue
 
     def get_encrypted_container(self):
         """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
             :returns: The container file path
             :rtype: str/unicode
         """
-        return self.encode_qt_output(self.unlock_container_file.text())
+        return self.unlock_container_file.get_text().strip()
 
     def get_luks_device_name(self):
         """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
             :returns: The device name
             :rtype: str/unicode
         """
-        return self.encode_qt_output(self.unlock_device_name.text())
+        return self.unlock_device_name.get_text().strip()
 
     def get_keyfile(self):
         """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
             :returns: The mount point path
             :rtype: str/unicode or None
         """
-        kf = self.encode_qt_output(self.unlock_keyfile.text())
-        return kf if kf != '' else None
+        return self.unlock_keyfile.get_text().strip() if self.unlock_keyfile.get_text().strip() != '' else None
 
     def get_mount_point(self):
         """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
             :returns: The mount point path
             :rtype: str/unicode or None
         """
-        mp = self.encode_qt_output(self.unlock_mountpoint.text())
-        return mp if mp != '' else None
+        return self.unlock_mountpoint.get_text().strip() if self.unlock_mountpoint.get_text().strip() != '' else None
 
-    def encode_qt_output(self, qstring_or_str):
-        """ Normalize output from QLineEdit
-            :param qstring_or_str: Output from QLineEdit.text()
-            :type qstring_or_str: str/QString
-            :returns: python unicode (instead of QString in py2)
-            :rtype: str/unicode
-        """
-        try:
-            return qstring_or_str.strip()
-        except AttributeError:  # py2: 'QString' object has no attribute strip
-            return unicode(qstring_or_str.trimmed().toUtf8(), encoding="UTF-8")
-
-    def show_help_create(self):
+    def show_help_create(self, widget):
         """ Triggered by clicking the help button (create tab) """
         header_text = _('<b>Create a new encrypted container</b>\n')
         basic_help = _('Enter the path of the <b>new container file</b> in the textbox '
@@ -708,7 +753,7 @@ class SetupDialog(QDialog):
                        'access to the key file can open your encrypted container. Make sure to store it at a '
                        'protected location. Its okay to store it on your computer if you are using an already '
                        'encrypted harddrive or a digital keystore. Having the key file on a '
-                       '<a href="https://www.google.com/search?q=keychain+usb+drive&tbm=isch">small USB drive</a> '
+                       '<a href="https://www.google.com/search?q=keychain+usb+drive&amp;tbm=isch">small USB drive</a> '
                        'attached to your real chain of keys would be an option as well.\n'
                        'Since you dont have to enter a password, using a key file can be a convenient way to '
                        'access your encrypted container. Just make sure you dont lose the key (file) ;)') +
@@ -729,9 +774,10 @@ class SetupDialog(QDialog):
                        '-> take care when using unlocked ntfs devices in a multiuser environment!')}
         ]
         hd = HelpDialog(self, header_text, basic_help, advanced_topics)
-        hd.exec_()
+        hd.run()
+        hd.destroy()
 
-    def show_help_unlock(self):
+    def show_help_unlock(self, widget):
         """ Triggered by clicking the help button (unlock tab) """
         header_text = _('<b>Unlock an encrypted container</b>\n')
         basic_help = _('Select the encrypted <b>container file</b> by clicking the button next to '
@@ -747,7 +793,7 @@ class SetupDialog(QDialog):
                        'access to the key file can open your encrypted container. Make sure to store it at a '
                        'protected location. Its okay to store it on your computer if you are using an already '
                        'encrypted harddrive or a digital keystore. Having the key file on a '
-                       '<a href="https://www.google.com/search?q=keychain+usb+drive&tbm=isch">small USB drive</a> '
+                       '<a href="https://www.google.com/search?q=keychain+usb+drive&amp;tbm=isch">small USB drive</a> '
                        'attached to your real chain of keys would be an option as well.\n'
                        'Since you dont have to enter a password, using a key file can be a convenient way to '
                        'access your encrypted container. Just make sure you dont lose the key (file) ;)')},
@@ -758,4 +804,6 @@ class SetupDialog(QDialog):
                        'explicitly setting a mountpoint is not neccessary (but still possible).')}
         ]
         hd = HelpDialog(self, header_text, basic_help, advanced_topics)
-        hd.exec_()
+        hd.run()
+        hd.destroy()
+        

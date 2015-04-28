@@ -19,14 +19,16 @@ GNU General Public License for more details. <http://www.gnu.org/licenses/>
 from __future__ import unicode_literals
 
 try:
-    from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QDialog, QMessageBox, QDialogButtonBox, QStyle, \
-        QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout, QApplication
-    from PyQt5.QtGui import QIcon
-except ImportError:  # py2 or py3 without pyqt5
-    from PyQt4.QtCore import Qt
-    from PyQt4.QtGui import QDialog, QMessageBox, QDialogButtonBox, QStyle, \
-        QIcon, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout, QApplication
+    import pygtk
+    pygtk.require('2.0')
+except ImportError:# py3
+    import gi
+    gi.require_version('Gtk', '3.0')
+    from gi import pygtkcompat
+    pygtkcompat.enable()
+    pygtkcompat.enable_gtk(version='3.0')
+
+import gtk
 
 
 class UserInputError(Exception):
@@ -35,7 +37,7 @@ class UserInputError(Exception):
     pass
 
 
-class PasswordDialog(QDialog):
+class PasswordDialog(gtk.Dialog):
 
     """ Basic dialog with a textbox input field for the password/-phrase and OK/Cancel buttons """
 
@@ -48,53 +50,46 @@ class PasswordDialog(QDialog):
             :param title: Displayed in the dialogs titlebar
             :type title: str or None
         """
-        super(PasswordDialog, self).__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
-        self.setWindowTitle(title)
-        self.layout = QVBoxLayout()
-        self.layout.setSizeConstraint(QLayout.SetFixedSize)
-        self.layout.setSpacing(10)
+        super(PasswordDialog, self).__init__( title, parent,
+                                                gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                                                (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                                 gtk.STOCK_OK, gtk.RESPONSE_OK)
+                                            )
+        self.set_resizable(False)
+        self.set_border_width(10)
+        # default response will be triggered by pressing enter as well
+        self.set_default_response(gtk.RESPONSE_OK);
+        # connect buttons
+        self.connect('response', self.on_response_check) 
 
         # create icon and label
-        self.header_box = QHBoxLayout()
-        self.header_box.setSpacing(10)
-        self.header_box.setAlignment(Qt.AlignLeft)
-        self.header_text = QLabel(message)
-        icon = QLabel()
-        icon.setPixmap(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)).pixmap(32))
-        self.header_box.addWidget(icon)
-        self.header_box.addWidget(self.header_text)
-        self.layout.addLayout(self.header_box)
+        self.header_text = gtk.Label()
+        self.header_text.set_markup(message)
+        self.header_box = gtk.HBox(spacing=10)
+        self.header_box.pack_start(gtk.image_new_from_stock(gtk.STOCK_DIALOG_AUTHENTICATION, gtk.ICON_SIZE_DIALOG), False, False, 10)
+        self.header_box.pack_start(self.header_text, True, True, 0)
+        self.get_content_area().add(self.header_box)
 
         # create the text input field
-        self.pw_box = QLineEdit()
-        self.pw_box.setMinimumSize(0, 25)
-        # password will not be shown on screen
-        self.pw_box.setEchoMode(QLineEdit.Password)
-        self.layout.addWidget(self.pw_box)
-        self.layout.addSpacing(10)
+        self.pw_box = gtk.Entry()
+        #password will not be shown on screen
+        self.pw_box.set_visibility(False)
+        # allow the user to press enter to do ok
+        self.pw_box.set_activates_default(True)
+        # add the entry field with top/bottom margins
+        align_box = gtk.Alignment(0,0.5,1,0.25)
+        align_box.add(self.pw_box)
+        align_box.set_size_request(-1, 60)
+        self.get_content_area().add(align_box)        
 
-        # OK and Cancel buttons
-        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, parent=self)
-        self.buttons.accepted.connect(self.on_accepted)
-        self.buttons.rejected.connect(self.reject)
-        self.layout.addWidget(self.buttons)
+        self.pw_box.grab_focus()
+        self.show_all()
 
-        self.setLayout(self.layout)
-        self.pw_box.setFocus()
-
-    def on_accepted(self):
-        """ Event handler for accept signal: block when input field empty """
-        if self.pw_box.text() != '':
-            self.accept()
-        else:
-            self.pw_box.setFocus()
-
-    def get_pw(self):
-        """ Get pw inputfiled value, returns python unicode instead of QString in py2"""
-        try:
-            return str(self.pw_box.text())
-        except UnicodeEncodeError:
-            return unicode(self.pw_box.text().toUtf8(), encoding="UTF-8")
+    def on_response_check(self, dialog, response):
+        """ Event handler for response: block when input field empty """
+        if response == gtk.RESPONSE_OK and self.pw_box.get_text() == '':
+            self.pw_box.grab_focus()
+            dialog.emit_stop_by_name('response')
 
     def get_password(self):
         """ Dialog runs itself and returns the password/-phrase entered
@@ -104,8 +99,9 @@ class PasswordDialog(QDialog):
             :raises: UserInputError
         """
         try:
-            if self.exec_():
-                return self.get_pw()
+            response = self.run()
+            if response == gtk.RESPONSE_OK:
+                return self.pw_box.get_text()
             else:
                 raise UserInputError()
         finally:
@@ -130,27 +126,18 @@ class SudoDialog(PasswordDialog):
 
         # add checkbox to dialog
         self.toggle_function = toggle_function
-        self.store_cb = QCheckBox('')  # QCheckBox supports only string labels ..
-        cb_label = QLabel(_('Always allow luckyLUKS to be run\nwith administrative privileges'))  # .. QLabel because markup is needed for linebreak
-        # connect clicked on QLabel to fully emulate QCheckbox behaviour
-        cb_label.mouseReleaseEvent = self.toggle_cb
-        self.store_cb.stateChanged.connect(self.on_cb_toggled)
-        self.toggle_function(False)  # allowing permanent access has to be confirmed explicitly
+        self.store_cb = gtk.CheckButton(_('Always allow luckyLUKS to be run\nwith administrative privileges'))
+        self.store_cb.connect("toggled", self.on_cb_toggled)
+        self.toggle_function(False)# allowing permanent access has to be confirmed explicitly
+        align_box = gtk.Alignment(0,0,1,0.25)
+        align_box.add(self.store_cb)
+        align_box.set_size_request(-1, 50)
+        self.get_content_area().add(align_box)
+        self.get_content_area().show_all()
 
-        self.sudo_box = QHBoxLayout()
-        self.sudo_box.setSpacing(5)
-        self.sudo_box.addWidget(self.store_cb)
-        self.sudo_box.addWidget(cb_label)
-        self.sudo_box.addStretch()
-        self.layout.insertLayout(2, self.sudo_box)
-
-    def toggle_cb(self, event):
-        """ Slot for QCheckbox behaviour emulation: toggles checkbox """
-        self.store_cb.setChecked(not self.store_cb.isChecked())
-
-    def on_cb_toggled(self, state):
-        """ Event handler for checkbox toggle: propagate new value to parent """
-        self.toggle_function(self.store_cb.isChecked())
+    def on_cb_toggled(self, checkbox):
+        """ Event handler for checkbox toggle: propagate new value """
+        self.toggle_function(checkbox.get_active())
 
 
 class FormatContainerDialog(PasswordDialog):
@@ -164,44 +151,43 @@ class FormatContainerDialog(PasswordDialog):
         super(FormatContainerDialog, self).__init__(parent,
                                                     message=_('Please choose a passphrase\nto encrypt the new container:\n'),
                                                     title=_('Enter new Passphrase'))
+        
+        self.connect("delete_event", self.on_close_dialog)
         # display passphrase checkbox and set default to show input
-        self.show_cb = QCheckBox(_('Display passphrase'))
-        self.show_cb.stateChanged.connect(self.on_cb_toggled)
-        self.show_box = QHBoxLayout()
-        self.show_box.addWidget(self.show_cb)
-        self.layout.insertLayout(2, self.show_box)
-        self.show_cb.setChecked(True)
+        self.show_cb = gtk.CheckButton(_('Display passphrase'))
+        self.show_cb.connect("toggled", self.on_cb_toggled)
+        self.show_cb.set_active(True)
+        self.get_content_area().add(self.show_cb)
+        self.get_content_area().show_all()
 
-    def on_cb_toggled(self):
+    def on_cb_toggled(self, checkbox):
         """ Event handler for checkbox toggle: show/hide passphrase input on screen """
-        if self.show_cb.isChecked():
-            # show input on screen
-            self.pw_box.setEchoMode(QLineEdit.Normal)
-        else:
-            # hide input on screen
-            self.pw_box.setEchoMode(QLineEdit.Password)
+        self.pw_box.set_visibility(checkbox.get_active())
 
-    def closeEvent(self, event):
-        """ Event handler confirm close """
-        if not self.confirm_close_cancel():
-            event.ignore()
+    def on_response_check(self, dialog, response):
+        """ Event handler for response: block when input field empty and confirm close/cancel """
+        # dont allow empty password
+        if response == gtk.RESPONSE_OK and self.pw_box.get_text() == '':
+            self.pw_box.grab_focus()
+            dialog.emit_stop_by_name('response')
+        # confirm cancel
+        elif response != gtk.RESPONSE_OK:
+            md = gtk.MessageDialog(self,
+              gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+              gtk.MESSAGE_WARNING,
+              gtk.BUTTONS_CANCEL,
+              _('Currently creating new container!\nDo you really want to quit?')
+              )
+            md.add_button(gtk.STOCK_QUIT, gtk.RESPONSE_OK)
+            response = md.run()
+            md.destroy()
+            if response != gtk.RESPONSE_OK:
+                self.pw_box.grab_focus()
+                dialog.emit_stop_by_name('response')
 
-    def reject(self):
-        """ Event handler confirm cancel """
-        if self.confirm_close_cancel():
-            super(FormatContainerDialog, self).reject()
-        else:
-            self.pw_box.setFocus()
-
-    def confirm_close_cancel(self):
-        """ Display dialog for close/cancel confirmation
-            :returns: The users decision
-            :rtype: bool
-        """
-        message = _('Currently creating new container!\nDo you really want to quit?')
-        mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
-        mb.button(QMessageBox.Ok).setText(_('Quit'))
-        return mb.exec_() == QMessageBox.Ok
+    def on_close_dialog(self, widget, event):
+        """ Event handler for delete: pass response handler """
+        return True
 
 
 class UnlockContainerDialog(PasswordDialog):
@@ -226,19 +212,19 @@ class UnlockContainerDialog(PasswordDialog):
 
         self.worker = worker
         self.error_message = ''
+        self.waiting_for_response = True
+        # disable input until worker initialized
+        self.get_action_area().set_sensitive(False)
 
         if key_file is not None:
-            self.header_text.setText(_('<b>Using keyfile</b>\n{keyfile}\nto open container.\n\nPlease wait ..').format(keyfile=key_file))
+            self.header_text.set_markup(_('<b>Using keyfile</b>\n{keyfile}\nto open container.\n\nPlease wait ..').format(keyfile=key_file))
             self.pw_box.hide()
-            self.buttons.hide()
-            self.header_text.setContentsMargins(10, 10, 10, 10)
         else:
-            self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
-            # disable input until worker initialized
-            self.pw_box.setEnabled(False)
-            self.buttons.setEnabled(False)
-
-        self.waiting_for_response = True
+            # change label on stock button removes icon -> reset
+            self.get_widget_for_response(gtk.RESPONSE_OK).set_label(_('Unlock'))
+            self.get_widget_for_response(gtk.RESPONSE_OK).set_image(gtk.image_new_from_stock(gtk.STOCK_OK, gtk.ICON_SIZE_BUTTON))
+            self.pw_box.set_sensitive(False)
+        self.connect("delete_event", self.on_close_dialog)
         # call worker
         self.worker.execute(command={'type': 'request',
                                      'msg': 'unlock',
@@ -250,64 +236,73 @@ class UnlockContainerDialog(PasswordDialog):
                             success_callback=self.on_worker_reply,
                             error_callback=self.on_error)
 
-    def on_accepted(self):
-        """ Event handler send password/-phrase if worker ready """
-        # dont send empty password
-        if self.pw_box.text() == '':
-            self.pw_box.setFocus()
-        elif not self.waiting_for_response:
-            # worker is ready, send request
-            self.waiting_for_response = True
-            self.pw_box.setEnabled(False)
-            self.buttons.setEnabled(False)
-            self.header_text.setText(_('Checking passphrase ..'))
-            self.worker.execute(command={'type': 'response',
-                                         'msg': self.get_pw()
-                                         },
-                                success_callback=self.on_worker_reply,
-                                error_callback=self.on_error)
-
-    def reject(self):
-        """ Event handler cancel:
-            Block while waiting for response or notify worker with abort message
-        """
-        if not self.waiting_for_response:
-            self.worker.execute({'type': 'abort', 'msg': ''}, None, None)
-            super(UnlockContainerDialog, self).reject()
-
     def on_error(self, error_message):
         """ Error-Callback: set errormessage and trigger Cancel """
         self.error_message = error_message
-        super(UnlockContainerDialog, self).reject()
+        self.waiting_for_response = False
+        self.response(gtk.RESPONSE_CANCEL)
 
     def on_worker_reply(self, message):
         """ Success-Callback: trigger OK when unlocked, reset dialog if not """
+        self.waiting_for_response = False
         if message == 'success':
-            self.accept()
+            self.error_message = 'UNLOCK_SUCCESSFUL'  # (mis-)using errormessage to avoid the need for another state var
+            self.response(gtk.RESPONSE_OK)
         else:
-            if self.pw_box.text() == '':  # init
-                self.header_text.setText(_('Please enter\ncontainer passphrase:'))
+            if self.pw_box.get_text() == '':  # init
+                self.header_text.set_markup(_('Please enter\ncontainer passphrase:'))
             else:  # at least one previous pw attempt
-                self.header_text.setText(_('Wrong passphrase, please retry!\nEnter container passphrase:'))
-            self.buttons.setEnabled(True)
-            self.pw_box.setText('')
-            self.pw_box.setEnabled(True)
-            self.pw_box.setFocus()
-            self.waiting_for_response = False
-
-    def closeEvent(self, event):
-        """ Event handler close: block while waiting for response or notify worker with abort message """
-        if self.waiting_for_response:
-            event.ignore()
+                self.header_text.set_markup(_('Wrong passphrase, please retry!\nEnter container passphrase:'))
+            self.pw_box.set_text('')
+            self.pw_box.set_sensitive(True)
+            self.get_action_area().set_sensitive(True)
+            self.pw_box.grab_focus()
+            
+    def on_response_check(self, dialog, response):
+        """ Event handler for response:
+            send password/-phrase to worker on OK,
+            send abort message on close/cancel
+            and block while waiting for worker
+        """
+#       #  worker is waiting: send request on OK, send abort on cancel
+        if response == gtk.RESPONSE_OK and self.error_message == 'UNLOCK_SUCCESSFUL':
+            return  # close dialog
+        if not self.waiting_for_response:
+            # sending pw to worker
+            if response == gtk.RESPONSE_OK:
+                # dont send empty password
+                if self.pw_box.get_text() == '':
+                    self.pw_box.grab_focus()
+                else:
+                    self.waiting_for_response = True
+                    self.pw_box.set_sensitive(False)
+                    self.get_action_area().set_sensitive(False)
+                    self.header_text.set_markup(_('Checking passphrase ..'))
+                    self.worker.execute(command = {'type': 'response',
+                                                   'msg': self.pw_box.get_text()
+                                                   },
+                                        success_callback = self.on_worker_reply,
+                                        error_callback = self.on_error)
+                dialog.emit_stop_by_name('response')
+            # CANCEL/DELETE_EVENT -> abort worker
+            else:
+                self.worker.execute({'type': 'abort', 'msg': ''}, None, None)
+        # always block signal if waiting for worker
         else:
-            self.worker.execute({'type': 'abort', 'msg': ''}, None, None)
+            dialog.emit_stop_by_name('response')
 
     def communicate(self):
         """ Dialog runs itself and throws an exception if the container wasn't unlocked
             :raises: UserInputError
         """
         try:
-            if not self.exec_():
+            response = self.run()
+            if response != gtk.RESPONSE_OK:
                 raise UserInputError(self.error_message)  # is empty string in case of cancel/delete -> won't get displayed
         finally:
             self.destroy()
+            
+    def on_close_dialog(self, widget, event):
+        """ Event handler for delete: block while waiting for worker """
+        if self.waiting_for_response:
+            return True

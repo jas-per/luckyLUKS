@@ -20,13 +20,17 @@ import subprocess
 import sys
 import json
 import traceback
+import threading
 
 try:
-    from PyQt5.QtCore import QThread, QEvent
-    from PyQt5.QtWidgets import QApplication
-except ImportError:  # py2 or py3 without pyqt5
-    from PyQt4.QtCore import QThread, QEvent
-    from PyQt4.QtGui import QApplication
+    import pygtk
+    pygtk.require('2.0')
+except ImportError:# py3
+    import gi
+    gi.require_version('Gtk', '3.0')
+    from gi import pygtkcompat
+    pygtkcompat.enable()
+import gobject
 
 from luckyLUKS.unlockUI import PasswordDialog, SudoDialog, UserInputError
 from luckyLUKS.utilsUI import show_alert, show_info
@@ -38,7 +42,7 @@ class SudoException(Exception):
     pass
 
 
-class WorkerMonitor(QThread):
+class WorkerMonitor(threading.Thread):
 
     """ Establishes an asynchronous communication channel with the worker process:
         Since the worker executes only one task at a time queueing/sophisticated ipc are not needed.
@@ -50,10 +54,11 @@ class WorkerMonitor(QThread):
 
     def __init__(self, parent):
         """ :param parent: The parent widget to be passed to modal dialogs
-            :type parent: :class:`PyQt4.QtGui.QWidget`
+            :type parent: :class:`gtk.Widget`
             :raises: SudoException
         """
         super(WorkerMonitor, self).__init__()
+        self.daemon = True#force kill needed 
         self.parent = parent
         self.success_callback, self.error_callback = None, None
         self.modify_sudoers = False
@@ -185,22 +190,22 @@ class WorkerMonitor(QThread):
                 assert(self.success_callback is not None and self.error_callback is not None)  # there should be somebody waiting for an answer!
                 # valid response received
                 if response['type'] == 'error':
-                    QApplication.postEvent(self.parent, WorkerEvent(self.error_callback, response['msg']))
+                    gobject.idle_add(self.error_callback, response['msg'])
                 else:
-                    QApplication.postEvent(self.parent, WorkerEvent(self.success_callback, response['msg']))
+                    gobject.idle_add(self.success_callback, response['msg'])
                 # reset callbacks
                 self.success_callback, self.error_callback = None, None
 
             except ValueError:
                 # worker didn't return json -> probably crashed, show everything printed to stdout
                 buf += self.worker.stdout.read()
-                QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
-                                                                response=_('Error in communication:\n{error}').format(error=_(buf))))
+                gobject.idle_add(lambda msg: show_alert(self.parent, msg, critical=True),
+                                 _('Error in communication:\n{error}').format(error=_(buf)))
                 return
 
             except (IOError, AssertionError) as communication_error:
-                QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
-                                                                response=_('Error in communication:\n{error}').format(error=format_exception(communication_error))))
+                gobject.idle_add(lambda msg: show_alert(self.parent, msg, critical=True),
+                                 _('Error in communication:\n{error}').format(error=format_exception(communication_error)))
                 return
 
     def execute(self, command, success_callback, error_callback):
@@ -220,30 +225,11 @@ class WorkerMonitor(QThread):
             self.worker.stdin.write(json.dumps(command) + '\n')
             self.worker.stdin.flush()
         except (IOError, AssertionError) as communication_error:
-            QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
-                                                            response=_('Error in communication:\n{error}').format(error=format_exception(communication_error))))
+            gobject.idle_add(lambda msg: show_alert(self.parent, msg, critical=True),
+                             _('Error in communication:\n{error}').format(error=format_exception(communication_error)))
 
 
-class WorkerEvent(QEvent):
-
-    """ thread-safe callback execution by raising
-        these custom events in the main ui loop
-    """
-    EVENT_TYPE = QEvent.Type(QEvent.registerEventType())
-
-    def __init__(self, callback, response):
-        """ A WorkerEvent encapsulates a function to be called in the main ui loop and its argument
-            :param callback: The function to be called when the event gets processed
-            :type callback: function
-            :param response: Response message from the worker, passed as argument to the callback function
-            :type response: str
-        """
-        QEvent.__init__(self, WorkerEvent.EVENT_TYPE)
-        self.callback = callback
-        self.response = response
-
-
-class KeyfileCreator(QThread):
+class KeyfileCreator(threading.Thread):
 
     """ Create a 1KByte key file with random data
         Worker thread to avoid blocking the ui loop
@@ -251,11 +237,12 @@ class KeyfileCreator(QThread):
 
     def __init__(self, parent, path):
         """ :param parent: The parent widget to be passed to modal dialogs
-            :type parent: :class:`PyQt4.QtGui.QWidget`
+            :type parent: :class:`gtk.Widget`
             :param path: The designated key file path
             :type path: str/unicode
         """
         super(KeyfileCreator, self).__init__()
+        self.daemon = True#force kill needed 
         self.parent = parent
         self.path = path
 
@@ -271,13 +258,9 @@ class KeyfileCreator(QThread):
             p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
             __, errors = p.communicate()
         if p.returncode != 0:
-            QApplication.postEvent(self.parent.parent(),
-                                   WorkerEvent(callback=lambda msg: self.parent.display_create_failed(msg, stop_timer=True),
-                                               response=_('Error while creating key file:\n{error}').format(error=format_exception(errors)))
-                                   )
+            gobject.idle_add(self.parent.display_create_failed, _('Error while creating key file:\n{error}').format(error=errors))
         else:
-            QApplication.postEvent(self.parent.parent(), WorkerEvent(callback=lambda msg: self.parent.on_keyfile_created(msg),
-                                                                     response=self.path))
+            gobject.idle_add(self.parent.on_keyfile_created, self.path)
         return
 
 

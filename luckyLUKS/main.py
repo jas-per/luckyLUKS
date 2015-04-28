@@ -15,10 +15,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
 from luckyLUKS import VERSION_STRING, PROJECT_URL
-import os.path
+import os
 import sys
 import argparse
-import types
 
 
 def luckyLUKS(translation, *args, **kwargs):
@@ -26,20 +25,15 @@ def luckyLUKS(translation, *args, **kwargs):
     try:
         # py3:
         import builtins
-        translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
-        translation.ugettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
         commandline_unicode_arg = lambda arg: arg
-        argparse._ = _ = translation.gettext  # gettext for argsparse
+        argparse._ = builtins._ = translation.gettext
         builtins.format_exception = str  # format exception message for gui
     except:
-        # py2: explicit unicode for qt string translations, exception output and commandline args parsing
+        # py2: explicit unicode for string translations, exception output and commandline args parsing
         import __builtin__ as builtins
-        translation.gettext_qt = types.MethodType(lambda self, msg: self.gettext(msg).replace('\n', '<br>'), translation)
-        translation.ugettext_qt = types.MethodType(lambda self, msg: self.ugettext(msg).replace('\n', '<br>'), translation)
         commandline_unicode_arg = lambda arg: arg.decode(sys.getfilesystemencoding())
-        argparse._ = _ = translation.ugettext  # gettext for argsparse
+        argparse._ = builtins._ = translation.ugettext
         # format exception message for gui
-
         def format_exception(exception):
             try:
                 return str(exception).decode('utf-8')
@@ -91,37 +85,37 @@ def luckyLUKS(translation, *args, **kwargs):
     # worker will be created by calling the script again (but this time with su privileges)
     if parsed_args.ishelperprocess:
         # the backend process uses utf8 encoded str in py2
-        builtins._ = translation.gettext_qt
+        builtins._ = translation.gettext
         startWorker(parsed_args.sudouser)
     else:
-        # unicode translations for the qt gui
-        builtins._ = translation.ugettext_qt
         startUI(parsed_args)
 
 
 def startUI(parsed_args):
     """ Import the required GUI elements and create main window """
     try:
-        from PyQt5.QtWidgets import QApplication
-        from PyQt5.QtCore import QLocale, QTranslator, QLibraryInfo
-    except ImportError:  # py2 or py3 without pyqt5
-        from PyQt4.QtGui import QApplication
-        from PyQt4.QtCore import QLocale, QTranslator, QLibraryInfo
+        import pygtk
+        pygtk.require('2.0')
+    except ImportError:# py3
+        import gi
+        gi.require_version('Gtk', '3.0')
+        from gi import pygtkcompat
+        pygtkcompat.enable()
+        pygtkcompat.enable_gtk(version='3.0')
+
+    import gtk
+    import gobject
+    
     from luckyLUKS.mainUI import MainWindow
 
-    # l10n qt-gui elements
-    qt_translator = QTranslator()
-    qt_translator.load('qt_' + QLocale.system().name(), QLibraryInfo.location(QLibraryInfo.TranslationsPath))
-    application = QApplication(sys.argv)
-    application.installTranslator(qt_translator)
-
     # start application
-    main_win = MainWindow(parsed_args.name, parsed_args.container, parsed_args.keyfile, parsed_args.mountpoint)
-    # setup OK -> run event loop
-    if main_win.is_initialized:
-        sys.exit(application.exec_())
-    else:
-        sys.exit(0)
+    gobject.threads_init()#needed for PyGObject up to 3.10.1
+    # TODO: remove after testing
+    settings = gtk.settings_get_default()
+#     settings.props.gtk_button_images = True
+#     settings.props.gtk_menu_images = True
+    MainWindow(parsed_args.name, parsed_args.container,  parsed_args.keyfile, parsed_args.mountpoint)
+    sys.exit(gtk.main())
 
 
 def startWorker(sudouser=None):
