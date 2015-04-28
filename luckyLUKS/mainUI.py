@@ -66,7 +66,6 @@ class MainWindow(gtk.Window):
         self.worker = None
         self.is_waiting_for_worker = False
         self.is_unlocked = False
-# self.is_initialized = False # TODO: proper worker shutdown
         self.has_tray = True  # gtk.StatusIcon.is_embedded() has to be checked after init
 
         # L10n: program name - translatable for startmenu titlebar etc
@@ -127,7 +126,12 @@ class MainWindow(gtk.Window):
 
                 self.is_unlocked = True  # all checks in setup dialog -> skip initializing state
             else:
-                sys.exit()  # user closed dialog -> quit program
+                # user closed dialog -> quit program
+                # and check if a keyfile create thread has to be stopped
+                # the worker process terminates itself when its parent dies
+                if hasattr(sd, 'create_thread') and sd.create_thread.isAlive():
+                    sd.create_thread.terminate()
+                sys.exit()
 
         # center window on desktop
         self.set_position(gtk.WIN_POS_CENTER_ALWAYS)

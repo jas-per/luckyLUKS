@@ -58,7 +58,7 @@ class WorkerMonitor(threading.Thread):
             :raises: SudoException
         """
         super(WorkerMonitor, self).__init__()
-        self.daemon = True  # force kill needed
+        self.daemon = True  # force kill needed because you cannot kill the privileged subprocess -> worker will detect parents death and terminate by itself
         self.parent = parent
         self.success_callback, self.error_callback = None, None
         self.modify_sudoers = False
@@ -242,9 +242,9 @@ class KeyfileCreator(threading.Thread):
             :type path: str/unicode
         """
         super(KeyfileCreator, self).__init__()
-        self.daemon = True  # force kill needed
         self.parent = parent
         self.path = path
+        self.process = None
 
     def run(self):
         """ Spawns child process and passes a WorkerEvent to the main event loop when finished """
@@ -255,13 +255,17 @@ class KeyfileCreator(threading.Thread):
         # oflag=excl -> fail if the output file already exists
         cmd = ['dd', 'if=/dev/random', 'of=' + output_file, 'bs=1', 'count=1024', 'conv=excl']
         with open(os.devnull) as DEVNULL:
-            p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
-            __, errors = p.communicate()
-        if p.returncode != 0:
+            self.process = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+            __, errors = self.process.communicate()
+        if self.process.returncode != 0:
             gobject.idle_add(self.parent.display_create_failed, _('Error while creating key file:\n{error}').format(error=errors))
         else:
             gobject.idle_add(self.parent.on_keyfile_created, self.path)
         return
+
+    def terminate(self):
+        """ kill dd process """
+        self.process.kill()
 
 
 def is_installed(executable):
