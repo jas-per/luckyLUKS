@@ -20,7 +20,7 @@ For more information and a complete FAQ see
 https://github.com/jas-per/luckyLUKS"""
 
 
-setup(name='luckyLUKS',
+setup(name='luckyLUKS-gtk',
       version=VERSION_STRING,
       author='Jasper van Hoorn',
       author_email='muzius@gmail.com',

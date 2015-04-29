@@ -27,13 +27,13 @@ dist_deb: dist
 	cp dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.install
 	mkdir dist_deb/${NAME}-${VERSION}/debian/upstream/
 	cp signing-key.asc dist_deb/${NAME}-${VERSION}/debian/upstream/
-	echo 'version=3\nopts=filenamemangle=s/.+\/v?(\d?\S*)\.tar\.gz/luckyluks_$$1.tar.gz/,pgpsigurlmangle=s/archive\/v?(\d\S*)\.tar\.gz/releases\/download\/v$$1\/v$$1.tar.gz.asc/ https://github.com/jas-per/luckyLUKS/releases .*/v(\d?\S*)\.tar\.gz' >> dist_deb/${NAME}-${VERSION}/debian/watch
+	echo 'version=3\nopts=pgpsigurlmangle=s/$/.asc/ https://github.com/jas-per/luckyLUKS/releases .*/luckyluks-gtk_(\d?\S*)\.tar\.gz' >> dist_deb/${NAME}-${VERSION}/debian/watch
 	sed -e "s/dh_desktop//g" -i dist_deb/${NAME}-${VERSION}/debian/rules
 	sed -e "s/dh binary-indep/dh binary-indep --with python2,python3/g" -i dist_deb/${NAME}-${VERSION}/debian/rules
 	echo 'override_dh_install:' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tdh_install --sourcedir=./' >> dist_deb/${NAME}-${VERSION}/debian/rules
-	echo '\tsed -i '\''1c#!/usr/bin/python3'\'' debian/python3-${LOWER_NAME}/usr/bin/${LOWER_NAME}' >> dist_deb/${NAME}-${VERSION}/debian/rules
-	sed -e "s,Standards-Version: 3.9.1,Standards-Version: 3.9.6\nVcs-Git: git://github.com/jas-per/luckyLUKS.git\nVcs-Browser: https://github.com/jas-per/luckyLUKS,g" -i dist_deb/${NAME}-${VERSION}/debian/control
+	echo '\tsed -i '\''1c#!/usr/bin/python3'\'' debian/python3-${LOWER_NAME}/usr/bin/luckyluks' >> dist_deb/${NAME}-${VERSION}/debian/rules
+	sed -e "s,Standards-Version: 3.9.1,Standards-Version: 3.9.6\nVcs-Git: git://github.com/jas-per/luckyLUKS.git -b gtk\nVcs-Browser: https://github.com/jas-per/luckyLUKS/tree/gtk,g" -i dist_deb/${NAME}-${VERSION}/debian/control
 	cd dist_deb/${NAME}-${VERSION} && debuild -S -sa
  
 dist_zip:
@@ -58,11 +58,11 @@ dist_zip:
 #	${PYTHON} setup.py bdist_rpm --post-install=rpm/postinstall --pre-uninstall=rpm/preuninstall
 
 update_locales:
-	python2 setup.py extract_messages --output-file ${NAME}/locale/${NAME}.pot
-	python2 setup.py update_catalog --domain ${NAME} --input-file ${NAME}/locale/${NAME}.pot --output-dir ${NAME}/locale
+	python2 setup.py extract_messages --output-file luckyLUKS/locale/luckyLUKS.pot
+	python2 setup.py update_catalog --domain luckyLUKS --input-file luckyLUKS/locale/luckyLUKS.pot --output-dir luckyLUKS/locale
 
 compile_locales:
-	python2 setup.py compile_catalog --domain ${NAME} --directory ${NAME}/locale
+	python2 setup.py compile_catalog --domain luckyLUKS --directory luckyLUKS/locale
 	
 init_locale:
 	if test -z "$$NEW_LANG";\
@@ -79,8 +79,8 @@ install:
 	${PYTHON} setup.py install --install-layout=deb
 
 check:
-	@echo '### pylint check ###'
-	find . -name \*.py | grep -v "^test_" | xargs pylint --errors-only --additional-builtins=_,format_exception --reports=n
+#	@echo '### pylint check ###'
+#	find . -name \*.py | grep -v "^test_" | xargs pylint --errors-only --additional-builtins=_,format_exception --reports=n
 	@echo '### pep8 check ###'
 	pep8  *.py ./luckyLUKS --ignore=E501
 #	autopep8 ./luckyLUKS/*.py --in-place --verbose --ignore=E501
