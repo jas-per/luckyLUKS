@@ -29,6 +29,10 @@ except ImportError:  # py3
     pygtkcompat.enable_gtk(version='3.0')
 
 import gtk
+try:  # missing in older pygtkcompat
+    gtk.status_icon_position_menu = gtk.StatusIcon.position_menu
+except AttributeError:
+    pass
 
 from luckyLUKS import utils, PROJECT_URL
 from luckyLUKS.unlockUI import UnlockContainerDialog, UserInputError

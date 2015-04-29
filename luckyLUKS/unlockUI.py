@@ -264,9 +264,9 @@ class UnlockContainerDialog(PasswordDialog):
             send abort message on close/cancel
             and block while waiting for worker
         """
-# worker is waiting: send request on OK, send abort on cancel
-        if response == gtk.RESPONSE_OK and self.error_message == 'UNLOCK_SUCCESSFUL':
-            return  # close dialog
+        # worker is waiting: send request on OK, send abort on cancel
+        if self.error_message:
+            return  # close dialog with RESPONSE_CANCEL or RESPONSE_OK if unlock successful
         if not self.waiting_for_response:
             # sending pw to worker
             if response == gtk.RESPONSE_OK:

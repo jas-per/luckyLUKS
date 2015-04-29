@@ -19,12 +19,14 @@ import sys
 try:
     import pygtk
     pygtk.require('2.0')
+    TK_STRING = ' (GTK2)'
 except ImportError:  # py3
     import gi
     gi.require_version('Gtk', '3.0')
     from gi import pygtkcompat
     pygtkcompat.enable()
     pygtkcompat.enable_gtk(version='3.0')
+    TK_STRING = ' (GTK3)'
 
 import gtk
 
@@ -104,7 +106,7 @@ class HelpDialog(gtk.Dialog):
         footer_label = gtk.Label()
         footer_label.set_markup(_('luckyLUKS version {version}\n'
                                   'For more information, visit\n'
-                                  '<a href="{project_url}">{project_url}</a>').format(version=VERSION_STRING,
+                                  '<a href="{project_url}">{project_url}</a>').format(version=VERSION_STRING + TK_STRING,
                                                                                       project_url=PROJECT_URL))
         footer.add(footer_label)
         self.get_content_area().add(footer)
