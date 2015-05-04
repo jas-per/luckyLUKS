@@ -127,7 +127,11 @@ Long story short: Hidden containers are not supported by luckyLUKS right now, be
 Translations
 ============
 
-Providing an easy to use graphical interface instead of relying on command line tools significantly expands the audience for data encryption as TrueCrypt has shown. A graphical interface is only the first step in giving more people the ability to use data encryption on Linux. The next is removing the language barrier from the interface by making the software speak the language the end-user is most comfortable with. The user interface of luckyLUKS is fully translateable, but to offer more translations your help is needed. Since the application is not too complex, it doesn't take long to translate all the neccessary strings. If you want to help out:
+Providing an easy to use graphical interface instead of relying on command line tools significantly expands the audience for data encryption as TrueCrypt has shown. A graphical interface is only the first step in giving more people the ability to use data encryption on Linux. The next is removing the language barrier from the interface by making the software speak the language the end-user is most comfortable with. The user interface of luckyLUKS is fully translateable, but to offer more translations your help is needed.
+
+Since the application is not too complex, it won't take long to translate all the neccessary strings. Furthermore luckyLUKS is feature complete at this point, so translating won't be an ongoing effort. If you want to help out, you can use a web-based translation platform: `Transifex <https://www.transifex.com/projects/p/luckyluks/>`_
+
+If you want to preview your translation straight away, you can also do the translation locally on your computer:
 
 - install a translations editor (eg `Poedit <http://poedit.net/>`_) and `python-babel <http://babel.pocoo.org/>`_
 - `Download <https://github.com/jas-per/luckyLUKS/archive/master.zip>`_ the source code of luckyLUKS
@@ -138,7 +142,7 @@ Providing an easy to use graphical interface instead of relying on command line 
 - After editing the po file has to be compiled. Poedit can do this automatically: go to :code:`Preferences` and check :code:`Automatically compile .mo file on save`. Or use :code:`make compile_locales` from the source directory.
 - To test your translation, start luckyLUKS from the command line. You might have to set the locale explicitly, if your operation system is using a different locale (eg :code:`LANG=pt_PT.utf-8 LANGUAGE=pt ./luckyluks`)
 
-Don't worry too much about previewing messages, since all dialogs resize dynamically. Just make sure the labels in the main windows get displayed nicely. When you are happy with the results, send me the .po-file you created and your translation will get included in the next release. Pull requests are welcome too :)
+When you are happy with the results, mail the .po-file you created and your translation will get included in the next release. Pull requests are welcome too :)
 
 
 Bugs

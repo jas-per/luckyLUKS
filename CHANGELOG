@@ -1,4 +1,4 @@
-luckyluks-gtk (1.2.0) unstable; urgency=low
+luckyluks (1.2.0) unstable; urgency=low
 
   * minor adjustments for gtk2/3 version
     (feature complete alternative to this qt based version)
