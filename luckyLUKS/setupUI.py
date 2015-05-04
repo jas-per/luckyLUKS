@@ -537,7 +537,7 @@ class SetupDialog(QDialog):
                 # move to homedir instead
                 from shutil import move
                 move(desktop_file_path, home_dir_path)
-                show_alert(self, format_exception(cpe.output))
+                show_alert(self, cpe.output)
                 show_info(self, _('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=home_dir_path))
         else:
             show_info(self, _('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=desktop_file_path))
@@ -708,7 +708,7 @@ class SetupDialog(QDialog):
                        'access to the key file can open your encrypted container. Make sure to store it at a '
                        'protected location. Its okay to store it on your computer if you are using an already '
                        'encrypted harddrive or a digital keystore. Having the key file on a '
-                       '<a href="https://www.google.com/search?q=keychain+usb+drive&tbm=isch">small USB drive</a> '
+                       '<a href="https://www.google.com/search?q=keychain+usb+drive">small USB drive</a> '
                        'attached to your real chain of keys would be an option as well.\n'
                        'Since you dont have to enter a password, using a key file can be a convenient way to '
                        'access your encrypted container. Just make sure you dont lose the key (file) ;)') +
@@ -747,7 +747,7 @@ class SetupDialog(QDialog):
                        'access to the key file can open your encrypted container. Make sure to store it at a '
                        'protected location. Its okay to store it on your computer if you are using an already '
                        'encrypted harddrive or a digital keystore. Having the key file on a '
-                       '<a href="https://www.google.com/search?q=keychain+usb+drive&tbm=isch">small USB drive</a> '
+                       '<a href="https://www.google.com/search?q=keychain+usb+drive">small USB drive</a> '
                        'attached to your real chain of keys would be an option as well.\n'
                        'Since you dont have to enter a password, using a key file can be a convenient way to '
                        'access your encrypted container. Just make sure you dont lose the key (file) ;)')},

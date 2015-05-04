@@ -273,7 +273,7 @@ class KeyfileCreator(QThread):
         if p.returncode != 0:
             QApplication.postEvent(self.parent.parent(),
                                    WorkerEvent(callback=lambda msg: self.parent.display_create_failed(msg, stop_timer=True),
-                                               response=_('Error while creating key file:\n{error}').format(error=format_exception(errors)))
+                                               response=_('Error while creating key file:\n{error}').format(error=errors))
                                    )
         else:
             QApplication.postEvent(self.parent.parent(), WorkerEvent(callback=lambda msg: self.parent.on_keyfile_created(msg),
