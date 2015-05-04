@@ -1,3 +1,13 @@
+luckyluks-gtk (1.2.0) unstable; urgency=low
+
+  * minor adjustments for gtk2/3 version
+    (feature complete alternative to this qt based version)
+
+  * bugfixes error handling
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Tue, 04 May 2015 16:32:28 +0100
+
+
 luckyluks (1.1.0) unstable; urgency=low
 
   * keyfile support (open/create for LUKS and TrueCrypt containers)

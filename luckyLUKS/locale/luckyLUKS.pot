@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: luckyLUKS 1.1.0\n"
 "Report-Msgid-Bugs-To: Jasper van Hoorn (muzius@gmail.com)\n"
-"POT-Creation-Date: 2015-04-20 12:00+0200\n"
+"POT-Creation-Date: 2015-05-04 18:22+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
@@ -144,87 +144,87 @@ msgid ""
 "<a href=\"{project_url}\">{project_url}</a>"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:140
+#: luckyLUKS/mainUI.py:144
 msgid "Handle encrypted container"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:142
+#: luckyLUKS/mainUI.py:146
 msgid "Name:"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:145
+#: luckyLUKS/mainUI.py:149
 msgid "File:"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:149
+#: luckyLUKS/mainUI.py:153
 msgid "Key:"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:153
+#: luckyLUKS/mainUI.py:157
 msgid "Mount:"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:156
+#: luckyLUKS/mainUI.py:160
 msgid "Status:"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:176 luckyLUKS/mainUI.py:225
+#: luckyLUKS/mainUI.py:180 luckyLUKS/mainUI.py:229
 msgid "Hide"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:179 luckyLUKS/mainUI.py:247 luckyLUKS/setupUI.py:563
+#: luckyLUKS/mainUI.py:183 luckyLUKS/mainUI.py:251 luckyLUKS/setupUI.py:563
 #: luckyLUKS/unlockUI.py:203
 msgid "Quit"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:194
+#: luckyLUKS/mainUI.py:198
 msgid "Container is {unlocked_green_bold}"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:195
+#: luckyLUKS/mainUI.py:199
 msgid "unlocked"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:196
+#: luckyLUKS/mainUI.py:200
 msgid "Close Container"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:198
+#: luckyLUKS/mainUI.py:202
 msgid "{device_name} is unlocked"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:200
+#: luckyLUKS/mainUI.py:204
 msgid "Container is {closed_red_bold}"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:201
+#: luckyLUKS/mainUI.py:205
 msgid "closed"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:202 luckyLUKS/setupUI.py:123
+#: luckyLUKS/mainUI.py:206 luckyLUKS/setupUI.py:123
 msgid "Unlock Container"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:204
+#: luckyLUKS/mainUI.py:208
 msgid "{device_name} is closed"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:222 luckyLUKS/mainUI.py:233
+#: luckyLUKS/mainUI.py:226 luckyLUKS/mainUI.py:237
 msgid "Show"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:242
+#: luckyLUKS/mainUI.py:246
 msgid ""
 "<b>{device_name}</b> >> {container_path}\n"
 "is currently <b>unlocked</b>,\n"
 "Close Container now and quit?"
 msgstr ""
 
-#: luckyLUKS/mainUI.py:273
+#: luckyLUKS/mainUI.py:277
 msgid "Closing Container .."
 msgstr ""
 
-#: luckyLUKS/mainUI.py:303 luckyLUKS/unlockUI.py:225
+#: luckyLUKS/mainUI.py:307 luckyLUKS/unlockUI.py:225
 msgid "Initializing .."
 msgstr ""
 
@@ -269,7 +269,7 @@ msgstr ""
 msgid "choose folder"
 msgstr ""
 
-#: luckyLUKS/setupUI.py:117 luckyLUKS/setupUI.py:206 luckyLUKS/utilsUI.py:53
+#: luckyLUKS/setupUI.py:117 luckyLUKS/setupUI.py:206 luckyLUKS/utilsUI.py:55
 msgid "Help"
 msgstr ""
 
@@ -494,9 +494,9 @@ msgid ""
 "encrypted container. Make sure to store it at a protected location. Its "
 "okay to store it on your computer if you are using an already encrypted "
 "harddrive or a digital keystore. Having the key file on a <a "
-"href=\"https://www.google.com/search?q=keychain+usb+drive&tbm=isch\">small"
-" USB drive</a> attached to your real chain of keys would be an option as "
-"well.\n"
+"href=\"https://www.google.com/search?q=keychain+usb+drive\">small USB "
+"drive</a> attached to your real chain of keys would be an option as well."
+"\n"
 "Since you dont have to enter a password, using a key file can be a "
 "convenient way to access your encrypted container. Just make sure you "
 "dont lose the key (file) ;)"
@@ -650,24 +650,24 @@ msgid ""
 "{error}"
 msgstr ""
 
-#: luckyLUKS/utils.py:276
+#: luckyLUKS/utils.py:277
 msgid ""
 "Error while creating key file:\n"
 "{error}"
 msgstr ""
 
-#: luckyLUKS/utilsUI.py:74
+#: luckyLUKS/utilsUI.py:76
 msgid "Advanced Topics:"
 msgstr ""
 
-#: luckyLUKS/utilsUI.py:98
+#: luckyLUKS/utilsUI.py:100
 msgid ""
 "luckyLUKS version {version}\n"
 "For more information, visit\n"
 "<a href=\"{project_url}\">{project_url}</a>"
 msgstr ""
 
-#: luckyLUKS/utilsUI.py:140
+#: luckyLUKS/utilsUI.py:142
 msgid "Error"
 msgstr ""
 
