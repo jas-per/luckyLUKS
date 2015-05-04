@@ -122,6 +122,10 @@ class MainWindow(QMainWindow):
                 self.is_unlocked = True  # all checks in setup dialog -> skip initializing state
             else:
                 # user closed dialog -> quit program
+                # and check if a keyfile create thread has to be stopped
+                # the worker process terminates itself when its parent dies
+                if hasattr(sd, 'create_thread') and sd.create_thread.isRunning():
+                    sd.create_thread.terminate()
                 QApplication.instance().quit()
                 return
 

@@ -258,6 +258,7 @@ class KeyfileCreator(QThread):
         super(KeyfileCreator, self).__init__()
         self.parent = parent
         self.path = path
+        self.process = None
 
     def run(self):
         """ Spawns child process and passes a WorkerEvent to the main event loop when finished """
@@ -268,9 +269,9 @@ class KeyfileCreator(QThread):
         # oflag=excl -> fail if the output file already exists
         cmd = ['dd', 'if=/dev/random', 'of=' + output_file, 'bs=1', 'count=1024', 'conv=excl']
         with open(os.devnull) as DEVNULL:
-            p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
-            __, errors = p.communicate()
-        if p.returncode != 0:
+            self.process = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+            __, errors = self.process.communicate()
+        if self.process.returncode != 0:
             QApplication.postEvent(self.parent.parent(),
                                    WorkerEvent(callback=lambda msg: self.parent.display_create_failed(msg, stop_timer=True),
                                                response=_('Error while creating key file:\n{error}').format(error=errors))
@@ -279,6 +280,10 @@ class KeyfileCreator(QThread):
             QApplication.postEvent(self.parent.parent(), WorkerEvent(callback=lambda msg: self.parent.on_keyfile_created(msg),
                                                                      response=self.path))
         return
+
+    def terminate(self):
+        """ kill dd process """
+        self.process.kill()
 
 
 def is_installed(executable):
