@@ -21,10 +21,12 @@ try:
     from PyQt5.QtWidgets import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
         QWidget, QDialogButtonBox, QLabel, QStyle, QStyleOption, QSizePolicy, QFrame
     from PyQt5.QtGui import QPainter
+    TK_STRING = ' (Qt5)'
 except ImportError:  # py2 or py3 without pyqt5
     from PyQt4.QtCore import pyqtSignal, Qt
     from PyQt4.QtGui import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
         QWidget, QDialogButtonBox, QLabel, QPainter, QStyle, QStyleOption, QSizePolicy, QFrame
+    TK_STRING = ' (Qt4)'
 
 from luckyLUKS import VERSION_STRING, PROJECT_URL
 
@@ -97,7 +99,7 @@ class HelpDialog(QDialog):
 
         footer = QLabel(_('luckyLUKS version {version}\n'
                           'For more information, visit\n'
-                          '<a href="{project_url}">{project_url}</a>').format(version=VERSION_STRING,
+                          '<a href="{project_url}">{project_url}</a>').format(version=VERSION_STRING + TK_STRING,
                                                                               project_url=PROJECT_URL))
         footer.setContentsMargins(0, 10, 0, 10)
         layout.addWidget(footer)
