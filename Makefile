@@ -100,6 +100,6 @@ check:
 
 clean:
 	${PYTHON} setup.py clean
-	rm -rf build/ dist build ${NAME}-${VERSION} ${NAME}.egg-info deb_dist dist_zip dist_deb debian luckyluks.1.gz README
+	rm -rf build/ dist build ${NAME}-${VERSION} *.egg-info deb_dist dist_zip dist_deb debian luckyluks.1.gz README
 	find . -name '*.pyc' -delete
 
