@@ -19,7 +19,7 @@ luckyLUKS follows a keep-it-simple philosophy that aims to keep users from shoot
 Installation
 ============
 
-For Ubuntu and derivates just use this ppa::
+For Ubuntu and derivates just use this `ppa <https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks>`_::
 
     > sudo add-apt-repository ppa:jas-per/lucky-luks
     > sudo apt-get update && sudo apt-get upgrade
@@ -27,19 +27,19 @@ For Ubuntu and derivates just use this ppa::
 
 For other debian based distributions download this debian package and install manually:
 
-`python-luckyluks_1.1.0-1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v1.1.0/python-luckyluks_1.1.0-1_all.deb>`_
+`python-luckyluks_1.2.0-1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v1.2.0/python-luckyluks_1.2.0-1_all.deb>`_
 
 On other distriubutions you can use the following zip-packaged python file:
 
-`luckyLUKS-1.1.0 <https://github.com/jas-per/luckyLUKS/releases/download/v1.1.0/luckyLUKS-1.1.0>`_
+`luckyLUKS-1.2.0 <https://github.com/jas-per/luckyLUKS/releases/download/v1.2.0/luckyLUKS-1.2.0>`_
 
 This file contains all resources and can be executed directly by the python intepreter. Place in :code:`/usr/bin` and change ownership to root::
 
-    > sudo mv luckyLUKS-1.1.0 /usr/bin/
-    > sudo chown root:root /usr/bin/luckyLUKS-1.1.0
-    > sudo chmod 755 /usr/bin/luckyLUKS-1.1.0
+    > sudo mv luckyLUKS-1.2.0 /usr/bin/
+    > sudo chown root:root /usr/bin/luckyLUKS-1.2.0
+    > sudo chmod 755 /usr/bin/luckyLUKS-1.2.0
 
-Then start with :code:`luckyLUKS-1.1.0` on the command line or create a desktop shortcut manually.
+Then start with :code:`luckyLUKS-1.2.0` on the command line or create a desktop shortcut manually.
 
 Dependencies
 ------------
@@ -54,6 +54,13 @@ To run luckyLUKS, make sure you have the following installed:
 
 When using the ubuntu-ppa or debian package, these will get installed automatically, if you use the zip-package please install the dependencies manually with your distributions repository tools.
 
+Gtk-version
+-----------
+
+luckyLUKS  was started using Gtk for the graphical interface and switched to Qt later on because it adapts to the multitude of Linux desktop environments and themes much better. Since the gtk-version has been nearly feature complete anyway, doing a proper release was no big deal. The graphical toolkit is the only major dependency of luckyLUKS, so if you'd like to use a version that is optimized for your desktop environment install
+:code:`python-luckyluks-gtk` (for XFCE, Mate, LXDE - Gtk2) or
+:code:`python3-luckyluks-gtk` (for Gnome, Unity, Cinnamon - Gtk3)
+from the `ubuntu ppa <https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks>`_.
 
 FAQ
 ===
