@@ -27,7 +27,7 @@ dist_deb: dist
 	cp dist_deb/${NAME}-${VERSION}/debian/python-${LOWER_NAME}.install dist_deb/${NAME}-${VERSION}/debian/python3-${LOWER_NAME}.install
 	mkdir dist_deb/${NAME}-${VERSION}/debian/upstream/
 	cp signing-key.asc dist_deb/${NAME}-${VERSION}/debian/upstream/
-	echo 'version=3\nopts=pgpsigurlmangle=s/$/.asc/ https://github.com/jas-per/luckyLUKS/releases .*/luckyluks-gtk_(\d?\S*)\.tar\.gz' >> dist_deb/${NAME}-${VERSION}/debian/watch
+	echo 'version=3\nopts=pgpsigurlmangle=s/$$/.asc/ https://github.com/jas-per/luckyLUKS/releases .*/luckyluks-gtk_(\d?\S*)\.tar\.gz' >> dist_deb/${NAME}-${VERSION}/debian/watch
 	sed -e "s/dh_desktop//g" -i dist_deb/${NAME}-${VERSION}/debian/rules
 	sed -e "s/dh binary-indep/dh binary-indep --with python2,python3/g" -i dist_deb/${NAME}-${VERSION}/debian/rules
 	echo 'override_dh_install:' >> dist_deb/${NAME}-${VERSION}/debian/rules
