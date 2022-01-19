@@ -1,7 +1,7 @@
 """
 If the main program gets called without arguments, this GUI will be shown first.
 
-luckyLUKS Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
+luckyLUKS Copyright (c) 2014,2015,2022 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -13,22 +13,20 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
-from __future__ import unicode_literals
-from __future__ import division
 
 import os
 import sys
 import codecs
+import random
+import string
 import subprocess
+import glob
+from shutil import move
 
-try:
-    from PyQt5.QtCore import QTimer, Qt
-    from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
-        QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar, QLayout
-except ImportError:  # py2 or py3 without pyqt5
-    from PyQt4.QtCore import QTimer, Qt
-    from PyQt4.QtGui import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
-        QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication, QProgressBar, QLayout
+from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
+    QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication,\
+    QProgressBar, QLayout
 
 from luckyLUKS.unlockUI import FormatContainerDialog, UnlockContainerDialog, UserInputError
 from luckyLUKS.utilsUI import QExpander, HelpDialog, show_info, show_alert
@@ -44,9 +42,9 @@ class SetupDialog(QDialog):
 
     def __init__(self, parent):
         """ :param parent: The parent window/dialog used to enable modal behaviour
-            :type parent: :class:`PyQt4.QtGui.QWidget`
+            :type parent: :class:`PyQt5.QtGui.QWidget`
         """
-        super(SetupDialog, self).__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
+        super().__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
         self.setWindowTitle(_('luckyLUKS'))
 
         self.worker = parent.worker
@@ -222,6 +220,12 @@ class SetupDialog(QDialog):
         # ui built, add to widget
         self.setLayout(self.layout)
 
+        # var-def for create-subdialog
+        self.create_progressbars = []
+        self.create_thread = None
+        self.create_status_grid = None
+        self.create_timer = None
+
     def on_create_container(self):
         """ Triggered by clicking create.
             Hides the unlock/create pane and switches to a status pane
@@ -249,20 +253,21 @@ class SetupDialog(QDialog):
         # calculate designated container size for worker and progress indicator
         size = self.create_container_size.value()
         size = size * (1024 * 1024 * 1024 if self.create_size_unit.currentIndex() == 1 else 1024 * 1024)  # GB vs MB
-        location = self.encode_qt_output(self.create_container_file.text())
+        location = self.create_container_file.text().strip()
         if not os.path.dirname(location):
             location = os.path.join(os.path.expanduser('~'), location)
             self.create_container_file.setText(location)
+        keyfile = self.create_keyfile.text().strip() if self.create_keyfile.text().strip() != '' else None
         # start timer for progressbar updates during container creation
         self.create_timer.timeout.connect(lambda: self.display_progress_percent(location, size))
         self.create_timer.start(500)
 
         self.worker.execute(command={'type': 'request',
                                      'msg': 'create',
-                                     'device_name': self.encode_qt_output(self.create_device_name.text()),
+                                     'device_name': self.create_device_name.text().strip(),
                                      'container_path': location,
                                      'container_size': size,
-                                     'key_file': self.encode_qt_output(self.create_keyfile.text()) if self.create_keyfile.text() != '' else None,
+                                     'key_file': keyfile,
                                      'filesystem_type': str(self.create_filesystem_type.currentText()),
                                      'encryption_format': str(self.create_encryption_format.currentText()),
                                      },
@@ -321,7 +326,7 @@ class SetupDialog(QDialog):
         self.unlock_device_name.setText(self.create_device_name.text())
         self.unlock_keyfile.setText(self.create_keyfile.text())
         show_info(self, _('<b>{device_name}\nsuccessfully created!</b>\nClick on unlock to use the new container')
-                  .format(device_name=self.encode_qt_output(self.create_device_name.text())), _('Success'))
+                  .format(device_name=self.create_device_name.text().strip()), _('Success'))
         # reset create ui and switch to unlock tab
         self.create_container_file.setText('')
         self.create_device_name.setText('')
@@ -390,7 +395,7 @@ class SetupDialog(QDialog):
                 self.accept()
 
         except UserInputError as error:
-            show_alert(self, format_exception(error))
+            show_alert(self, str(error))
 
     def init_create_pane(self):
         """ Helper that initializes the ui for the progress indicators shown while creating containers or keyfiles """
@@ -414,9 +419,9 @@ class SetupDialog(QDialog):
             Asks for key file location if not already provided, creates the progress ui and starts a create-thread
         """
         if self.create_keyfile.text() == '':
-            key_file = self.encode_qt_output(self.on_save_file(_('new_keyfile.bin')))
+            key_file = self.on_save_file(_('new_keyfile.bin')).strip()
         else:
-            key_file = self.encode_qt_output(self.create_keyfile.text())
+            key_file = self.create_keyfile.text().strip()
 
         if not os.path.dirname(key_file):
             key_file = os.path.join(os.path.expanduser('~'), key_file)
@@ -482,8 +487,6 @@ class SetupDialog(QDialog):
         """ Creates a startmenu entry that lets the user skip the setup dialog and go directly to the main UI
             Includes a workaround for the safety net some desktop environments create around the startupmenu
         """
-        import random
-        import string
         # command to be saved in shortcut: calling the script with the arguments entered in the dialog
         # put all arguments in single quotes and escape those in the strings (shell escape ' -> '\'')
         cmd = os.path.abspath(sys.argv[0])
@@ -495,11 +498,15 @@ class SetupDialog(QDialog):
             cmd += " -k '" + self.get_keyfile().replace("'", "'\\'''") + "'"
 
         # create .desktop-file
-        filename = _('luckyLUKS') + '-' + ''.join(i for i in self.get_luks_device_name() if i not in ' \/:*?<>|')  # xdg-desktop-menu has problems with some special chars
+        # xdg-desktop-menu has problems does not like some special chars
+        filename = _('luckyLUKS') + '-' + ''.join(i for i in self.get_luks_device_name() if i not in ' \\/:*?<>|')
         if is_installed('xdg-desktop-menu'):  # create in tmp and add freedesktop menu entry
-            # some desktop menus dont delete the .desktop files if a user removes items from the menu but keep track of those files instead
-            # those items wont be readded later, the random part of the filename works around this behaviour
-            desktop_file_path = os.path.join('/tmp', filename + '-' + ''.join(random.choice(string.ascii_letters) for i in range(4)) + '.desktop')
+            # some desktop menus dont delete the .desktop files if a user removes
+            # items from the menu but keep track of those files instead and do not readded later
+            # -> the random part of the filename works around this behaviour
+            rand4 = ''.join(random.choice(string.ascii_letters) for i in range(4))
+            desktop_file_path = filename + '-' + rand4 + '.desktop'
+            desktop_file_path = os.path.join('/tmp', desktop_file_path)
         else:  # or create in users home dir
             desktop_file_path = os.path.join(os.path.expanduser('~'), filename + '.desktop')
 
@@ -523,29 +530,43 @@ class SetupDialog(QDialog):
         os.chmod(desktop_file_path, 0o700)  # some distros need the xbit to trust the desktop file
 
         if is_installed('xdg-desktop-menu'):
-            # safest way to ensure updates: explicit uninstall followed by installing a new desktop file with different random part
-            import glob
-            for desktopfile in glob.glob(os.path.expanduser('~') + '/.local/share/applications/' + filename + '-*.desktop'):
+            # safest way to ensure updates: explicit uninstall
+            # followed by installing a new desktop file with different random part
+            desktopfiles = os.path.expanduser('~') + '/.local/share/applications/' + filename + '-*.desktop'
+            for desktopfile in glob.glob(desktopfiles):
                 with open(os.devnull) as DEVNULL:
-                    subprocess.call(['xdg-desktop-menu', 'uninstall', desktopfile], stdout=DEVNULL, stderr=subprocess.STDOUT)
+                    subprocess.call(
+                        ['xdg-desktop-menu', 'uninstall', desktopfile],
+                        stdout=DEVNULL, stderr=subprocess.STDOUT)
             try:
-                subprocess.check_output(['xdg-desktop-menu', 'install', '--novendor', desktop_file_path], stderr=subprocess.STDOUT, universal_newlines=True)
+                subprocess.check_output(
+                    ['xdg-desktop-menu', 'install', '--novendor', desktop_file_path],
+                    stderr=subprocess.STDOUT, universal_newlines=True)
                 os.remove(desktop_file_path)  # remove from tmp
                 show_info(self, _('<b>` {name} `</b>\nadded to start menu').format(name=entry_name), _('Success'))
             except subprocess.CalledProcessError as cpe:
                 home_dir_path = os.path.join(os.path.expanduser('~'), os.path.basename(desktop_file_path))
                 # move to homedir instead
-                from shutil import move
                 move(desktop_file_path, home_dir_path)
                 show_alert(self, cpe.output)
-                show_info(self, _('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=home_dir_path))
+                show_info(
+                    self,
+                    _('Adding to start menu not possible,\n'
+                      'please place your shortcut manually.\n\nDesktop file saved to\n{location}')
+                    .format(location=home_dir_path)
+                )
         else:
-            show_info(self, _('Adding to start menu not possible,\nplease place your shortcut manually.\n\nDesktop file saved to\n{location}').format(location=desktop_file_path))
+            show_info(
+                self,
+                _('Adding to start menu not possible,\n'
+                  'please place your shortcut manually.\n\nDesktop file saved to\n{location}')
+                .format(location=desktop_file_path)
+            )
 
     def reject(self):
         """ Event handler cancel: Ask for confirmation while creating container """
         if self.confirm_close():
-            super(SetupDialog, self).reject()
+            super().reject()
 
     def closeEvent(self, event):
         """ Event handler close: ask for confirmation while creating container """
@@ -562,8 +583,7 @@ class SetupDialog(QDialog):
             mb = QMessageBox(QMessageBox.Question, '', message, QMessageBox.Ok | QMessageBox.Cancel, self)
             mb.button(QMessageBox.Ok).setText(_('Quit'))
             return mb.exec_() == QMessageBox.Ok
-        else:
-            return True
+        return True
 
     def on_switchpage_event(self, index):
         """ Event handler for tab switch: change text on OK button (Unlock/Create) """
@@ -586,7 +606,9 @@ class SetupDialog(QDialog):
 
     def on_select_mountpoint_clicked(self):
         """ Triggered by clicking the select button next to mount point """
-        self.unlock_mountpoint.setText(QFileDialog.getExistingDirectory(self, _('Please choose a folder as mountpoint'), os.getenv("HOME")))
+        self.unlock_mountpoint.setText(
+            QFileDialog.getExistingDirectory(self, _('Please choose a folder as mountpoint'), os.getenv("HOME"))
+        )
         self.buttons.button(QDialogButtonBox.Ok).setText(_('Unlock'))
 
     def on_select_keyfile_clicked(self, tab):
@@ -612,9 +634,9 @@ class SetupDialog(QDialog):
             while using native dialogs the QFileDialog has to be reopened on overwrite.
             A bit weird but enables visual consistency with the other file choose dialogs
             :param default_filename: The default filename to be used in the Qt file dialog
-            :type default_filename: str/unicode
+            :type default_filename: str
             :returns: The designated key file path
-            :rtype: str/unicode
+            :rtype: str
         """
         def_path = os.path.join(os.getenv("HOME"), default_filename)
 
@@ -624,7 +646,7 @@ class SetupDialog(QDialog):
                                                     def_path,
                                                     options=QFileDialog.DontConfirmOverwrite)
 
-            save_path = self.encode_qt_output(save_path[0]) if isinstance(save_path, tuple) else self.encode_qt_output(save_path)
+            save_path = save_path[0].strip() if isinstance(save_path, tuple) else save_path.strip()
             self.buttons.button(QDialogButtonBox.Ok).setText(_('Create'))  # qt keeps changing this..
 
             if os.path.exists(save_path):
@@ -643,51 +665,39 @@ class SetupDialog(QDialog):
         """
         try:
             new_value = int(os.path.getsize(location) / size * 100)
-        except Exception:
+        except (ZeroDivisionError, OSError, TypeError):
             new_value = 0
         self.create_progressbars[0].setValue(new_value)
 
     def get_encrypted_container(self):
-        """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
+        """ Getter for QLineEdit text
             :returns: The container file path
-            :rtype: str/unicode
+            :rtype: str
         """
-        return self.encode_qt_output(self.unlock_container_file.text())
+        return self.unlock_container_file.text().strip()
 
     def get_luks_device_name(self):
-        """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
+        """ Getter for QLineEdit text
             :returns: The device name
-            :rtype: str/unicode
+            :rtype: str
         """
-        return self.encode_qt_output(self.unlock_device_name.text())
+        return self.unlock_device_name.text().strip()
 
     def get_keyfile(self):
-        """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
+        """ Getter for QLineEdit text
             :returns: The mount point path
-            :rtype: str/unicode or None
+            :rtype: str or None
         """
-        kf = self.encode_qt_output(self.unlock_keyfile.text())
+        kf = self.unlock_keyfile.text().strip()
         return kf if kf != '' else None
 
     def get_mount_point(self):
-        """ Getter for QLineEdit text returns python unicode (instead of QString in py2)
+        """ Getter for QLineEdit text
             :returns: The mount point path
-            :rtype: str/unicode or None
+            :rtype: str or None
         """
-        mp = self.encode_qt_output(self.unlock_mountpoint.text())
+        mp = self.unlock_mountpoint.text().strip()
         return mp if mp != '' else None
-
-    def encode_qt_output(self, qstring_or_str):
-        """ Normalize output from QLineEdit
-            :param qstring_or_str: Output from QLineEdit.text()
-            :type qstring_or_str: str/QString
-            :returns: python unicode (instead of QString in py2)
-            :rtype: str/unicode
-        """
-        try:
-            return qstring_or_str.strip()
-        except AttributeError:  # py2: 'QString' object has no attribute strip
-            return unicode(qstring_or_str.trimmed().toUtf8(), encoding="UTF-8")
 
     def show_help_create(self):
         """ Triggered by clicking the help button (create tab) """
@@ -711,14 +721,16 @@ class SetupDialog(QDialog):
                        '<a href="https://www.google.com/search?q=keychain+usb+drive">small USB drive</a> '
                        'attached to your real chain of keys would be an option as well.\n'
                        'Since you dont have to enter a password, using a key file can be a convenient way to '
-                       'access your encrypted container. Just make sure you dont lose the key (file) ;)') +
-                       _('\n\n'
-                         'Although basically any file could be used as a key file, a file with predictable content '
-                         'leads to similar problems as using weak passwords. Audio files or pictures are a good choice. '
-                         'If unsure use the `create key file` button to generate a small key file filled with random data.')},
+                       'access your encrypted container. Just make sure you dont lose the key (file) ;)')
+                + _('\n\n'
+                    'Although basically any file could be used as a key file, a file with predictable content '
+                    'leads to similar problems as using weak passwords. Audio files or pictures are a good choice. '
+                    'If unsure use the `create key file` button to generate a small key file '
+                    'filled with random data.')},
             {'head': _('encryption format'),
              'text': _('The standard disk encryption format on Linux is called LUKS. '
-                       'With <a href="https://github.com/t-d-k/doxbox">doxbox</a> you can use LUKS containers on Windows as well. '
+                       'With <a href="https://github.com/t-d-k/LibreCrypt">LibreCrypt</a> '
+                       'you can use LUKS containers on Windows as well. '
                        'The TrueCrypt format is quite popular on Windows/Mac, and can be created '
                        'on Linux if `tcplay` is installed. Please note, that "hidden" TrueCrypt '
                        'partitions are not supported by luckyLUKS!')},

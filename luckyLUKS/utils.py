@@ -1,7 +1,7 @@
 """
 Helper to establish a root-worker process and ipc handler.
 
-luckyLUKS Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
+luckyLUKS Copyright (c) 2014,2015,2022 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -13,6 +13,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
+
 import os
 import select
 import fcntl
@@ -21,21 +22,15 @@ import sys
 import json
 import traceback
 
-try:
-    from PyQt5.QtCore import QThread, QEvent
-    from PyQt5.QtWidgets import QApplication
-except ImportError:  # py2 or py3 without pyqt5
-    from PyQt4.QtCore import QThread, QEvent
-    from PyQt4.QtGui import QApplication
+from PyQt5.QtCore import QThread, QEvent
+from PyQt5.QtWidgets import QApplication
 
 from luckyLUKS.unlockUI import PasswordDialog, SudoDialog, UserInputError
 from luckyLUKS.utilsUI import show_alert, show_info
 
 
 class SudoException(Exception):
-
     """ Errors while establishing a worker process with elevated privileges using sudo"""
-    pass
 
 
 class WorkerMonitor(QThread):
@@ -50,10 +45,10 @@ class WorkerMonitor(QThread):
 
     def __init__(self, parent):
         """ :param parent: The parent widget to be passed to modal dialogs
-            :type parent: :class:`PyQt4.QtGui.QWidget`
+            :type parent: :class:`PyQt5.QtGui.QWidget`
             :raises: SudoException
         """
-        super(WorkerMonitor, self).__init__()
+        super().__init__()
         self.parent = parent
         self.success_callback, self.error_callback = None, None
         self.modify_sudoers = False
@@ -62,7 +57,7 @@ class WorkerMonitor(QThread):
 
         if self.modify_sudoers:  # adding user/program to /etc/sudoers.d/ requested
             self.execute({'type': 'request', 'msg': 'authorize'}, None, None)
-            response = json.loads(self.worker.stdout.readline().strip(), encoding='utf-8')  # blocks
+            response = json.loads(self.worker.stdout.readline().strip())  # blocks
             if response['type'] == 'error':
                 show_alert(self.parent, response['msg'])
             else:
@@ -92,17 +87,22 @@ class WorkerMonitor(QThread):
 
                 if event & select.POLLIN:
                     if 'ESTABLISHED' in msg:
-                        # Helper process initialized
-                        # from here on all com-messages on the pipe will be terminated with newline -> switch back to blocking IO
+                        # Helper process initialized, from here on all com-messages on the pipe
+                        # will be terminated with newline -> switch back to blocking IO
                         fl = fcntl.fcntl(self.worker.stdout.fileno(), fcntl.F_GETFL)
                         fcntl.fcntl(self.worker.stdout.fileno(), fcntl.F_SETFL, fl & (~os.O_NONBLOCK))
                         break
 
-                    elif 'SUDO_PASSWD_PROMPT' in msg:
-                        self.worker.stdin.write(SudoDialog(parent=self.parent,
-                                                           message=_('<b>Sorry, incorrect password.</b>\n') + dlg_message if incorrent_pw_entered else dlg_message,
-                                                           toggle_function=lambda val: setattr(self, 'modify_sudoers', val)
-                                                           ).get_password() + '\n')
+                    if 'SUDO_PASSWD_PROMPT' in msg:
+                        if incorrent_pw_entered:
+                            dlg_msg = _('<b>Sorry, incorrect password.</b>\n') + dlg_message
+                        else:
+                            dlg_msg = dlg_message
+                        self.worker.stdin.write(
+                            SudoDialog(parent=self.parent,
+                                       message=dlg_msg,
+                                       toggle_function=lambda val: setattr(self, 'modify_sudoers', val)
+                                       ).get_password() + '\n')
                         self.worker.stdin.flush()
                         incorrent_pw_entered = True
 
@@ -117,34 +117,51 @@ class WorkerMonitor(QThread):
                         incorrent_pw_entered = False
                         while True:
                             master, slave = os.openpty()  # su has to be run from a terminal
-                            p = subprocess.Popen("su -c '" + sys.argv[0] + " --ishelperprocess --sudouser " + str(os.getuid()) + "'", shell=True, stdin=slave, stderr=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, close_fds=True)
+                            p = subprocess.Popen(
+                                "su -c '" + sys.argv[0] + " --ishelperprocess --sudouser " + str(os.getuid()) + "'",
+                                shell=True, stdin=slave, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+                                universal_newlines=True, close_fds=True
+                            )
+                            if incorrent_pw_entered:
+                                dlg_msg = _('<b>Sorry, incorrect password.</b>\n') + dlg_su_message
+                            else:
+                                dlg_msg = dlg_su_message
                             os.write(master, (PasswordDialog(parent=self.parent,
-                                                             message=_('<b>Sorry, incorrect password.</b>\n') + dlg_su_message if incorrent_pw_entered else dlg_su_message
+                                                             message=dlg_msg
                                                              ).get_password() + '\n').encode('UTF-8'))
                             p.wait()
 
                             if p.returncode == 0:
-                                show_info(self.parent, _('`sudo` configuration successfully modified, now\n'
-                                                         'you can use luckyLUKS with your user password.\n\n'
-                                                         'If you want to grant permanent administrative rights\n'
-                                                         'just tick the checkbox in the following dialog.\n'), _('Success'))
+                                show_info(
+                                    self.parent,
+                                    _('`sudo` configuration successfully modified, now\n'
+                                      'you can use luckyLUKS with your user password.\n\n'
+                                      'If you want to grant permanent administrative rights\n'
+                                      'just tick the checkbox in the following dialog.\n'),
+                                    _('Success')
+                                )
                                 incorrent_pw_entered = False
                                 self._connect_to_sudo()
                                 break
-                            elif p.returncode == 1:
+                            if p.returncode == 1:
                                 incorrent_pw_entered = True
                             else:
-                                raise SudoException(p.stdout.read())  # worker prints exceptions to stdout to keep them separated from su: Authentication failure
+                                # worker prints exceptions to stdout
+                                # to keep them separated from 'su: Authentication failure'
+                                raise SudoException(p.stdout.read())
 
                 elif event & select.POLLERR or event & select.POLLHUP:
                     raise SudoException(msg)
 
         except SudoException:  # don't touch
             raise
-        except UserInputError:  # user cancelled dlg -> quit without msg
-            raise SudoException()
-        except Exception:  # catch ANY other exception to show via gui
-            raise SudoException(_('Communication with sudo process failed\n{error}').format(error=''.join(traceback.format_exception(*sys.exc_info()))))
+        except UserInputError as e:  # user cancelled dlg -> quit without msg
+            raise SudoException() from e
+        except Exception as e:  # catch ANY other exception to show via gui
+            raise SudoException(
+                _('Communication with sudo process failed\n{error}')
+                .format(error=''.join(traceback.format_exception(*sys.exc_info())))
+            ) from e
         finally:
             try:
                 self.pipe_events.unregister(self.worker.stdout.fileno())
@@ -163,8 +180,13 @@ class WorkerMonitor(QThread):
         original_language = os.getenv("LANGUAGE", "")
         env_lang_cleared = {prop: os.environ[prop] for prop in os.environ if prop[0:3] == 'LC_' or prop == 'LANG'}
         env_lang_cleared['LANGUAGE'] = 'C'
-        cmd = ['sudo', '-S', '-p', 'SUDO_PASSWD_PROMPT', 'LANGUAGE=' + original_language, os.path.abspath(sys.argv[0]), '--ishelperprocess']
-        self.worker = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, universal_newlines=True, env=env_lang_cleared)
+        cmd = ['sudo', '-S', '-p', 'SUDO_PASSWD_PROMPT',
+               'LANGUAGE=' + original_language,
+               os.path.abspath(sys.argv[0]),
+               '--ishelperprocess']
+        self.worker = subprocess.Popen(cmd,
+                                       stdin=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       stdout=subprocess.PIPE, universal_newlines=True, env=env_lang_cleared)
         # switch pipe to non-blocking IO
         fd = self.worker.stdout.fileno()
         fl = fcntl.fcntl(fd, fcntl.F_GETFL)
@@ -178,11 +200,12 @@ class WorkerMonitor(QThread):
             try:
                 buf = self.worker.stdout.readline()  # blocks
                 if buf:  # check if worker output pipe closed
-                    response = json.loads(buf.strip(), encoding='utf-8')
+                    response = json.loads(buf.strip())
                 else:
                     return
                 assert('type' in response and 'msg' in response)
-                assert(self.success_callback is not None and self.error_callback is not None)  # there should be somebody waiting for an answer!
+                # there should be somebody waiting for an answer!
+                assert(self.success_callback is not None and self.error_callback is not None)
                 # valid response received
                 if response['type'] == 'error':
                     QApplication.postEvent(self.parent, WorkerEvent(self.error_callback, response['msg']))
@@ -194,18 +217,25 @@ class WorkerMonitor(QThread):
             except ValueError:
                 # worker didn't return json -> probably crashed, show everything printed to stdout
                 buf += self.worker.stdout.read()
-                QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
-                                                                response=_('Error in communication:\n{error}').format(error=_(buf))))
+                QApplication.postEvent(
+                    self.parent,
+                    WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
+                                response=_('Error in communication:\n{error}').format(error=_(buf)))
+                )
                 return
 
             except (IOError, AssertionError) as communication_error:
-                QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
-                                                                response=_('Error in communication:\n{error}').format(error=format_exception(communication_error))))
+                QApplication.postEvent(
+                    self.parent,
+                    WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
+                                response=_('Error in communication:\n{error}').format(error=str(communication_error)))
+                )
                 return
 
     def execute(self, command, success_callback, error_callback):
         """ Writes command to workers stdin and sets callbacks for listener thread
-            :param command: The function to be done by the worker is in command[`msg`] the arguments are passed as named properties command[`device_name`] etc.
+            :param command: The function to be done by the worker is in command[`msg`]
+                            the arguments are passed as named properties command[`device_name`] etc.
             :type command: dict
             :param success_callback: The function to be called if the worker finished successfully
             :type success_callback: function
@@ -213,15 +243,20 @@ class WorkerMonitor(QThread):
             :type error_callback: function
         """
         try:
-            assert('type' in command and 'msg' in command)  # valid command obj?
-            assert(self.success_callback is None and self.error_callback is None)  # channel clear? (no qeue neccessary for the backend process)
+            # valid command obj?
+            assert('type' in command and 'msg' in command)
+            # channel clear? (no qeue neccessary for the backend process)
+            assert(self.success_callback is None and self.error_callback is None)
             self.success_callback = success_callback
             self.error_callback = error_callback
             self.worker.stdin.write(json.dumps(command) + '\n')
             self.worker.stdin.flush()
         except (IOError, AssertionError) as communication_error:
-            QApplication.postEvent(self.parent, WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
-                                                            response=_('Error in communication:\n{error}').format(error=format_exception(communication_error))))
+            QApplication.postEvent(
+                self.parent,
+                WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),
+                            response=_('Error in communication:\n{error}').format(error=str(communication_error)))
+            )
 
 
 class WorkerEvent(QEvent):
@@ -251,11 +286,11 @@ class KeyfileCreator(QThread):
 
     def __init__(self, parent, path):
         """ :param parent: The parent widget to be passed to modal dialogs
-            :type parent: :class:`PyQt4.QtGui.QWidget`
+            :type parent: :class:`PyQt5.QtGui.QWidget`
             :param path: The designated key file path
-            :type path: str/unicode
+            :type path: str
         """
-        super(KeyfileCreator, self).__init__()
+        super().__init__()
         self.parent = parent
         self.path = path
         self.process = None
@@ -269,17 +304,21 @@ class KeyfileCreator(QThread):
         # oflag=excl -> fail if the output file already exists
         cmd = ['dd', 'if=/dev/random', 'of=' + output_file, 'bs=1', 'count=1024', 'conv=excl']
         with open(os.devnull) as DEVNULL:
-            self.process = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
+            self.process = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=DEVNULL,
+                                            universal_newlines=True, close_fds=True)
             __, errors = self.process.communicate()
         if self.process.returncode != 0:
-            QApplication.postEvent(self.parent.parent(),
-                                   WorkerEvent(callback=lambda msg: self.parent.display_create_failed(msg, stop_timer=True),
-                                               response=_('Error while creating key file:\n{error}').format(error=errors))
-                                   )
+            QApplication.postEvent(
+                self.parent.parent(),
+                WorkerEvent(callback=lambda msg: self.parent.display_create_failed(msg, stop_timer=True),
+                            response=_('Error while creating key file:\n{error}').format(error=errors))
+            )
         else:
-            QApplication.postEvent(self.parent.parent(), WorkerEvent(callback=lambda msg: self.parent.on_keyfile_created(msg),
-                                                                     response=self.path))
-        return
+            QApplication.postEvent(
+                self.parent.parent(),
+                WorkerEvent(callback=lambda msg: self.parent.on_keyfile_created(msg),
+                            response=self.path)
+            )
 
     def terminate(self):
         """ kill dd process """
@@ -299,4 +338,6 @@ def is_installed(executable):
         :returns: True if executable found
         :rtype: bool
     """
-    return any([os.path.exists(os.path.join(p, executable)) for p in os.environ["PATH"].split(os.pathsep) + ['/sbin', '/usr/sbin']])
+    return any([os.path.exists(os.path.join(p, executable))
+                for p in os.environ["PATH"].split(os.pathsep) + ['/sbin', '/usr/sbin']
+                ])

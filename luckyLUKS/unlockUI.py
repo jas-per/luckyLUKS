@@ -4,7 +4,7 @@ Each is based on a common password dialog and offers a method to use the dialog
 in a synchronous way ie to run itself and return a result or perform an action,
 or throw an exception if this fails
 
-luckyLUKS Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
+luckyLUKS Copyright (c) 2014,2015,2022 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,23 +16,15 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
-from __future__ import unicode_literals
 
-try:
-    from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QDialog, QMessageBox, QDialogButtonBox, QStyle, \
-        QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout, QApplication
-    from PyQt5.QtGui import QIcon
-except ImportError:  # py2 or py3 without pyqt5
-    from PyQt4.QtCore import Qt
-    from PyQt4.QtGui import QDialog, QMessageBox, QDialogButtonBox, QStyle, \
-        QIcon, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout, QApplication
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QMessageBox, QDialogButtonBox, QStyle, \
+    QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QCheckBox, QLayout, QApplication
+from PyQt5.QtGui import QIcon
 
 
 class UserInputError(Exception):
-
     """ Raised if user cancels a password dialog """
-    pass
 
 
 class PasswordDialog(QDialog):
@@ -42,13 +34,13 @@ class PasswordDialog(QDialog):
     def __init__(self, parent, message, title='Enter Password'):
         """
             :param parent: The parent window/dialog used to enable modal behaviour
-            :type parent: :class:`gtk.Widget`
+            :type parent: :class:`PyQt5.QtGui.QWidget`
             :param message: The message that gets displayed above the textbox
             :type message: str
             :param title: Displayed in the dialogs titlebar
             :type title: str or None
         """
-        super(PasswordDialog, self).__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
+        super().__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
         self.setWindowTitle(title)
         self.layout = QVBoxLayout()
         self.layout.setSizeConstraint(QLayout.SetFixedSize)
@@ -60,7 +52,12 @@ class PasswordDialog(QDialog):
         self.header_box.setAlignment(Qt.AlignLeft)
         self.header_text = QLabel(message)
         icon = QLabel()
-        icon.setPixmap(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)).pixmap(32))
+        icon.setPixmap(
+            QIcon.fromTheme(
+                'dialog-password',
+                QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)
+            ).pixmap(32)
+        )
         self.header_box.addWidget(icon)
         self.header_box.addWidget(self.header_text)
         self.layout.addLayout(self.header_box)
@@ -89,13 +86,6 @@ class PasswordDialog(QDialog):
         else:
             self.pw_box.setFocus()
 
-    def get_pw(self):
-        """ Get pw inputfiled value, returns python unicode instead of QString in py2"""
-        try:
-            return str(self.pw_box.text())
-        except UnicodeEncodeError:
-            return unicode(self.pw_box.text().toUtf8(), encoding="UTF-8")
-
     def get_password(self):
         """ Dialog runs itself and returns the password/-phrase entered
             or throws an exception if the user cancelled/closed the dialog
@@ -105,9 +95,8 @@ class PasswordDialog(QDialog):
         """
         try:
             if self.exec_():
-                return self.get_pw()
-            else:
-                raise UserInputError()
+                return str(self.pw_box.text())
+            raise UserInputError()
         finally:
             self.destroy()
 
@@ -118,20 +107,19 @@ class SudoDialog(PasswordDialog):
 
     def __init__(self, parent, message, toggle_function):
         """ :param parent: The parent window/dialog used to enable modal behaviour
-            :type parent: :class:`gtk.Widget`
+            :type parent: :class:`PyQt5.QtGui.QWidget`
             :param message: The message that gets displayed above the textbox
             :type message: str
-            :param toggle_function: A function that accepts a boolean value, used to propagate the current state of the checkbox
+            :param toggle_function: A function that accepts a boolean value, propagates current state of the checkbox
             :type toggle_function: function(boolean)
         """
-        super(SudoDialog, self).__init__(parent,
-                                         message=message,
-                                         title=_('luckyLUKS'))
+        super().__init__(parent, message=message, title=_('luckyLUKS'))
 
         # add checkbox to dialog
         self.toggle_function = toggle_function
         self.store_cb = QCheckBox('')  # QCheckBox supports only string labels ..
-        cb_label = QLabel(_('Always allow luckyLUKS to be run\nwith administrative privileges'))  # .. QLabel because markup is needed for linebreak
+        # using QLabel because markup is needed for linebreak
+        cb_label = QLabel(_('Always allow luckyLUKS to be run\nwith administrative privileges'))
         # connect clicked on QLabel to fully emulate QCheckbox behaviour
         cb_label.mouseReleaseEvent = self.toggle_cb
         self.store_cb.stateChanged.connect(self.on_cb_toggled)
@@ -159,11 +147,11 @@ class FormatContainerDialog(PasswordDialog):
 
     def __init__(self, parent):
         """ :param parent: The parent window/dialog used to enable modal behaviour
-            :type parent: :class:`gtk.Widget`
+            :type parent: :class:`PyQt5.QtGui.QWidget`
         """
-        super(FormatContainerDialog, self).__init__(parent,
-                                                    message=_('Please choose a passphrase\nto encrypt the new container:\n'),
-                                                    title=_('Enter new Passphrase'))
+        super().__init__(parent,
+                         message=_('Please choose a passphrase\nto encrypt the new container:\n'),
+                         title=_('Enter new Passphrase'))
         # display passphrase checkbox and set default to show input
         self.show_cb = QCheckBox(_('Display passphrase'))
         self.show_cb.stateChanged.connect(self.on_cb_toggled)
@@ -189,7 +177,7 @@ class FormatContainerDialog(PasswordDialog):
     def reject(self):
         """ Event handler confirm cancel """
         if self.confirm_close_cancel():
-            super(FormatContainerDialog, self).reject()
+            super().reject()
         else:
             self.pw_box.setFocus()
 
@@ -210,25 +198,28 @@ class UnlockContainerDialog(PasswordDialog):
 
     def __init__(self, parent, worker, luks_device_name, encrypted_container, key_file=None, mount_point=None):
         """ :param parent: The parent window/dialog used to enable modal behaviour
-            :type parent: :class:`gtk.Widget`
+            :type parent: :class:`PyQt5.QtGui.QWidget`
             :param worker: Communication handler with the worker process
             :type worker: :class:`helper.WorkerMonitor`
             :param luks_device_name: The device mapper name
-            :type luks_device_name: str/unicode
+            :type luks_device_name: str
             :param encrypted_container: The path of the container file
-            :type encrypted_container: str/unicode
+            :type encrypted_container: str
             :param key_file: The path of an optional key file
-            :type key_file: str/unicode or None
+            :type key_file: str or None
             :param mount_point: The path of an optional mount point
-            :type mount_point: str/unicode or None
+            :type mount_point: str or None
         """
-        super(UnlockContainerDialog, self).__init__(parent, _('Initializing ..'), luks_device_name)
+        super().__init__(parent, _('Initializing ..'), luks_device_name)
 
         self.worker = worker
         self.error_message = ''
 
         if key_file is not None:
-            self.header_text.setText(_('<b>Using keyfile</b>\n{keyfile}\nto open container.\n\nPlease wait ..').format(keyfile=key_file))
+            self.header_text.setText(
+                _('<b>Using keyfile</b>\n{keyfile}\nto open container.\n\nPlease wait ..')
+                .format(keyfile=key_file)
+            )
             self.pw_box.hide()
             self.buttons.hide()
             self.header_text.setContentsMargins(10, 10, 10, 10)
@@ -262,7 +253,7 @@ class UnlockContainerDialog(PasswordDialog):
             self.buttons.setEnabled(False)
             self.header_text.setText(_('Checking passphrase ..'))
             self.worker.execute(command={'type': 'response',
-                                         'msg': self.get_pw()
+                                         'msg': str(self.pw_box.text())
                                          },
                                 success_callback=self.on_worker_reply,
                                 error_callback=self.on_error)
@@ -273,12 +264,12 @@ class UnlockContainerDialog(PasswordDialog):
         """
         if not self.waiting_for_response:
             self.worker.execute({'type': 'abort', 'msg': ''}, None, None)
-            super(UnlockContainerDialog, self).reject()
+            super().reject()
 
     def on_error(self, error_message):
         """ Error-Callback: set errormessage and trigger Cancel """
         self.error_message = error_message
-        super(UnlockContainerDialog, self).reject()
+        super().reject()
 
     def on_worker_reply(self, message):
         """ Success-Callback: trigger OK when unlocked, reset dialog if not """
@@ -308,6 +299,6 @@ class UnlockContainerDialog(PasswordDialog):
         """
         try:
             if not self.exec_():
-                raise UserInputError(self.error_message)  # is empty string in case of cancel/delete -> won't get displayed
+                raise UserInputError(self.error_message)  # empty string if cancel/delete -> won't get displayed
         finally:
             self.destroy()

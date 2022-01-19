@@ -1,7 +1,7 @@
 """
 UI helper/classes for luckyLUKS
 
-luckyLUKS Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
+luckyLUKS Copyright (c) 2014,2015,2022 Jasper van Hoorn (muzius@gmail.com)
 QExpander Copyright (c) 2012 Canonical Ltd.
 modified, originally from https://launchpad.net/ubuntu-sso-client (GPL v3+)
 
@@ -16,17 +16,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
 
-try:
-    from PyQt5.QtCore import pyqtSignal, Qt
-    from PyQt5.QtWidgets import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
-        QWidget, QDialogButtonBox, QLabel, QStyle, QStyleOption, QSizePolicy, QFrame
-    from PyQt5.QtGui import QPainter
-    TK_STRING = ' (Qt5)'
-except ImportError:  # py2 or py3 without pyqt5
-    from PyQt4.QtCore import pyqtSignal, Qt
-    from PyQt4.QtGui import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QVBoxLayout,\
-        QWidget, QDialogButtonBox, QLabel, QPainter, QStyle, QStyleOption, QSizePolicy, QFrame
-    TK_STRING = ' (Qt4)'
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtWidgets import QApplication, QMessageBox, QDialog, QVBoxLayout, QHBoxLayout,\
+    QWidget, QDialogButtonBox, QLabel, QStyle, QStyleOption, QSizePolicy, QFrame
+from PyQt5.QtGui import QPainter
 
 from luckyLUKS import VERSION_STRING, PROJECT_URL
 
@@ -43,15 +36,15 @@ class HelpDialog(QDialog):
     def __init__(self, parent, header_text, basic_text, advanced_topics):
         """ Create a new instance
             :param parent: The parent window/dialog used to enable modal behaviour
-            :type parent: :class:`PyQt4.QtGui.QWidget`
+            :type parent: :class:`PyQt5.QtGui.QWidget`
             :param header_text: Displayed in the top of the dialog next to the help icon
-            :type header_text: str/unicode
+            :type header_text: str
             :param basic_text: Displayed in the middle of the help dialog
-            :type basic_text: str/unicode
-            :param advanced_topics: Displayed below the basic text, initially only the header is shown, the content gets hidden
-            :type advanced_topics: Array of dicts with str/unicode head and text properties
+            :type basic_text: str
+            :param advanced_topics: Displayed below the basic text, initially only header is shown and content hidden
+            :type advanced_topics: Array of dicts with str head and text properties
         """
-        super(HelpDialog, self).__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
+        super().__init__(parent, Qt.WindowCloseButtonHint | Qt.WindowTitleHint)
         self.setWindowTitle(_('Help'))
         layout = QVBoxLayout()
         layout.setContentsMargins(15, 5, 15, 5)
@@ -99,7 +92,7 @@ class HelpDialog(QDialog):
 
         footer = QLabel(_('luckyLUKS version {version}\n'
                           'For more information, visit\n'
-                          '<a href="{project_url}">{project_url}</a>').format(version=VERSION_STRING + TK_STRING,
+                          '<a href="{project_url}">{project_url}</a>').format(version=VERSION_STRING,
                                                                               project_url=PROJECT_URL))
         footer.setContentsMargins(0, 10, 0, 10)
         layout.addWidget(footer)
@@ -121,11 +114,11 @@ class HelpDialog(QDialog):
 def show_info(parent, message, title=''):
     """ Helper to show info message
         :param parent: The parent widget to be passed to the modal dialog
-        :type parent: :class:`PyQt4.QtGui.QWidget`
+        :type parent: :class:`PyQt5.QtGui.QWidget`
         :param message: The message that gets displayed in a modal dialog
-        :type message: str/unicode
+        :type message: str
         :param title: Displayed in the dialogs titlebar
-        :type title: str/unicode
+        :type title: str
     """
     show_message(parent, message, title, QMessageBox.Information)
 
@@ -133,9 +126,9 @@ def show_info(parent, message, title=''):
 def show_alert(parent, message, critical=False):
     """ Helper to show error message
         :param parent: The parent widget to be passed to the modal dialog
-        :type parent: :class:`PyQt4.QtGui.QWidget`
+        :type parent: :class:`PyQt5.QtGui.QWidget`
         :param message: The message that gets displayed in a modal dialog
-        :type message: str/unicode
+        :type message: str
         :param critical: If critical, quit application (default=False)
         :type critical: bool
     """
@@ -147,11 +140,11 @@ def show_alert(parent, message, critical=False):
 def show_message(parent, message, title, message_type):
     """ Generic helper to show message
         :param parent: The parent widget to be passed to the modal dialog
-        :type parent: :class:`PyQt4.QtGui.QWidget`
+        :type parent: :class:`PyQt5.QtGui.QWidget`
         :param message: The message that gets displayed in a modal dialog
-        :type message: str/unicode
+        :type message: str
         :param title: Displayed in the dialogs titlebar
-        :type title: str/unicode
+        :type title: str
         :param message_type: Type of message box to be used
         :type message_type: :class:`QMessageBox.Icon`
     """
@@ -170,13 +163,14 @@ class QExpander(QWidget):
 
     def __init__(self, label, parent, expanded=False):
         """Create a new instance."""
-        super(QExpander, self).__init__(parent)
+        super().__init__(parent)
         self.parent = parent
         self.label = QExpanderLabel(label, self)
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.layout.addWidget(self.label)
         self._widgets = []
+        self._expanded = False
         self.label.clicked.connect(self._on_label_clicked)
         self.setExpanded(expanded)
 
@@ -216,7 +210,7 @@ class QExpanderLabel(QWidget):
 
     def __init__(self, label, parent):
         """Create a new instance."""
-        super(QExpanderLabel, self).__init__(parent)
+        super().__init__(parent)
         self.arrow = QArrow(QArrow.RIGHT)
         self.label = QLabel(label)
         layout = QHBoxLayout()
@@ -244,7 +238,7 @@ class QArrow(QWidget):
 
     def __init__(self, direction, parent=None):
         """Create a new instance."""
-        super(QArrow, self).__init__(parent)
+        super().__init__(parent)
         self._set_direction(direction)
         self.setFixedWidth(10)
 

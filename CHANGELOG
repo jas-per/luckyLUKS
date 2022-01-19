@@ -1,3 +1,18 @@
+luckyluks (1.99.0) unstable; urgency=low
+
+  * minor adjustments for LUKS2 support
+
+  * cleanup: remove legacy code for cryptsetup < 2.0
+
+  * cleanup: remove legacy support for qt4/python2
+
+  * update build scripts
+
+  * update/cleanup readme
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Mon, 17 Jan 2022 16:42:21 +0100
+
+
 luckyluks (1.2.0) unstable; urgency=low
 
   * minor adjustments for gtk2/3 version
@@ -11,14 +26,14 @@ luckyluks (1.2.0) unstable; urgency=low
 luckyluks (1.1.0) unstable; urgency=low
 
   * keyfile support (open/create for LUKS and TrueCrypt containers)
-  
+
   * generate safe keyfile from ui
-  
+
   * improved help dialogs
 
  -- Jasper van Hoorn <muzius@gmail.com>  Sun, 19 Apr 2015 22:16:24 +0100
- 
- 
+
+
 luckyluks (1.0.5) unstable; urgency=low
 
   * fix locale transfer to worker process

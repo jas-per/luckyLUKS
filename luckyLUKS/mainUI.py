@@ -1,7 +1,7 @@
 """
 This module contains the main window of the application
 
-luckyLUKS Copyright (c) 2014,2015 Jasper van Hoorn (muzius@gmail.com)
+luckyLUKS Copyright (c) 2014,2015,2022 Jasper van Hoorn (muzius@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -13,20 +13,14 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. <http://www.gnu.org/licenses/>
 """
-from __future__ import unicode_literals
 
 import sys
 import os.path
 
-try:
-    from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
-        QSystemTrayIcon, QMessageBox, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle
-    from PyQt5.QtGui import QIcon
-except ImportError:  # py2 or py3 without pyqt5
-    from PyQt4.QtCore import Qt
-    from PyQt4.QtGui import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
-        QSystemTrayIcon, QMessageBox, QIcon, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QDesktopWidget, QDialog,\
+    QSystemTrayIcon, QMessageBox, QMenu, QAction, QLabel, QPushButton, QGridLayout, QStyle
+from PyQt5.QtGui import QIcon
 
 from luckyLUKS import utils, PROJECT_URL
 from luckyLUKS.unlockUI import UnlockContainerDialog, UserInputError
@@ -43,7 +37,8 @@ class MainWindow(QMainWindow):
     def __init__(self, device_name=None, container_path=None, key_file=None, mount_point=None):
         """ Command line arguments checks are done here to be able to display a graphical dialog with error messages .
             If no arguments were supplied on the command line a setup dialog will be shown.
-            All commands will be executed from a separate worker process with administrator privileges that gets initialized here.
+            All commands will be executed from a separate worker process with administrator privileges
+            that gets initialized here.
             :param device_name: The device mapper name
             :type device_name: str/unicode or None
             :param container_path: The path of the container file
@@ -53,7 +48,7 @@ class MainWindow(QMainWindow):
             :param mount_point: The path of an optional mount point
             :type mount_point: str/unicode or None
         """
-        super(MainWindow, self).__init__()
+        super().__init__()
 
         self.luks_device_name = device_name
         self.encrypted_container = container_path
@@ -71,16 +66,25 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)))
 
         # check if cryptsetup and sudo are installed
-        not_installed_msg = _('{program_name} executable not found!\nPlease install, eg for Debian/Ubuntu\n`apt-get install {program_name}`')
+        not_installed_msg = _('{program_name} executable not found!\n'
+                              'Please install, eg for Debian/Ubuntu\n`apt-get install {program_name}`')
         if not utils.is_installed('cryptsetup'):
             show_alert(self, not_installed_msg.format(program_name='cryptsetup'), critical=True)
         if not utils.is_installed('sudo'):
             show_alert(self, not_installed_msg.format(program_name='sudo'), critical=True)
         # quick sanity checks before asking for passwd
         if os.getuid() == 0:
-            show_alert(self, _('Graphical programs should not be run as root!\nPlease call as normal user.'), critical=True)
+            show_alert(self,
+                       _('Graphical programs should not be run as root!\nPlease call as normal user.'),
+                       critical=True
+                       )
         if self.encrypted_container and not os.path.exists(self.encrypted_container):
-            show_alert(self, _('Container file not accessible\nor path does not exist:\n\n{file_path}').format(file_path=self.encrypted_container), critical=True)
+            show_alert(
+                self,
+                _('Container file not accessible\nor path does not exist:\n\n{file_path}')
+                .format(file_path=self.encrypted_container),
+                critical=True
+            )
 
         # only either encrypted_container or luks_device_name supplied
         if bool(self.encrypted_container) != bool(self.luks_device_name):
@@ -104,7 +108,7 @@ class MainWindow(QMainWindow):
             # start communication thread
             self.worker.start()
         except utils.SudoException as se:
-            show_alert(self, format_exception(se), critical=True)
+            show_alert(self, str(se), critical=True)
             return
 
         # if no arguments supplied, display dialog to gather this information
@@ -124,7 +128,7 @@ class MainWindow(QMainWindow):
                 # user closed dialog -> quit program
                 # and check if a keyfile create thread has to be stopped
                 # the worker process terminates itself when its parent dies
-                if hasattr(sd, 'create_thread') and sd.create_thread.isRunning():
+                if hasattr(sd, 'create_thread') and sd.create_thread is not None and sd.create_thread.isRunning():
                     sd.create_thread.terminate()
                 QApplication.instance().quit()
                 return
@@ -139,12 +143,16 @@ class MainWindow(QMainWindow):
         main_grid = QGridLayout()
         main_grid.setSpacing(10)
         icon = QLabel()
-        icon.setPixmap(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)).pixmap(32))
+        icon.setPixmap(QIcon.fromTheme(
+            'dialog-password',
+            QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)
+        ).pixmap(32))
         main_grid.addWidget(icon, 0, 0)
         main_grid.addWidget(QLabel('<b>' + _('Handle encrypted container') + '</b>\n'), 0, 1, alignment=Qt.AlignCenter)
 
         main_grid.addWidget(QLabel(_('Name:')), 1, 0)
-        main_grid.addWidget(QLabel('<b>{dev_name}</b>'.format(dev_name=self.luks_device_name)), 1, 1, alignment=Qt.AlignCenter)
+        main_grid.addWidget(QLabel('<b>{dev_name}</b>'.format(dev_name=self.luks_device_name)),
+                            1, 1, alignment=Qt.AlignCenter)
 
         main_grid.addWidget(QLabel(_('File:')), 2, 0)
         main_grid.addWidget(QLabel(self.encrypted_container), 2, 1, alignment=Qt.AlignCenter)
@@ -175,9 +183,11 @@ class MainWindow(QMainWindow):
         # tray popup menu
         if self.has_tray:
             tray_popup = QMenu(self)
-            tray_popup.addAction(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)), self.luks_device_name).setEnabled(False)
+            tray_popup.addAction(QIcon.fromTheme('dialog-password',
+                                                 QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)),
+                                 self.luks_device_name).setEnabled(False)
             tray_popup.addSeparator()
-            self.tray_toggle_action = QAction(QApplication.style().standardIcon(QStyle. SP_DesktopIcon), _('Hide'), self)
+            self.tray_toggle_action = QAction(QApplication.style().standardIcon(QStyle.SP_DesktopIcon), _('Hide'), self)
             self.tray_toggle_action.triggered.connect(self.toggle_main_window)
             tray_popup.addAction(self.tray_toggle_action)
             quit_action = QAction(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), _('Quit'), self)
@@ -185,7 +195,10 @@ class MainWindow(QMainWindow):
             tray_popup.addAction(quit_action)
             # systray
             self.tray = QSystemTrayIcon(self)
-            self.tray.setIcon(QIcon.fromTheme('dialog-password', QApplication.style().standardIcon(QStyle.SP_DriveHDIcon)))
+            self.tray.setIcon(QIcon.fromTheme(
+                'dialog-password',
+                QApplication.style().standardIcon(QStyle.SP_DriveHDIcon))
+            )
             self.tray.setContextMenu(tray_popup)
             self.tray.activated.connect(self.toggle_main_window)
             self.tray.show()
@@ -220,7 +233,8 @@ class MainWindow(QMainWindow):
 
     def toggle_main_window(self, tray_icon_clicked):
         """ Triggered by clicking on the systray icon: show/hide main window """
-        if not tray_icon_clicked or tray_icon_clicked == QSystemTrayIcon.Trigger:  # don't activate on rightclick/contextmenu
+        # don't activate on rightclick/contextmenu
+        if not tray_icon_clicked or tray_icon_clicked == QSystemTrayIcon.Trigger:
             if self.isVisible():
                 self.hide()
                 self.tray_toggle_action.setText(_('Show'))
@@ -229,7 +243,8 @@ class MainWindow(QMainWindow):
                 self.tray_toggle_action.setText(_('Hide'))
 
     def closeEvent(self, event):
-        """ Triggered by closing the window: If the container is unlocked, the program won't quit but remain in the systray. """
+        """ Triggered by closing the window: If the container is unlocked,
+            the program won't quit but remain in the systray. """
         if not self.is_waiting_for_worker:
             if self.is_unlocked:
                 if self.has_tray:
@@ -262,10 +277,14 @@ class MainWindow(QMainWindow):
             self.do_close_container()
         else:
             try:
-                UnlockContainerDialog(self, self.worker, self.luks_device_name, self.encrypted_container, self.key_file, self.mount_point).communicate()
+                UnlockContainerDialog(
+                    self, self.worker, self.luks_device_name,
+                    self.encrypted_container, self.key_file,
+                    self.mount_point
+                ).communicate()
                 self.is_unlocked = True
             except UserInputError as uie:
-                show_alert(self, format_exception(uie))
+                show_alert(self, str(uie))
                 self.is_unlocked = False
             self.refresh()
 
@@ -285,7 +304,8 @@ class MainWindow(QMainWindow):
 
     def on_container_closed(self, message, error, shutdown):
         """ Callback after worker closed container
-            :param message: Contains an error description if error=True, otherwise the current state of the container (unlocked/closed)
+            :param message: Contains an error description if error=True,
+                            otherwise the current state of the container (unlocked/closed)
             :type message: str
             :param error: Error during closing of container
             :type error: bool
@@ -320,7 +340,8 @@ class MainWindow(QMainWindow):
 
     def on_initialized(self, message, error=False):
         """ Callback after worker send current state of container
-            :param message: Contains an error description if error=True, otherwise the current state of the container (unlocked/closed)
+            :param message: Contains an error description if error=True,
+                            otherwise the current state of the container (unlocked/closed)
             :type message: str
             :param critical: Error during initialization (default=False)
             :type critical: bool
@@ -328,7 +349,7 @@ class MainWindow(QMainWindow):
         if error:
             show_alert(self, message, critical=True)
         else:
-            self.is_unlocked = (True if message == 'unlocked' else False)
+            self.is_unlocked = bool(message == 'unlocked')
             self.enable_ui()
 
     def enable_ui(self):
