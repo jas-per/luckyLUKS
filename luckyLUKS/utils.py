@@ -216,7 +216,8 @@ class WorkerMonitor(QThread):
 
             except ValueError:
                 # worker didn't return json -> probably crashed, show everything printed to stdout
-                buf += self.worker.stdout.read()
+                os.set_blocking(self.worker.stdout.fileno(), False)
+                buf += str(self.worker.stdout.readlines())
                 QApplication.postEvent(
                     self.parent,
                     WorkerEvent(callback=lambda msg: show_alert(self.parent, msg, critical=True),

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: luckyLUKS 1.99.0\n"
 "Report-Msgid-Bugs-To: Jasper van Hoorn (muzius@gmail.com)\n"
-"POT-Creation-Date: 2022-01-19 15:08+0100\n"
+"POT-Creation-Date: 2022-01-22 02:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
@@ -643,14 +643,14 @@ msgid ""
 "{error}"
 msgstr ""
 
-#: luckyLUKS/utils.py:223 luckyLUKS/utils.py:231 luckyLUKS/utils.py:258
+#: luckyLUKS/utils.py:224 luckyLUKS/utils.py:232 luckyLUKS/utils.py:259
 #: luckyLUKS/worker.py:129
 msgid ""
 "Error in communication:\n"
 "{error}"
 msgstr ""
 
-#: luckyLUKS/utils.py:314
+#: luckyLUKS/utils.py:315
 msgid ""
 "Error while creating key file:\n"
 "{error}"
@@ -685,7 +685,7 @@ msgstr ""
 msgid "Helper process received unknown command"
 msgstr ""
 
-#: luckyLUKS/worker.py:200 luckyLUKS/worker.py:446
+#: luckyLUKS/worker.py:200 luckyLUKS/worker.py:450
 msgid "Device Name is empty"
 msgstr ""
 
@@ -705,7 +705,7 @@ msgid ""
 "(roughly 8 non-ascii characters possible)"
 msgstr ""
 
-#: luckyLUKS/worker.py:237 luckyLUKS/worker.py:450
+#: luckyLUKS/worker.py:237 luckyLUKS/worker.py:454
 msgid ""
 "Illegal Device Name!\n"
 "Names starting with `-` or using `/` are not possible"
@@ -718,7 +718,7 @@ msgid ""
 "The container is already in use ({existing_device})."
 msgstr ""
 
-#: luckyLUKS/worker.py:269 luckyLUKS/worker.py:489
+#: luckyLUKS/worker.py:269 luckyLUKS/worker.py:493
 msgid ""
 "Key file not accessible\n"
 "or path does not exist:\n"
@@ -748,42 +748,42 @@ msgid ""
 "is not empty"
 msgstr ""
 
-#: luckyLUKS/worker.py:363
+#: luckyLUKS/worker.py:367
 msgid ""
 "Open container failed.\n"
 "Please check key file"
 msgstr ""
 
-#: luckyLUKS/worker.py:399
+#: luckyLUKS/worker.py:403
 msgid "Unable to close container, device is busy"
 msgstr ""
 
-#: luckyLUKS/worker.py:442
+#: luckyLUKS/worker.py:446
 msgid "Container Filename not supplied"
 msgstr ""
 
-#: luckyLUKS/worker.py:454
+#: luckyLUKS/worker.py:458
 msgid ""
 "Device Name too long:\n"
 "Only up to 16 characters possible, even less for unicode \n"
 "(roughly 8 non-ascii characters possible)"
 msgstr ""
 
-#: luckyLUKS/worker.py:459
+#: luckyLUKS/worker.py:463
 msgid ""
 "Device Name already in use:\n"
 "\n"
 "{device_name}"
 msgstr ""
 
-#: luckyLUKS/worker.py:463
+#: luckyLUKS/worker.py:467
 msgid ""
 "Container size too small\n"
 "to create encrypted filesystem\n"
 "Please choose at least 5MB"
 msgstr ""
 
-#: luckyLUKS/worker.py:477
+#: luckyLUKS/worker.py:481
 msgid ""
 "Not enough free disc space for container:\n"
 "\n"
@@ -791,26 +791,26 @@ msgid ""
 "{space_available} MB available"
 msgstr ""
 
-#: luckyLUKS/worker.py:496
+#: luckyLUKS/worker.py:500
 msgid "Unknown filesystem type: {filesystem_type}"
 msgstr ""
 
-#: luckyLUKS/worker.py:499
+#: luckyLUKS/worker.py:503
 msgid ""
 "If you want to use TrueCrypt containers\n"
 "make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n"
 "and `tcplay` is installed (eg for Debian/Ubuntu `apt-get install tcplay`)"
 msgstr ""
 
-#: luckyLUKS/worker.py:582
+#: luckyLUKS/worker.py:588
 msgid "Unknown encryption format: {enc_fmt}"
 msgstr ""
 
-#: luckyLUKS/worker.py:637
+#: luckyLUKS/worker.py:643
 msgid "Cannot change sudo rights, invalid username"
 msgstr ""
 
-#: luckyLUKS/worker.py:643
+#: luckyLUKS/worker.py:649
 msgid ""
 "I`m afraid I can`t do that.\n"
 "\n"

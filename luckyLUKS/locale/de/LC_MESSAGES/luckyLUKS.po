@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: luckyLUKS 0.9.1\n"
 "Report-Msgid-Bugs-To: Jasper van Hoorn (muzius@gmail.com)\n"
-"POT-Creation-Date: 2022-01-19 15:08+0100\n"
-"PO-Revision-Date: 2022-01-19 15:25+0100\n"
+"POT-Creation-Date: 2022-01-22 02:02+0100\n"
+"PO-Revision-Date: 2022-01-22 02:03+0100\n"
 "Last-Translator: Jasper van Hoorn <muzius@gmail.com>\n"
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
@@ -805,7 +805,7 @@ msgstr ""
 "Fehler in der Kommunikation mit `sudo`\n"
 "{error}"
 
-#: luckyLUKS/utils.py:223 luckyLUKS/utils.py:231 luckyLUKS/utils.py:258
+#: luckyLUKS/utils.py:224 luckyLUKS/utils.py:232 luckyLUKS/utils.py:259
 #: luckyLUKS/worker.py:129
 msgid ""
 "Error in communication:\n"
@@ -814,7 +814,7 @@ msgstr ""
 "Kommunikationsfehler:\n"
 "{error}"
 
-#: luckyLUKS/utils.py:314
+#: luckyLUKS/utils.py:315
 msgid ""
 "Error while creating key file:\n"
 "{error}"
@@ -856,7 +856,7 @@ msgstr ""
 msgid "Helper process received unknown command"
 msgstr "Hilfsprozess hat eine unbekannte Anweisung bekommen"
 
-#: luckyLUKS/worker.py:200 luckyLUKS/worker.py:446
+#: luckyLUKS/worker.py:200 luckyLUKS/worker.py:450
 msgid "Device Name is empty"
 msgstr "Kein Gerätename angegeben"
 
@@ -885,7 +885,7 @@ msgstr ""
 "wird Unicode verwendet etwas weniger.\n"
 "(ungefähr 8 nicht-ASCII Buchstaben möglich)"
 
-#: luckyLUKS/worker.py:237 luckyLUKS/worker.py:450
+#: luckyLUKS/worker.py:237 luckyLUKS/worker.py:454
 msgid ""
 "Illegal Device Name!\n"
 "Names starting with `-` or using `/` are not possible"
@@ -904,7 +904,7 @@ msgstr ""
 "{file_path}\n"
 "Der Container wird bereits verwendet ({existing_device})."
 
-#: luckyLUKS/worker.py:269 luckyLUKS/worker.py:489
+#: luckyLUKS/worker.py:269 luckyLUKS/worker.py:493
 msgid ""
 "Key file not accessible\n"
 "or path does not exist:\n"
@@ -946,7 +946,7 @@ msgstr ""
 "{mount_dir}\n"
 "ist nicht leer."
 
-#: luckyLUKS/worker.py:363
+#: luckyLUKS/worker.py:367
 msgid ""
 "Open container failed.\n"
 "Please check key file"
@@ -954,15 +954,15 @@ msgstr ""
 "Öffnen des Containers fehlgeschlagen.\n"
 "Bitte Schlüsseldatei überprüfen."
 
-#: luckyLUKS/worker.py:399
+#: luckyLUKS/worker.py:403
 msgid "Unable to close container, device is busy"
 msgstr "Container wird zur Zeit verwendet, Schliessen nicht möglich."
 
-#: luckyLUKS/worker.py:442
+#: luckyLUKS/worker.py:446
 msgid "Container Filename not supplied"
 msgstr "Keine Container Datei angegeben"
 
-#: luckyLUKS/worker.py:454
+#: luckyLUKS/worker.py:458
 msgid ""
 "Device Name too long:\n"
 "Only up to 16 characters possible, even less for unicode \n"
@@ -973,7 +973,7 @@ msgstr ""
 "wird Unicode verwendet etwas weniger.\n"
 "(ungefähr 8 nicht-ASCII Buchstaben möglich)"
 
-#: luckyLUKS/worker.py:459
+#: luckyLUKS/worker.py:463
 msgid ""
 "Device Name already in use:\n"
 "\n"
@@ -983,7 +983,7 @@ msgstr ""
 "\n"
 "{device_name}"
 
-#: luckyLUKS/worker.py:463
+#: luckyLUKS/worker.py:467
 msgid ""
 "Container size too small\n"
 "to create encrypted filesystem\n"
@@ -993,7 +993,7 @@ msgstr ""
 "um ein verschlüsseltes Dateisystem anzulegen.\n"
 "Bitte mindestens 5MB auswählen."
 
-#: luckyLUKS/worker.py:477
+#: luckyLUKS/worker.py:481
 msgid ""
 "Not enough free disc space for container:\n"
 "\n"
@@ -1005,11 +1005,11 @@ msgstr ""
 "{space_needed} MB benötigt\n"
 "{space_available} MB vorhanden"
 
-#: luckyLUKS/worker.py:496
+#: luckyLUKS/worker.py:500
 msgid "Unknown filesystem type: {filesystem_type}"
 msgstr "Unbekanntes Dateisystem: {filesystem_type}"
 
-#: luckyLUKS/worker.py:499
+#: luckyLUKS/worker.py:503
 msgid ""
 "If you want to use TrueCrypt containers\n"
 "make sure `cryptsetup` is at least version 1.6 (`cryptsetup --version`)\n"
@@ -1019,15 +1019,15 @@ msgstr ""
 "muss `cryptsetup` mindestens Version 1.6 sein (`cryptsetup --version`),\n"
 "und `tcplay` installiert sein (z.B. in Debian/Ubuntu `apt-get install tcplay`)"
 
-#: luckyLUKS/worker.py:582
+#: luckyLUKS/worker.py:588
 msgid "Unknown encryption format: {enc_fmt}"
 msgstr "Unbekanntes Verschlüsselungsformat: {enc_fmt}"
 
-#: luckyLUKS/worker.py:637
+#: luckyLUKS/worker.py:643
 msgid "Cannot change sudo rights, invalid username"
 msgstr "Ungültiger Benutzername, Ändern der sudo-Rechte nicht möglich."
 
-#: luckyLUKS/worker.py:643
+#: luckyLUKS/worker.py:649
 msgid ""
 "I`m afraid I can`t do that.\n"
 "\n"

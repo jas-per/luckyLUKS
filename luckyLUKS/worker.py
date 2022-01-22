@@ -356,7 +356,11 @@ class WorkerHelper():
                             stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=DEVNULL,
                             universal_newlines=True, close_fds=True
                         )
-                        __, errors = p.communicate()
+                        if container_is_luks:
+                            __, errors = p.communicate()
+                        else:
+                            # tcplay with keyfile only means empty password
+                            __, errors = p.communicate('\n')
                         if p.returncode != 0:
                             if p.returncode == 2:
                                 # error message from cryptsetup is a bit ambiguous
@@ -571,12 +575,14 @@ class WorkerHelper():
                     p.stdin.write(resp + '\n')
                     p.stdin.flush()
                     sleep(1)
-                    p.stdin.write('y\n')  # TODO: .. until tcplay gets localized :)
+                    p.stdin.write('y\n')  # .. until tcplay gets localized :)
                     p.stdin.flush()
+                    p.stdin.close()
+                    p.stderr.close()
                     p.wait()
 
                 if p.returncode != 0:
-                    raise WorkerException(p.stderr.read())
+                    raise WorkerException('TCPLAY ERROR')
 
             else:
                 raise WorkerException(_('Unknown encryption format: {enc_fmt}').format(enc_fmt=enc_format))
