@@ -1,3 +1,10 @@
+luckyluks (2.0.1) unstable; urgency=low
+
+  * Update readme/manpages
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Tue, 25 Jan 2022 01:03:37 +0100
+
+
 luckyluks (2.0.0) unstable; urgency=low
 
   * bugfix tcplay keyfile only

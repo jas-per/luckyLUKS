@@ -36,19 +36,19 @@ For Ubuntu and derivates just use this `ppa <https://launchpad.net/~jas-per/+arc
 
 All Debian based distributions can use this debian package and install manually:
 
-`luckyluks_2.0.0_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v2.0.0/luckyluks_2.0.0_all.deb>`_
+`luckyluks_2.0.1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v2.0.1/luckyluks_2.0.1_all.deb>`_
 
 On other distriubutions you can use the following zip-packaged python file:
 
-`luckyLUKS-2.0.0 <https://github.com/jas-per/luckyLUKS/releases/download/v2.0.0/luckyLUKS-2.0.0>`_
+`luckyLUKS-2.0.1 <https://github.com/jas-per/luckyLUKS/releases/download/v2.0.1/luckyLUKS-2.0.1>`_
 
 This file contains all resources and can be executed directly by the python intepreter. Place in :code:`/usr/bin` and change ownership to root::
 
-    > sudo mv luckyLUKS-2.0.0 /usr/bin/
-    > sudo chown root:root /usr/bin/luckyLUKS-2.0.0
-    > sudo chmod 755 /usr/bin/luckyLUKS-2.0.0
+    > sudo mv luckyLUKS-2.0.1 /usr/bin/
+    > sudo chown root:root /usr/bin/luckyLUKS-2.0.1
+    > sudo chmod 755 /usr/bin/luckyLUKS-2.0.1
 
-Then start with :code:`luckyLUKS-2.0.0` on the command line or create a desktop shortcut manually.
+Then start with :code:`luckyLUKS-2.0.1` on the command line or create a desktop shortcut manually.
 
 Dependencies
 ------------
