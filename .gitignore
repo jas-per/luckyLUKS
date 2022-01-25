@@ -11,6 +11,8 @@ env/
 build/
 develop-eggs/
 dist/
+dist_deb/
+deb_dist/
 downloads/
 eggs/
 lib/
@@ -18,6 +20,8 @@ lib64/
 parts/
 sdist/
 var/
+README
+luckyluks.1.gz
 *.egg-info/
 .installed.cfg
 *.egg

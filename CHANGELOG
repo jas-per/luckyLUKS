@@ -1,3 +1,12 @@
+luckyluks (2.0.0) unstable; urgency=low
+
+  * bugfix tcplay keyfile only
+
+  * testing: kde, (ubuntu-) gnome, xfce, lxqt, cinnamon, mate
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Tue, 25 Jan 2022 00:23:45 +0100
+
+
 luckyluks (1.99.0) unstable; urgency=low
 
   * minor adjustments for LUKS2 support

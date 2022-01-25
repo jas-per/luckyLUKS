@@ -30,7 +30,7 @@ dist_deb: dist
 	echo 'version=3\nopts=filenamemangle=s/.+\/v?(\d?\S*)\.tar\.gz/luckyluks_$$1.tar.gz/,pgpsigurlmangle=s/archive\/v?(\d\S*)\.tar\.gz/releases\/download\/v$$1\/v$$1.tar.gz.asc/ https://github.com/jas-per/luckyLUKS/releases .*/archive/v(\d?\S*)\.tar\.gz' >> dist_deb/${NAME}-${VERSION}/debian/watch
 	echo 'override_dh_install:' >> dist_deb/${NAME}-${VERSION}/debian/rules
 	echo '\tdh_install --sourcedir=./' >> dist_deb/${NAME}-${VERSION}/debian/rules
-	sed -e "s/7/10/g" -i dist_deb/${NAME}-${VERSION}/debian/compat
+	sed -e "s/7/9/g" -i dist_deb/${NAME}-${VERSION}/debian/compat
 	sed -e "s,Standards-Version: 3.9.1,Standards-Version: 4.5.0\nVcs-Git: git://github.com/jas-per/luckyLUKS.git\nVcs-Browser: https://github.com/jas-per/luckyLUKS,g" -i dist_deb/${NAME}-${VERSION}/debian/control
 	cd dist_deb/${NAME}-${VERSION} && debuild -S -sa
 
@@ -46,10 +46,10 @@ dist_zip:
 # use dist_deb target instead and build binary package manually if needed
 #deb_src: clean manpage
 #	${PYTHON} setup.py --command-packages=stdeb.command sdist_dsc --extra-cfg-file setup.cfg
-#	debsign deb_dist/${LOWER_NAME}_${VERSION}*_source.changes
+#	debsign dist_deb/${LOWER_NAME}_${VERSION}*_source.changes
 
 #deb_bin: deb_src
-#	cd deb_dist/${NAME}-${VERSION} && debuild -us -uc
+#	cd dist_deb/${NAME}-${VERSION} && debuild -us -uc
 
 update_locales:
 	${PYTHON} setup.py extract_messages --output-file ${NAME}/locale/${NAME}.pot
