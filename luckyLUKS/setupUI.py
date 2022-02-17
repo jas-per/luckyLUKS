@@ -25,7 +25,7 @@ from shutil import move
 
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTabWidget, QDialogButtonBox, QGridLayout, QLabel, QStackedWidget,\
-    QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QFileDialog, QWidget, QStyle, QApplication,\
+    QMessageBox, QLineEdit, QPushButton, QSpinBox, QComboBox, QCheckBox, QFileDialog, QWidget, QStyle, QApplication,\
     QProgressBar, QLayout
 
 from luckyLUKS.unlockUI import FormatContainerDialog, UnlockContainerDialog, UserInputError
@@ -155,55 +155,59 @@ class SetupDialog(QDialog):
         self.create_size_unit.addItems(['MB', 'GB'])
         self.create_size_unit.setCurrentIndex(1)
         create_grid.addWidget(self.create_size_unit, 3, 2)
+
+        self.create_quickformat = QCheckBox(_('Quickformat'))
+        create_grid.addWidget(self.create_quickformat, 4, 1)
+
         # advanced settings
         a_settings = QExpander(_('Advanced'), self, False)
-        create_grid.addWidget(a_settings, 4, 0, 1, 3)
+        create_grid.addWidget(a_settings, 5, 0, 1, 3)
 
         label = QLabel(_('key file'))
         label.setIndent(5)
-        create_grid.addWidget(label, 5, 0)
+        create_grid.addWidget(label, 6, 0)
         self.create_keyfile = QLineEdit()
-        create_grid.addWidget(self.create_keyfile, 5, 1)
+        create_grid.addWidget(self.create_keyfile, 6, 1)
         button_choose_cKeyfile = QPushButton(style.standardIcon(QStyle.SP_DialogOpenButton), '')
         button_choose_cKeyfile.setToolTip(_('choose keyfile'))
-        create_grid.addWidget(button_choose_cKeyfile, 5, 2)
+        create_grid.addWidget(button_choose_cKeyfile, 6, 2)
         button_choose_cKeyfile.clicked.connect(lambda: self.on_select_keyfile_clicked('Create'))
-        a_settings.addWidgets([create_grid.itemAtPosition(5, column).widget() for column in range(0, 3)])
+        a_settings.addWidgets([create_grid.itemAtPosition(6, column).widget() for column in range(0, 3)])
 
         button_create_keyfile = QPushButton(_('Create key file'))
         button_create_keyfile.clicked.connect(self.on_create_keyfile)
-        create_grid.addWidget(button_create_keyfile, 6, 1)
+        create_grid.addWidget(button_create_keyfile, 7, 1)
         a_settings.addWidgets([button_create_keyfile])
 
         label = QLabel(_('format'))
         label.setIndent(5)
-        create_grid.addWidget(label, 7, 0)
+        create_grid.addWidget(label, 8, 0)
         self.create_encryption_format = QComboBox()
         self.create_encryption_format.addItem('LUKS')
         self.create_encryption_format.addItem('TrueCrypt')
         if not is_installed('tcplay'):
             self.create_encryption_format.setEnabled(False)
         self.create_encryption_format.setCurrentIndex(0)
-        create_grid.addWidget(self.create_encryption_format, 7, 1)
-        a_settings.addWidgets([create_grid.itemAtPosition(7, column).widget() for column in range(0, 2)])
+        create_grid.addWidget(self.create_encryption_format, 8, 1)
+        a_settings.addWidgets([create_grid.itemAtPosition(8, column).widget() for column in range(0, 2)])
 
         label = QLabel(_('filesystem'))
         label.setIndent(5)
-        create_grid.addWidget(label, 8, 0)
+        create_grid.addWidget(label, 9, 0)
         filesystems = ['ext4', 'ext2', 'ntfs']
         self.create_filesystem_type = QComboBox()
         for filesystem in filesystems:
             if is_installed('mkfs.' + filesystem):
                 self.create_filesystem_type.addItem(filesystem)
         self.create_filesystem_type.setCurrentIndex(0)
-        create_grid.addWidget(self.create_filesystem_type, 8, 1)
-        a_settings.addWidgets([create_grid.itemAtPosition(8, column).widget() for column in range(0, 2)])
+        create_grid.addWidget(self.create_filesystem_type, 9, 1)
+        a_settings.addWidgets([create_grid.itemAtPosition(9, column).widget() for column in range(0, 2)])
 
-        create_grid.setRowStretch(9, 1)
-        create_grid.setRowMinimumHeight(9, 10)
+        create_grid.setRowStretch(10, 1)
+        create_grid.setRowMinimumHeight(10, 10)
         button_help_create = QPushButton(style.standardIcon(QStyle.SP_DialogHelpButton), _('Help'))
         button_help_create.clicked.connect(self.show_help_create)
-        create_grid.addWidget(button_help_create, 10, 2)
+        create_grid.addWidget(button_help_create, 11, 2)
 
         create_tab = QWidget()
         create_tab.setLayout(create_grid)
@@ -267,6 +271,7 @@ class SetupDialog(QDialog):
                                      'device_name': self.create_device_name.text().strip(),
                                      'container_path': location,
                                      'container_size': size,
+                                     'quickformat': self.create_quickformat.isChecked(),
                                      'key_file': keyfile,
                                      'filesystem_type': str(self.create_filesystem_type.currentText()),
                                      'encryption_format': str(self.create_encryption_format.currentText()),
@@ -710,7 +715,12 @@ class SetupDialog(QDialog):
                        '\n\n'
                        'The <b>size</b> of the container can be provided in GB or MB. The container '
                        'will get initialized with random data, this can take quite a while - '
-                       '1 hour for a 10GB container on an external drive is nothing unusual.')
+                       '1 hour for a 10GB container on an external drive is nothing unusual.'
+                       '\n\n'
+                       'To speed up container creation <b>Quickformat</b> can be enabled to use `fallocate` '
+                       'instead of initializing the container with random data - this means previous data '
+                       'will not be overwritten and some conclusions about encrypted data inside closed '
+                       'containers can be drawn.\n')
         advanced_topics = [
             {'head': _('key file'),
              'text': _('A key file can be used to allow access to an encrypted container instead of a password. '

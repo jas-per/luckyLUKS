@@ -73,7 +73,7 @@ install:
 	${PYTHON} setup.py install --install-layout=deb
 
 check:
-#	@echo '### pylint check ###'
+	@echo '### pylint check ###'
 	find . -name \*.py | grep -v "^test_" | xargs pylint --max-line-length=120 --max-args=7 --disable=invalid-name,unused-argument,fixme,import-outside-toplevel,no-self-use --errors-only --additional-builtins=_ --extension-pkg-whitelist=PyQt5 --reports=n
 	@echo '### pep8 check ###'
 	pep8  *.py ./luckyLUKS --max-line-length=120 --ignore=E731,W503,W504

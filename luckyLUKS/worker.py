@@ -113,7 +113,8 @@ def run():
                 elif cmd['msg'] == 'create':
                     worker.create_container(cmd['device_name'], cmd['container_path'],
                                             cmd['container_size'], cmd['filesystem_type'],
-                                            cmd['encryption_format'], cmd['key_file'])
+                                            cmd['encryption_format'], cmd['key_file'],
+                                            cmd['quickformat'])
                 elif cmd['msg'] == 'authorize':
                     worker.modify_sudoers(os.getenv("SUDO_UID"), nopassword=True)
                 else:
@@ -414,7 +415,8 @@ class WorkerHelper():
             sleep(0.2)  # give udisks some time to process closing of container ..
             self.detach_loopback_device(associated_loop)
 
-    def create_container(self, device_name, container_path, container_size, filesystem_type, enc_format, key_file=None):
+    def create_container(self, device_name, container_path, container_size,
+                         filesystem_type, enc_format, key_file=None, quickformat=False):
         """ Creates a new LUKS2 container with requested size and filesystem after validating parameters
             Three step process: asks for passphrase after initializing container with random bits,
             and signals successful LUKS initialization before writing the filesystem
@@ -432,6 +434,8 @@ class WorkerHelper():
             :type enc_format: str
             :param key_file: The path to an optional keyfile to be used for the container
             :type key_file: str or None
+            :param quickformat: Use fallocate instead of initializing container with random data
+            :type quickformat: bool
             :raises: WorkerException
         """
         # STEP0: #########################################################################
@@ -508,12 +512,18 @@ class WorkerHelper():
         # create container file by filling allocated space with random bits
         #
 
-        count = str(int(container_size / 1024 / 1024)) + 'K'
-        # oflag=excl -> fail if the output file already exists
         # runas user to fail on access restictions
-        cmd = ['sudo', '-u', os.getenv("SUDO_USER"),
-               'dd', 'if=/dev/urandom', 'of=' + container_path,
-               'bs=1K', 'count=' + count, 'conv=excl']
+        if quickformat:
+            # does not fail if the output file already exists, but check is in setupUI.on_save_file() anyway
+            cmd = ['sudo', '-u', os.getenv("SUDO_USER"),
+                   'fallocate', '-x', '-l', str(container_size), container_path]
+        else:
+            count = str(int(container_size / 1024 / 1024)) + 'K'
+            # oflag=excl -> fail if the output file already exists
+            cmd = ['sudo', '-u', os.getenv("SUDO_USER"),
+                   'dd', 'if=/dev/urandom', 'of=' + container_path,
+                   'bs=1K', 'count=' + count, 'conv=excl']
+
         with open(os.devnull) as DEVNULL:
             p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=DEVNULL, universal_newlines=True, close_fds=True)
             __, errors = p.communicate()

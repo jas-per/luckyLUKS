@@ -1,3 +1,10 @@
+luckyluks (2.1.0) unstable; urgency=low
+
+  * Add quickformat to initialize container with fallocate 
+    instead of filling with random data
+
+ -- Jasper van Hoorn <muzius@gmail.com>  Wed, 16 Feb 2022 23:48:23 +0100
+
 luckyluks (2.0.1) unstable; urgency=low
 
   * Update readme/manpages

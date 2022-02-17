@@ -26,29 +26,30 @@ unlock the container. For technical details please see the FAQ at the end of thi
 Installation
 ============
 
-For Ubuntu and derivates just use this `ppa <https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks>`_::
+Since 2022 luckyLUKS is available in Debian/Ubuntu based distributions - just use your package manager to install. \
+For older Ubuntu and derivates use this `ppa <https://launchpad.net/~jas-per/+archive/ubuntu/lucky-luks>`_::
 
     > sudo add-apt-repository ppa:jas-per/lucky-luks
     > sudo apt-get update && sudo apt-get upgrade
     > sudo apt-get install luckyluks
 
-(For older Ubuntu LTS install :code:`python-luckyLUKS` or :code:`python3-luckyLUKS` still present in that ppa)
+(For Ubuntu LTS <20.04 install :code:`python-luckyLUKS` or :code:`python3-luckyLUKS` still present in that ppa)
 
-All Debian based distributions can use this debian package and install manually:
+Alternatively Debian based distributions can use this Debian package and install manually:
 
-`luckyluks_2.0.1_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v2.0.1/luckyluks_2.0.1_all.deb>`_
+`luckyluks_2.1.0_all.deb <https://github.com/jas-per/luckyLUKS/releases/download/v2.1.0/luckyluks_2.1.0_all.deb>`_
 
 On other distriubutions you can use the following zip-packaged python file:
 
-`luckyLUKS-2.0.1 <https://github.com/jas-per/luckyLUKS/releases/download/v2.0.1/luckyLUKS-2.0.1>`_
+`luckyLUKS-2.1.0 <https://github.com/jas-per/luckyLUKS/releases/download/v2.1.0/luckyLUKS-2.1.0>`_
 
 This file contains all resources and can be executed directly by the python intepreter. Place in :code:`/usr/bin` and change ownership to root::
 
-    > sudo mv luckyLUKS-2.0.1 /usr/bin/
-    > sudo chown root:root /usr/bin/luckyLUKS-2.0.1
-    > sudo chmod 755 /usr/bin/luckyLUKS-2.0.1
+    > sudo mv luckyLUKS-2.1.0 /usr/bin/
+    > sudo chown root:root /usr/bin/luckyLUKS-2.1.0
+    > sudo chmod 755 /usr/bin/luckyLUKS-2.1.0
 
-Then start with :code:`luckyLUKS-2.0.1` on the command line or create a desktop shortcut manually.
+Then start with :code:`luckyLUKS-2.1.0` on the command line or create a desktop shortcut manually.
 
 Dependencies
 ------------
@@ -75,7 +76,7 @@ luckyLUKS gets tested with the major desktop environments:
 - :code:`xfce`
 - :code:`cinnamon`
 - :code:`mate`
-- :code:`lxqt` (known minor `issue <https://github.com/lxqt/lxqt-panel/issues/1705>`_)
+- :code:`lxqt`
 
 There are also some distribution specifics with Debian:
 
@@ -88,7 +89,7 @@ There are also some distribution specifics with Debian:
 
     please use the 'mount point' option in luckyLUKS
 
-Using luckyLUKS with a wayland-based display server / compositor instead of Xorg is possible with `gnome` and `kde` \
+Using luckyLUKS with a wayland-based display server / compositor instead of Xorg is possible eg with `gnome`, `kde` or `sway` \
 and for security reasons this is very much recommended! There is still some work left to get wayland running smooth though, \
 so check usability for yourself - things like gaming, input drivers, screen recording and also tray icon functionality \
 might stop you from using a wayland compositor yet.
